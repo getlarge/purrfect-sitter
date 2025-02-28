@@ -12,7 +12,7 @@ model: |
   type cat
     relations
       define admin: admin from system
-      define can_manage: owner or admin from system
+      define can_manage: owner or admin
       define owner: [user]
       define system: [system]
 
@@ -27,12 +27,15 @@ model: |
 
   type review
     relations
+      define admin: admin from system
       define author: owner from cat_sitting
+      define can_delete: admin
       define can_edit: author
-      define can_view: author or subject
+      define can_view: [user, user:*]
       define cat: cat from cat_sitting
       define cat_sitting: [cat_sitting]
       define subject: sitter from cat_sitting
+      define system: [system]
 
   condition is_active_timeslot(current_time: timestamp, end_time: timestamp, start_time: timestamp) {
     current_time >= start_time && current_time <= end_time
@@ -43,8 +46,16 @@ model: |
   }
 
 tuples:
+  - user: user:jenny
+    relation: admin
+    object: system:development
+
   - user: user:bob
     relation: owner
+    object: cat:romeo
+
+  - user: system:development
+    relation: system
     object: cat:romeo
 
   - user: cat:romeo
@@ -72,11 +83,58 @@ tuples:
       context:
         completed_statuses: ['completed']
 
+  - user: system:development
+    relation: system
+    object: review:1
+
   - user: cat_sitting:1
     relation: cat_sitting
     object: review:1
 
+  - user: user:*
+    relation: can_view
+    object: review:1
+
 tests:
+  - name: Test basic relations
+    check:
+      - user: user:anne
+        object: cat_sitting:1
+        assertions:
+          sitter: true
+
+      - user: user:bob
+        object: cat_sitting:1
+        assertions:
+          owner: true
+
+  - name: Test role access
+    check:
+      - user: user:jenny
+        object: cat:romeo
+        assertions:
+          can_manage: true
+
+      - user: user:bob
+        object: cat:romeo
+        assertions:
+          can_manage: true
+
+      - user: user:anne
+        object: cat:romeo
+        assertions:
+          can_manage: false
+
+      - user: user:jenny
+        object: review:1
+        assertions:
+          can_delete: true
+
+      - user: user:anne
+        object: review:1
+        assertions:
+          can_delete: false
+
   - name: Test temporal access
     check:
       - user: user:anne
@@ -92,16 +150,6 @@ tests:
           current_time: '2023-01-04T00:00:00Z'
         assertions:
           active_sitter: false
-
-      - user: user:anne
-        object: cat_sitting:1
-        assertions:
-          sitter: true
-
-      - user: user:bob
-        object: cat_sitting:1
-        assertions:
-          owner: true
 
   - name: Test attribute access
     check:
@@ -141,14 +189,7 @@ tests:
           can_edit:
             - review:1
 
-  - name: Test the reviews that anne can view
-    list_objects:
-      - user: user:anne
-        type: review
-        assertions:
-          can_view:
-            - review:1
-
+  - name: Test that reviews are public
     list_users:
       - object: review:1
         user_filter:
@@ -156,5 +197,4 @@ tests:
         assertions:
           can_view:
             users:
-              - user:anne
-              - user:bob
+              - user:*
