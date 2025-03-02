@@ -14,7 +14,7 @@
     ],
     "sharedGlobals": ["{workspaceRoot}/.github/workflows/ci.yml"]
   },
-  "nxCloudId": "67be24a9bc2e243ad1706f49",
+  "nxCloudId": "67c44b39da66fe6aba435f72",
   "targetDefaults": {
     "@nx/esbuild:esbuild": {
       "cache": true,
@@ -23,17 +23,10 @@
     }
   },
   "plugins": [
-    {
-      "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "lint"
-      }
-    },
+    { "plugin": "@nx/eslint/plugin", "options": { "targetName": "lint" } },
     {
       "plugin": "@nx/jest/plugin",
-      "options": {
-        "targetName": "test"
-      },
+      "options": { "targetName": "test" },
       "exclude": ["apps/purrfect-sitter-e2e/**/*"]
     }
   ]
