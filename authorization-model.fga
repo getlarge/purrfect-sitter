@@ -1,0 +1,41 @@
+model
+  schema 1.1
+
+type user
+
+type system
+  relations
+    define admin: [user]
+
+type cat
+  relations
+    define admin: admin from system
+    define can_manage: owner or admin from system
+    define owner: [user]
+    define system: [system]
+
+type cat_sitting
+  relations
+    define active_sitter: [cat_sitting#sitter with is_active_timeslot]
+    define can_post_updates: owner or active_sitter
+    define can_review: [cat#owner with is_cat_sitting_completed]
+    define cat: [cat]
+    define owner: owner from cat
+    define sitter: [user]
+
+type review
+  relations
+    define author: owner from cat_sitting
+    define can_edit: author
+    define can_view: author or subject
+    define cat: cat from cat_sitting
+    define cat_sitting: [cat_sitting]
+    define subject: sitter from cat_sitting
+
+condition is_active_timeslot(current_time: timestamp, end_time: timestamp, start_time: timestamp) {
+  current_time >= start_time && current_time <= end_time
+}
+
+condition is_cat_sitting_completed(cat_sitting_attributes: map<string>, completed_statuses: list<string>) {
+  cat_sitting_attributes["status"] in completed_statuses
+}

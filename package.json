@@ -2,7 +2,9 @@
   "name": "@purrfect-sitter/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "test:fga": "fga model test --tests store.fga.yml"
+  },
   "private": true,
   "dependencies": {
     "@fastify/autoload": "~6.0.3",
