@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "node-runner": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-node"
+      ],
+      "env": {}
+    },
+    "nx-purrfect-sitter": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "nx-mcp"
+      ],
+      "env": {}
+    }
+  }
+}
