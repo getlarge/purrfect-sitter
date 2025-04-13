@@ -1,0 +1,45 @@
+{
+  "name": "@purrfect-sitter/database",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {},
+  "nx": {
+    "targets": {
+      "build": {
+        "executor": "@nx/js:swc",
+        "outputs": ["{options.outputPath}"],
+        "options": {
+          "outputPath": "dist/libs/database",
+          "main": "libs/database/src/index.ts",
+          "tsConfig": "libs/database/tsconfig.lib.json",
+          "assets": ["libs/database/*.md"]
+        }
+      },
+      "generate": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "drizzle-kit generate:pg --config=drizzle.config.ts",
+          "cwd": "libs/database"
+        }
+      },
+      "migrate": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node -r dotenv/config src/lib/migrations/migrate.js",
+          "cwd": "libs/database"
+        }
+      }
+    }
+  }
+}
