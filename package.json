@@ -2,6 +2,7 @@
   "name": "@purrfect-sitter/source",
   "version": "0.0.0",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "test:fga": "fga model test --tests store.fga.yml"
   },
@@ -9,9 +10,21 @@
   "dependencies": {
     "@fastify/autoload": "~6.0.3",
     "@fastify/sensible": "~6.0.2",
+    "@fastify/swagger": "^9.4.2",
+    "@fastify/swagger-ui": "^5.2.2",
+    "@neondatabase/serverless": "^1.0.0",
+    "@openfga/sdk": "^0.8.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.57.1",
+    "@opentelemetry/sdk-node": "^0.200.0",
+    "@ory/kratos-client": "^1.3.8",
+    "@sinclair/typebox": "^0.34.33",
     "axios": "^1.6.0",
+    "drizzle-orm": "^0.41.0",
     "fastify": "~5.2.1",
-    "fastify-plugin": "~5.0.1"
+    "fastify-plugin": "~5.0.1",
+    "pg": "^8.14.1",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.8.0",
@@ -28,6 +41,8 @@
     "@swc/jest": "~0.2.36",
     "@types/jest": "^29.5.12",
     "@types/node": "~18.16.9",
+    "@types/pg": "^8.11.12",
+    "drizzle-kit": "^0.30.6",
     "esbuild": "^0.19.2",
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^10.0.0",
@@ -36,6 +51,7 @@
     "mcp-node": "^1.2.2",
     "nx": "20.7.2",
     "nx-mcp": "^0.0.8",
+    "pg-mem": "^3.0.5",
     "prettier": "^2.6.2",
     "ts-jest": "^29.1.0",
     "ts-node": "10.9.1",
@@ -44,7 +60,8 @@
     "typescript-eslint": "^8.19.0"
   },
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "libs/*"
   ],
   "packageManager": "npm@11.2.0"
 }
