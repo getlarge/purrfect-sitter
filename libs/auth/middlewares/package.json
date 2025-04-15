@@ -1,0 +1,43 @@
+{
+  "name": "@purrfect-sitter/auth-middlewares",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "nx": {
+    "sourceRoot": "libs/auth/middlewares/src",
+    "targets": {
+      "build": {
+        "executor": "@nx/js:swc",
+        "outputs": [
+          "{options.outputPath}"
+        ],
+        "options": {
+          "outputPath": "libs/auth/middlewares/dist",
+          "main": "libs/auth/middlewares/src/index.ts",
+          "tsConfig": "libs/auth/middlewares/tsconfig.lib.json",
+          "skipTypeCheck": true,
+          "stripLeadingPaths": true
+        }
+      }
+    },
+    "tags": [
+      "scope:auth",
+      "type:middlewares"
+    ]
+  },
+  "dependencies": {
+    "@swc/helpers": "~0.5.11"
+  }
+}
