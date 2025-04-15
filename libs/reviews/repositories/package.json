@@ -1,0 +1,43 @@
+{
+  "name": "@purrfect-sitter/reviews-repositories",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "nx": {
+    "sourceRoot": "libs/reviews/repositories/src",
+    "targets": {
+      "build": {
+        "executor": "@nx/js:swc",
+        "outputs": [
+          "{options.outputPath}"
+        ],
+        "options": {
+          "outputPath": "libs/reviews/repositories/dist",
+          "main": "libs/reviews/repositories/src/index.ts",
+          "tsConfig": "libs/reviews/repositories/tsconfig.lib.json",
+          "skipTypeCheck": true,
+          "stripLeadingPaths": true
+        }
+      }
+    },
+    "tags": [
+      "scope:reviews",
+      "type:repositories"
+    ]
+  },
+  "dependencies": {
+    "@swc/helpers": "~0.5.11"
+  }
+}

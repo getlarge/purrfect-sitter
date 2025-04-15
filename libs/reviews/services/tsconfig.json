@@ -1,0 +1,28 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "../repositories"
+    },
+    {
+      "path": "../../auth/repositories"
+    },
+    {
+      "path": "../../models"
+    },
+    {
+      "path": "../../database"
+    },
+    {
+      "path": "../../cat-sittings/repositories"
+    },
+    {
+      "path": "./tsconfig.lib.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ]
+}
