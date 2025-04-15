@@ -1,82 +1,128 @@
-# PurrfectSitter
+# Purrfect Sitter
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+A cat sitting management application with dual authorization strategies.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is almost ready ✨.
+## Architecture
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/node?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+### Core Application
 
-## Finish your CI setup
+- Fastify-based API
+- User authentication with Ory Kratos
+- Core models: User, Cat, CatSitting, Review
+- TypeBox for JSON Schema validation
+- Drizzle ORM for database access
+- OpenFGA for fine-grained authorization
 
-[Click here to finish setting up your workspace!](https://cloud.nx.app/connect/cKCYUCLLmL)
+### NX Workspace Structure
 
+```
+apps/
+  purrfect-sitter/       # Main Fastify application
+  purrfect-sitter-e2e/   # End-to-end tests
 
-## Run tasks
-
-To run the dev server for your app, use:
-
-```sh
-npx nx serve purrfect-sitter
+libs/                    # Domain-specific libraries
+  database/              # Database schema and repositories
+  models/                # DTOs and validation schemas
+  auth/                  # Authentication and authorization
+  cats/                  # Cats domain business logic
+  cat-sittings/          # Cat sittings domain business logic
+  reviews/               # Reviews domain business logic
 ```
 
-To create a production bundle:
+### Authorization Strategies
 
-```sh
-npx nx build purrfect-sitter
+This application implements two authorization strategies that can be toggled via environment variables:
+
+1. **Database Lookups** (`AUTH_STRATEGY=db`)
+
+   - Traditional database queries to check permissions
+   - Uses JOINs and WHERE clauses for relationship checks
+   - Direct SQL conditions for time-based rules
+
+2. **OpenFGA** (`AUTH_STRATEGY=openfga`)
+   - Relationship-based authorization using OpenFGA
+   - Declarative authorization model (authorization-model.fga)
+   - Uses relationship tuples for permissions
+   - Supports complex relationship checks with contextual tuples
+
+Both strategies implement the same authorization rules, allowing for performance comparisons.
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- Docker and Docker Compose
+- Nx CLI (`npm install -g nx`)
+
+### Environment Setup
+
+1. Start the required services:
+
+```bash
+docker compose --profile dev up -d
 ```
 
-To see all available targets to run for a project, run:
+This starts:
 
-```sh
-npx nx show project purrfect-sitter
+- PostgreSQL database
+- OpenFGA authorization service
+- Ory Kratos identity server
+
+2. Set environment variables:
+
+```
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/purrfect-sitter
+KRATOS_URL=http://localhost:4433
+OPENFGA_URL=http://localhost:8080
+OPENFGA_STORE_ID=<store_id>
+AUTH_STRATEGY=db  # or 'openfga'
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+3. Run database migrations:
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Add new projects
-
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
-
-Use the plugin's generator to create new projects.
-
-To generate a new application, use:
-
-```sh
-npx nx g @nx/node:app demo
+```bash
+nx generate database
+nx migrate database
 ```
 
-To generate a new library, use:
+4. Start the development server:
 
-```sh
-npx nx g @nx/node:lib mylib
+```bash
+nx serve purrfect-sitter
 ```
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+## API Endpoints
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+The API follows RESTful principles and provides the following endpoints:
 
+### Cats
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- `GET /api/cats` - List all cats
+- `GET /api/cats/:id` - Get cat details
+- `POST /api/cats` - Create cat profile (authenticated)
+- `PUT /api/cats/:id` - Update cat profile (owner or admin)
+- `DELETE /api/cats/:id` - Delete cat profile (owner or admin)
 
-## Install Nx Console
+### Cat Sittings
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+- `GET /api/cat-sittings` - List cat sittings (filtered by permissions)
+- `GET /api/cat-sittings/:id` - Get cat sitting details (owner, sitter, or admin)
+- `POST /api/cat-sittings` - Create cat sitting request (authenticated)
+- `PUT /api/cat-sittings/:id` - Update cat sitting (owner, sitter, or admin)
+- `PUT /api/cat-sittings/:id/status` - Update cat sitting status (owner or sitter)
+- `DELETE /api/cat-sittings/:id` - Delete cat sitting (owner or admin)
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Reviews
 
-## Useful links
+- `GET /api/reviews` - List reviews (public)
+- `GET /api/reviews/:id` - Get review details (author, subject, or admin)
+- `POST /api/reviews` - Create review (cat owner after completed sitting)
+- `PUT /api/reviews/:id` - Update review (author only)
+- `DELETE /api/reviews/:id` - Delete review (admin only)
 
-Learn more:
+## Testing
 
-- [Learn more about this workspace setup](https://nx.dev/nx-api/node?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- Unit tests: `nx test <project-name>`
+- E2E tests: `nx e2e purrfect-sitter-e2e`
+- Test OpenFGA authorization model: `npm run test:fga`

@@ -1,5 +1,5 @@
 import Fastify, { FastifyInstance } from 'fastify';
-import { app } from './app';
+import { app } from './app.js';
 
 describe('GET /', () => {
   let server: FastifyInstance;

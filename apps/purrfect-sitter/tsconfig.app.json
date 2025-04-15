@@ -16,5 +16,28 @@
     "eslint.config.js",
     "eslint.config.cjs",
     "eslint.config.mjs"
+  ],
+  "references": [
+    {
+      "path": "../../libs/database/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/reviews/services/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/cats/services/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/cat-sittings/services/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/models/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/auth/repositories/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/auth/middlewares/tsconfig.lib.json"
+    }
   ]
 }

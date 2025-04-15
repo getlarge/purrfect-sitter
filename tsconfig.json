@@ -8,6 +8,42 @@
     },
     {
       "path": "./apps/purrfect-sitter"
+    },
+    {
+      "path": "./libs/database"
+    },
+    {
+      "path": "./libs/models"
+    },
+    {
+      "path": "./libs/cat-sittings/repositories"
+    },
+    {
+      "path": "./libs/cat-sittings/services"
+    },
+    {
+      "path": "./libs/reviews/repositories"
+    },
+    {
+      "path": "./libs/reviews/services"
+    },
+    {
+      "path": "./libs/users/repositories"
+    },
+    {
+      "path": "./libs/users/services"
+    },
+    {
+      "path": "./libs/auth/repositories"
+    },
+    {
+      "path": "./libs/auth/middlewares"
+    },
+    {
+      "path": "./libs/cats/repositories"
+    },
+    {
+      "path": "./libs/cats/services"
     }
   ]
 }

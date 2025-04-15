@@ -4,6 +4,27 @@
   "include": [],
   "references": [
     {
+      "path": "../../libs/database"
+    },
+    {
+      "path": "../../libs/reviews/services"
+    },
+    {
+      "path": "../../libs/cats/services"
+    },
+    {
+      "path": "../../libs/cat-sittings/services"
+    },
+    {
+      "path": "../../libs/models"
+    },
+    {
+      "path": "../../libs/auth/repositories"
+    },
+    {
+      "path": "../../libs/auth/middlewares"
+    },
+    {
       "path": "./tsconfig.app.json"
     },
     {

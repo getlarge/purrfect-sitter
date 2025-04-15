@@ -4,6 +4,10 @@
   "private": true,
   "nx": {
     "name": "purrfect-sitter",
+    "tags": [
+      "type:app"
+    ],
+    "type": "app",
     "targets": {
       "build": {
         "executor": "@nx/esbuild:esbuild",

@@ -15,15 +15,23 @@
   },
   "dependencies": {},
   "nx": {
+    "tags": [
+      "scope:shared",
+      "type:core"
+    ],
     "targets": {
       "build": {
         "executor": "@nx/js:swc",
-        "outputs": ["{options.outputPath}"],
+        "outputs": [
+          "{options.outputPath}"
+        ],
         "options": {
           "outputPath": "dist/libs/database",
           "main": "libs/database/src/index.ts",
           "tsConfig": "libs/database/tsconfig.lib.json",
-          "assets": ["libs/database/*.md"]
+          "assets": [
+            "libs/database/*.md"
+          ]
         }
       },
       "generate": {

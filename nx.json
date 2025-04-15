@@ -28,7 +28,15 @@
           "buildDepsName": "build-deps",
           "watchDepsName": "watch-deps"
         }
-      }
+      },
+      "exclude": [
+        "libs/database/*",
+        "libs/models/*",
+        "libs/auth/*",
+        "libs/cats/*",
+        "libs/cat-sittings/*",
+        "libs/reviews/*"
+      ]
     },
     {
       "plugin": "@nx/eslint/plugin",
@@ -42,6 +50,22 @@
         "targetName": "test"
       },
       "exclude": ["apps/purrfect-sitter-e2e/**/*"]
+    },
+    {
+      "plugin": "@nx/js/typescript",
+      "include": [
+        "libs/database/*",
+        "libs/models/*",
+        "libs/auth/*",
+        "libs/cats/*",
+        "libs/cat-sittings/*",
+        "libs/reviews/*"
+      ],
+      "options": {
+        "typecheck": {
+          "targetName": "typecheck"
+        }
+      }
     }
   ],
   "targetDefaults": {
@@ -52,6 +76,11 @@
     },
     "test": {
       "dependsOn": ["^build"]
+    },
+    "@nx/js:swc": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
     }
   }
 }
