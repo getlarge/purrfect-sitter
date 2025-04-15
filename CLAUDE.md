@@ -31,7 +31,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Prefix interfaces with 'I' and types with 'T'
 - Use PascalCase for classes/interfaces, camelCase for variables/functions
 - Group imports: Node.js modules, external modules, internal modules
-- Nx workspace, each component (auth, models, repositories, ...) should be contained in its own Nx project under the libs directory. These projects should NOT be buildable.
+- Use functional programming patterns when possible
+- Handle errors with proper type checking and optional chaining
+- Avoid tight coupling between components
+- Never add special cases for specific inputs
+- Nx workspace, each component (auth, models, repositories, ...) should be contained in its own Nx project under the libs directory
+- Libraries SHOULD be buildable, using SWC as compiler
+- This is an ESM codebase - all import statements must include file extensions (e.g., `import { foo } from './bar.js';`)
+- Node.js built-in modules should be imported with the 'node:' prefix (e.g., `import { readFile } from 'node:fs/promises';`)
 
 ## Authentication
 
