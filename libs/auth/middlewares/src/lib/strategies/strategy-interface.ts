@@ -3,6 +3,7 @@ export interface IAuthorizationCheck {
   action: string;
   resource: string;
   resourceId: string;
+  relation?: string;
 }
 
 export interface IAuthorizationStrategy {

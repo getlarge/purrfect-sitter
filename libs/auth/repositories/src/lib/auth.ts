@@ -45,11 +45,18 @@ export const getOpenFgaClient = () => {
   return { client: openfgaClient, storeId: authConfig.openfgaStoreId };
 };
 
+export const getAuthStrategy = () => {
+  if (!authConfig) {
+    throw new Error('Auth configuration not set');
+  }
+  return authConfig?.authStrategy || 'db';
+};
+
 export const configureAuth = (config: IAuthConfig) => {
   authConfig = config;
   return {
     getKratosClient,
     getOpenFgaClient,
-    getAuthStrategy: () => authConfig.authStrategy || 'db',
+    getAuthStrategy,
   };
 };

@@ -7,7 +7,7 @@ import {
 import fp from 'fastify-plugin';
 
 // Session hook to validate the user's session using Kratos
-export const validateSession = async (
+export const authenticate = async (
   request: FastifyRequest,
   reply: FastifyReply
 ) => {
@@ -56,13 +56,7 @@ export const sessionMiddleware = fp(
   async (fastify) => {
     fastify.decorateRequest('user', undefined);
 
-    // Register the preHandler hook for routes that need authentication
-    fastify.decorate(
-      'authenticate',
-      async (request: FastifyRequest, reply: FastifyReply) => {
-        return validateSession(request, reply);
-      }
-    );
+    fastify.decorate('authenticate', authenticate);
   },
   {
     name: 'authenticate',

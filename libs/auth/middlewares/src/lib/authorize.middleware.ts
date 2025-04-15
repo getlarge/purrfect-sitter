@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { getAuthStrategy } from '../auth.js';
-import { dbAuthStrategy } from '../strategies/db-strategy.js';
-import { openfgaAuthStrategy } from '../strategies/openfga-strategy.js';
+import { getAuthStrategy } from '@purrfect-sitter/auth-repositories';
+import { dbAuthStrategy } from './strategies/db-strategy.js';
+import { openfgaAuthStrategy } from './strategies/openfga-strategy.js';
 import fp from 'fastify-plugin';
 
 export interface IAuthorizationParams {
