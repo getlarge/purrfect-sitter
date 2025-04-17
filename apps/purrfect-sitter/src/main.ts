@@ -1,9 +1,13 @@
-import Fastify from 'fastify';
 import { app } from './app/app.js';
+import {
+  TypeBoxTypeProvider,
+  TypeBoxValidatorCompiler,
+} from '@fastify/type-provider-typebox';
 import { createDatabase, closeDatabase } from '@purrfect-sitter/database';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
+import Fastify from 'fastify';
 
 // Set up OpenTelemetry diagnostics logging
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
@@ -47,7 +51,9 @@ const server = Fastify({
       },
     },
   },
-});
+})
+  .setValidatorCompiler(TypeBoxValidatorCompiler)
+  .withTypeProvider<TypeBoxTypeProvider>();
 
 // App options with configuration values
 const appOptions = {
