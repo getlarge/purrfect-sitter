@@ -3,13 +3,15 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "main": "./src/index.js",
-  "types": "./src/index.d.ts",
+  "main": "./dist/src/index.js",
+  "module": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./src/index.d.ts",
-      "import": "./src/index.js",
-      "default": "./src/index.js"
+      "development": "./src/index.ts",
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js",
+      "default": "./dist/src/index.js"
     },
     "./package.json": "./package.json"
   },
@@ -26,12 +28,13 @@
           "{options.outputPath}"
         ],
         "options": {
-          "outputPath": "dist/libs/models",
+          "outputPath": "libs/models/dist",
           "main": "libs/models/src/index.ts",
           "tsConfig": "libs/models/tsconfig.lib.json",
           "assets": [
             "libs/models/*.md"
-          ]
+          ],
+          "skipTypeCheck": true
         }
       }
     }

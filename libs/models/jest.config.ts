@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 import { readFileSync } from 'node:fs';
 
 // Reading the SWC compilation config for the spec files

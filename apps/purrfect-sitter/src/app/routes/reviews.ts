@@ -11,11 +11,12 @@ import {
   updateReviewParamsSchema,
   errorResponseSchema,
 } from '@purrfect-sitter/models';
-import { reviewsService } from '@purrfect-sitter/reviews-services';
+import { ReviewsService } from '@purrfect-sitter/reviews-services';
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
 const reviewsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   const { authenticate, authorize } = fastify;
+  const reviewsService = new ReviewsService();
 
   fastify.get('/reviews', {
     schema: {
@@ -41,7 +42,7 @@ const reviewsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     preHandler: [
       authenticate,
       async (request, reply) => {
-        const { id } = request.params
+        const { id } = request.params;
         return authorize({
           action: 'view',
           resource: 'review',
@@ -50,7 +51,7 @@ const reviewsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       },
     ],
     handler: async (request, reply) => {
-      const { id } = request.params ;
+      const { id } = request.params;
       const review = await reviewsService.findById(id);
 
       if (!review) {
@@ -73,7 +74,7 @@ const reviewsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     preHandler: [
       authenticate,
       async (request, reply) => {
-        const { catSittingId } = request.body
+        const { catSittingId } = request.body;
         return authorize({
           action: 'review',
           resource: 'cat_sitting',
@@ -109,7 +110,7 @@ const reviewsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     preHandler: [
       authenticate,
       async (request, reply) => {
-        const { id } = request.params
+        const { id } = request.params;
         return authorize({
           action: 'edit',
           resource: 'review',

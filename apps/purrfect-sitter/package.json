@@ -17,11 +17,11 @@
         ],
         "defaultConfiguration": "production",
         "options": {
-          "buildLibsFromSource": true,
+          "buildLibsFromSource": false,
           "platform": "node",
-          "outputPath": "apps/purrfect-sitter/dist",
+          "outputPath": "dist/apps/purrfect-sitter",
           "format": [
-            "cjs"
+            "esm"
           ],
           "bundle": false,
           "main": "apps/purrfect-sitter/src/main.ts",

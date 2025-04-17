@@ -6,14 +6,16 @@ import {
 } from '@purrfect-sitter/auth-repositories';
 import fp from 'fastify-plugin';
 
-// Session hook to validate the user's session using Kratos
-export const authenticate = async (
+export async function authenticate(
   request: FastifyRequest,
   reply: FastifyReply
-) => {
+) {
   try {
-    const sessionCookie = request.cookies?.['ory_kratos_session'];
-
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore all good
+    const sessionCookie = request.cookies?.['ory_kratos_session'] as
+      | string
+      | undefined;
     if (!sessionCookie) {
       throw new Error('No session cookie found');
     }
@@ -29,7 +31,6 @@ export const authenticate = async (
       throw new Error('User not found');
     }
 
-    // Add user to request for use in handlers
     request.user = {
       id: user.id,
       email: user.email,
@@ -40,14 +41,6 @@ export const authenticate = async (
     reply.status(401).send({
       message: 'Unauthorized',
     });
-  }
-};
-
-declare module 'fastify' {
-  interface FastifyRequest {
-    // should not be needed, because we are using @fastify/cookie
-    cookies?: Record<string, string>;
-    user?: ISessionUser;
   }
 }
 

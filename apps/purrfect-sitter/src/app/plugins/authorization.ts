@@ -38,6 +38,6 @@ declare module 'fastify' {
 
 export default fp(authorizationPlugin, {
   name: 'authorization',
-  fastify: '4.x',
+  fastify: '5.x',
   dependencies: ['session'],
 });

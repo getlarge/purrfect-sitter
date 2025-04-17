@@ -19,12 +19,13 @@ const sessionPlugin: FastifyPluginAsync = async (fastify) => {
       if (!request.user) {
         return reply.status(401).send({ error: 'Authentication required' });
       }
-      done();
+      return done();
     }
   );
 };
 
 export default fp(sessionPlugin, {
   name: 'session',
-  fastify: '4.x',
+  fastify: '5.x',
+  dependencies: ['auth-config'],
 });

@@ -19,13 +19,16 @@ type Fastify = FastifyInstance<
   TypeBoxTypeProvider
 >;
 
-export async function app(fastify: Fastify, opts: AppOptions) {
+const __dirname = import.meta.dirname;
+
+export async function app(fastify: Fastify, options: AppOptions) {
+
   // This loads all plugins defined in plugins
   // those should be support plugins that are reused
   // through your application
   await fastify.register(AutoLoad, {
     dir: path.join(__dirname, 'plugins'),
-    options: { ...opts },
+    options: { ...options },
     forceESM: true,
   });
 
@@ -34,7 +37,7 @@ export async function app(fastify: Fastify, opts: AppOptions) {
   await fastify.register(AutoLoad, {
     dir: path.join(__dirname, 'routes'),
     prefix: '/api',
-    options: { ...opts },
+    options: { ...options },
     forceESM: true,
   });
 

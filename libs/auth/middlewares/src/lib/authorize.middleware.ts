@@ -10,7 +10,6 @@ export interface IAuthorizationParams {
   resourceId: string;
 }
 
-// Generic authorization middleware that uses the configured strategy
 export const authorize = (params: IAuthorizationParams) => {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     try {

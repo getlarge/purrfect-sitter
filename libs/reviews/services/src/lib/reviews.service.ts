@@ -133,4 +133,4 @@ export class ReviewsService {
   }
 }
 
-export const reviewsService = new ReviewsService();
+// export const reviewsService = new ReviewsService();

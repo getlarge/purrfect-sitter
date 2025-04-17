@@ -11,11 +11,12 @@ import {
   updateCatParamsSchema,
   errorResponseSchema,
 } from '@purrfect-sitter/models';
-import { catsService } from '@purrfect-sitter/cats-services';
+import { CatsService } from '@purrfect-sitter/cats-services';
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
 const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   const { authenticate, authorize } = fastify;
+  const catsService = new CatsService();
 
   fastify.get('/cats', {
     schema: {

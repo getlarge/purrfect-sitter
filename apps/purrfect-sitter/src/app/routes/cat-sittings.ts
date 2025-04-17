@@ -14,7 +14,7 @@ import {
   errorResponseSchema,
 } from '@purrfect-sitter/models';
 
-import { catSittingsService } from '@purrfect-sitter/cat-sittings-services';
+import { CatSittingsService } from '@purrfect-sitter/cat-sittings-services';
 
 const params = Type.Object({
   id: Type.String({ format: 'uuid' }),
@@ -22,6 +22,7 @@ const params = Type.Object({
 
 const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   const { authenticate, authorize } = fastify;
+  const catSittingsService = new CatSittingsService();
 
   fastify.get('/cat-sittings', {
     schema: {

@@ -1,10 +1,10 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import pg from 'pg';
 import * as schema from './schema/index.js';
 
-export { schema };
+const { Pool } = pg;
 
-let pool: Pool | null = null;
+let pool: pg.Pool | null = null;
 let db: ReturnType<typeof drizzle> | null = null;
 
 export function createDatabase() {
@@ -27,11 +27,6 @@ export function closeDatabase() {
   }
   return Promise.resolve();
 }
-
-export default {
-  createDatabase,
-  closeDatabase,
-};
 
 export const getDb = () => {
   if (!db) {

@@ -168,4 +168,4 @@ export class CatSittingsService {
   }
 }
 
-export const catSittingsService = new CatSittingsService();
+// export const catSittingsService = new CatSittingsService();
