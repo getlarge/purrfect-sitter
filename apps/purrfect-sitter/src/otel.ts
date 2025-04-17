@@ -7,14 +7,23 @@ diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
 export const openTelemetrySdk = new NodeSDK({
   instrumentations: [
     getNodeAutoInstrumentations({
+      '@opentelemetry/instrumentation-dns': {
+        enabled: true,
+      },
+      '@opentelemetry/instrumentation-net': {
+        enabled: true,
+      },
+      '@opentelemetry/instrumentation-http': {
+        enabled: true,
+      },
       '@opentelemetry/instrumentation-fastify': {
+        enabled: true,
+      },
+      '@opentelemetry/instrumentation-pino': {
         enabled: true,
       },
       // TODO: check https://github.com/openfga/js-sdk/tree/main/example/opentelemetry for OpenFGA Telemetry
       '@opentelemetry/instrumentation-pg': {
-        enabled: true,
-      },
-      '@opentelemetry/instrumentation-http': {
         enabled: true,
       },
     }),
