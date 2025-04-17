@@ -1,4 +1,3 @@
-import { FastifyPluginAsync } from 'fastify';
 import {
   CreateCatSchema,
   UpdateCatSchema,
@@ -12,8 +11,9 @@ import {
   updateCatParamsSchema,
 } from '@purrfect-sitter/models';
 import { catsService } from '@purrfect-sitter/cats-services';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
-const catsRoutes: FastifyPluginAsync = async (fastify) => {
+const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   const { authenticate, authorize } = fastify;
 
   // Get all cats
@@ -62,7 +62,7 @@ const catsRoutes: FastifyPluginAsync = async (fastify) => {
     },
     preHandler: [authenticate],
     handler: async (request, reply) => {
-      const userId = request.user?.id;
+      const userId = request.user?.id as string;
       const createCatDto = request.body;
       const cat = await catsService.create(userId, createCatDto);
       return reply.status(201).send({ data: cat });

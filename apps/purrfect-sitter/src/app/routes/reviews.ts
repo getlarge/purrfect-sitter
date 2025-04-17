@@ -1,4 +1,3 @@
-import { FastifyPluginAsync } from 'fastify';
 import {
   CreateReviewSchema,
   UpdateReviewSchema,
@@ -12,12 +11,13 @@ import {
   updateReviewParamsSchema,
 } from '@purrfect-sitter/models';
 import { reviewsService } from '@purrfect-sitter/reviews-services';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
-const reviewsRoutes: FastifyPluginAsync = async (fastify) => {
+const reviewsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   const { authenticate, authorize } = fastify;
 
   // Get all reviews (publicly accessible)
-  fastify.get('/', {
+  fastify.get('/reviews', {
     schema: {
       response: {
         200: getReviewsResponseSchema,
@@ -30,7 +30,7 @@ const reviewsRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // Get a review by ID
-  fastify.get('/:id', {
+  fastify.get('/reviews/:id', {
     schema: {
       params: getReviewParamsSchema,
       response: {
@@ -62,7 +62,7 @@ const reviewsRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // Create a new review
-  fastify.post('/', {
+  fastify.post('/reviews', {
     schema: {
       body: CreateReviewSchema,
       response: {
@@ -95,7 +95,7 @@ const reviewsRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // Update a review
-  fastify.put('/:id', {
+  fastify.put('/reviews/:id', {
     schema: {
       params: updateReviewParamsSchema,
       body: UpdateReviewSchema,
@@ -130,7 +130,7 @@ const reviewsRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // Delete a review (admin only)
-  fastify.delete('/:id', {
+  fastify.delete('/reviews/:id', {
     schema: {
       params: deleteReviewParamsSchema,
       response: {
