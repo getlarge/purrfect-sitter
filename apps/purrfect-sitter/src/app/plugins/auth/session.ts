@@ -1,10 +1,11 @@
+import { fastifyCookie } from '@fastify/cookie';
 import { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
-import fastifyPlugin from 'fastify-plugin';
+import fp from 'fastify-plugin';
 import { sessionMiddleware } from '@purrfect-sitter/auth-middlewares';
 
-// Plugin to register the session middleware
 const sessionPlugin: FastifyPluginAsync = async (fastify) => {
-  // Register the session middleware
+  fastify.register(fastifyCookie, {});
+
   fastify.register(sessionMiddleware);
 
   // Add decorator for routes that need authentication
@@ -23,7 +24,7 @@ const sessionPlugin: FastifyPluginAsync = async (fastify) => {
   );
 };
 
-export default fastifyPlugin(sessionPlugin, {
+export default fp(sessionPlugin, {
   name: 'session',
   fastify: '4.x',
 });

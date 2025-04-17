@@ -1,15 +1,12 @@
 import { FastifyPluginAsync } from 'fastify';
-import fastifyPlugin from 'fastify-plugin';
+import fp from 'fastify-plugin';
 import { authorizeMiddleware } from '@purrfect-sitter/auth-middlewares';
 
-// Plugin to register the authorization middleware
 const authorizationPlugin: FastifyPluginAsync = async (fastify) => {
-  // Register the authorization middleware
   fastify.register(authorizeMiddleware);
 
   // Add telemetry for measuring authorization performance
   fastify.addHook('onRequest', (request, reply, done) => {
-    // Start measuring time
     request.authStartTime = performance.now();
     done();
   });
@@ -39,7 +36,7 @@ declare module 'fastify' {
   }
 }
 
-export default fastifyPlugin(authorizationPlugin, {
+export default fp(authorizationPlugin, {
   name: 'authorization',
   fastify: '4.x',
   dependencies: ['session'],

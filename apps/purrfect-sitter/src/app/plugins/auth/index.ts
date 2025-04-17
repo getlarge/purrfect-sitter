@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import fastifyPlugin from 'fastify-plugin';
-import { configureAuth } from '@purrfect-sitter/auth';
+import { configureAuth } from '@purrfect-sitter/auth-repositories';
 import sessionPlugin from './session.js';
 import authorizationPlugin from './authorization.js';
 
