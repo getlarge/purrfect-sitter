@@ -7,7 +7,6 @@ import {
   TypeBoxValidatorCompiler,
 } from '@fastify/type-provider-typebox';
 import Fastify from 'fastify';
-import { configureAuth } from '@purrfect-sitter/auth-repositories';
 
 const host = process.env.HOST ?? 'localhost';
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
@@ -29,22 +28,17 @@ const server = Fastify({
   .setValidatorCompiler(TypeBoxValidatorCompiler)
   .withTypeProvider<TypeBoxTypeProvider>();
 
-// TODO: validate environment variables
+// TODO: validate environment variables, should throw if OPENFGA_STORE_ID not set
 const appOptions = {
   kratosUrl: process.env.KRATOS_URL || 'http://localhost:4433',
   openfgaUrl: process.env.OPENFGA_URL || 'http://localhost:8080',
-  openfgaStoreId: process.env.OPENFGA_STORE_ID || '',
+  openfgaStoreId: process.env.FGA_STORE_ID || '',
   authStrategy: (process.env.AUTH_STRATEGY || 'db') as 'db' | 'openfga',
 };
 
-configureAuth({
-  kratosUrl: appOptions.kratosUrl,
-  openfgaUrl: appOptions.openfgaUrl,
-  openfgaStoreId: appOptions.openfgaStoreId,
-  authStrategy: appOptions.authStrategy,
-});
+await server.register(app, appOptions);
 
-server.register(app, appOptions);
+server.ready();
 
 const shutdown = async () => {
   server.log.info('Shutting down server...');

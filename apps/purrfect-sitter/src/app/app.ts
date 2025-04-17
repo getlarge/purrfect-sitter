@@ -41,8 +41,7 @@ export async function app(fastify: Fastify, options: AppOptions) {
     forceESM: true,
   });
 
-  // Generate Swagger documentation on startup
-  fastify.ready(() => {
-    fastify.swagger();
+  fastify.addHook('onReady', () => {
+    console.log(fastify.swagger());
   });
 }
