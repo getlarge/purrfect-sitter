@@ -1,19 +1,34 @@
-import { catRepository } from '@purrfect-sitter/database';
-import { CreateCatDto, UpdateCatDto } from '@purrfect-sitter/models';
-import { TupleKey } from '@openfga/sdk';
-import { openfgaAuthStrategy } from '@purrfect-sitter/auth';
+import { catRepository } from '@purrfect-sitter/cats-repositories';
+import { castCat, CreateCatDto, UpdateCatDto } from '@purrfect-sitter/models';
+import type { OpenFgaApi, TupleKey } from '@openfga/sdk';
+import { getOpenFgaClient } from '@purrfect-sitter/auth-repositories';
 
 export class CatsService {
+  private openfga: OpenFgaApi;
+  private openfgaStoreId: string;
+
+  constructor() {
+    const { client, storeId } = getOpenFgaClient();
+    this.openfga = client;
+    this.openfgaStoreId = storeId;
+  }
+
   async findAll() {
-    return catRepository.findAll();
+    const cats = await catRepository.findAll();
+    return cats.map((cat) => castCat(cat));
   }
 
   async findById(id: string) {
-    return catRepository.findById(id);
+    const cat = await catRepository.findById(id);
+    if (!cat) {
+      return null;
+    }
+    return castCat(cat);
   }
 
   async findByOwnerId(ownerId: string) {
-    return catRepository.findByOwnerId(ownerId);
+    const cats = await catRepository.findByOwnerId(ownerId);
+    return cats.map((cat) => castCat(cat));
   }
 
   async create(ownerId: string, createCatDto: CreateCatDto) {
@@ -21,26 +36,27 @@ export class CatsService {
       ...createCatDto,
       ownerId,
     });
-
-    // Create OpenFGA relationship tuples for the new cat
     await this.createAuthRelationships(newCat.id, ownerId);
 
-    return newCat;
+    return castCat(newCat);
   }
 
   async update(id: string, updateCatDto: UpdateCatDto) {
-    return catRepository.update(id, updateCatDto);
+    const cat = await catRepository.update(id, updateCatDto);
+    if (!cat) {
+      return null;
+    }
+    return castCat(cat);
   }
 
   async remove(id: string) {
     const cat = await catRepository.delete(id);
-
     if (cat) {
       // Delete OpenFGA relationship tuples
       await this.deleteAuthRelationships(id, cat.ownerId);
     }
 
-    return cat;
+    return castCat(cat);
   }
 
   // Helper to create OpenFGA relationship tuples for authorization
@@ -60,7 +76,11 @@ export class CatsService {
     ];
 
     try {
-      await openfgaAuthStrategy.writeTuples(tuples);
+      await this.openfga.write(this.openfgaStoreId, {
+        writes: {
+          tuple_keys: tuples,
+        },
+      });
     } catch (error) {
       console.error('Failed to create authorization relationships:', error);
       // Even if OpenFGA relationship creation fails, the DB operation succeeded
@@ -84,7 +104,11 @@ export class CatsService {
     ];
 
     try {
-      await openfgaAuthStrategy.deleteTuples(tuples);
+      await this.openfga.write(this.openfgaStoreId, {
+        deletes: {
+          tuple_keys: tuples,
+        },
+      });
     } catch (error) {
       console.error('Failed to delete authorization relationships:', error);
     }

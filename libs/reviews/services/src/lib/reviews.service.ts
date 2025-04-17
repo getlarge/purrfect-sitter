@@ -1,6 +1,9 @@
 import { catSittingRepository } from '@purrfect-sitter/cat-sittings-repositories';
-import { CatSittingStatus } from '@purrfect-sitter/database';
-import { CreateReviewDto, UpdateReviewDto } from '@purrfect-sitter/models';
+import {
+  castReview,
+  CreateReviewDto,
+  UpdateReviewDto,
+} from '@purrfect-sitter/models';
 import type { OpenFgaApi, TupleKey } from '@openfga/sdk';
 import { getOpenFgaClient } from '@purrfect-sitter/auth-repositories';
 import { reviewRepository } from '@purrfect-sitter/reviews-repositories';
@@ -16,15 +19,24 @@ export class ReviewsService {
   }
 
   async findAll() {
-    return reviewRepository.findAll();
+    const reviews = await reviewRepository.findAll();
+    return reviews.map((review) => castReview(review));
   }
 
   async findById(id: string) {
-    return reviewRepository.findById(id);
+    const review = await reviewRepository.findById(id);
+    if (!review) {
+      return null;
+    }
+    return castReview(review);
   }
 
   async findByCatSittingId(catSittingId: string) {
-    return reviewRepository.findByCatSittingId(catSittingId);
+    const review = await reviewRepository.findByCatSittingId(catSittingId);
+    if (!review) {
+      return null;
+    }
+    return castReview(review);
   }
 
   async create(userId: string, createReviewDto: CreateReviewDto) {
@@ -36,12 +48,6 @@ export class ReviewsService {
       throw new Error('Cat sitting not found');
     }
 
-    // Verify the cat sitting is completed
-    if (catSitting.status !== CatSittingStatus.COMPLETED) {
-      throw new Error('Cannot review an incomplete cat sitting');
-    }
-
-    // Verify this sitting doesn't already have a review
     const existingReview = await reviewRepository.findByCatSittingId(
       createReviewDto.catSittingId
     );
@@ -55,11 +61,12 @@ export class ReviewsService {
       createReviewDto.catSittingId
     );
 
-    return newReview;
+    return castReview(newReview);
   }
 
   async update(id: string, updateReviewDto: UpdateReviewDto) {
-    return reviewRepository.update(id, updateReviewDto);
+    const review = await reviewRepository.update(id, updateReviewDto);
+    return castReview(review);
   }
 
   async remove(id: string) {
@@ -69,13 +76,12 @@ export class ReviewsService {
     }
 
     const deletedReview = await reviewRepository.delete(id);
-
     if (deletedReview) {
       // Delete OpenFGA relationship tuples
       await this.deleteAuthRelationships(id, review.catSittingId);
     }
 
-    return deletedReview;
+    return castReview(deletedReview);
   }
 
   // Helper to create OpenFGA relationship tuples for authorization

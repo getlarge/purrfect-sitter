@@ -9,6 +9,7 @@ import {
   deleteCatResponseSchema,
   deleteCatParamsSchema,
   updateCatParamsSchema,
+  errorResponseSchema,
 } from '@purrfect-sitter/models';
 import { catsService } from '@purrfect-sitter/cats-services';
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
@@ -16,8 +17,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   const { authenticate, authorize } = fastify;
 
-  // Get all cats
-  fastify.get('/', {
+  fastify.get('/cats', {
     schema: {
       response: {
         200: getCatsResponseSchema,
@@ -30,17 +30,17 @@ const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     },
   });
 
-  // Get a cat by ID
-  fastify.get('/:id', {
+  fastify.get('/cats/:id', {
     schema: {
       params: getCatParamsSchema,
       response: {
         200: getCatResponseSchema,
+        404: errorResponseSchema,
       },
       security: [{ cookieAuth: [] }],
     },
     handler: async (request, reply) => {
-      const { id } = request.params as { id: string };
+      const { id } = request.params;
       const cat = await catsService.findById(id);
 
       if (!cat) {
@@ -51,8 +51,7 @@ const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     },
   });
 
-  // Create a new cat
-  fastify.post('/', {
+  fastify.post('/cats', {
     schema: {
       body: CreateCatSchema,
       response: {
@@ -69,20 +68,21 @@ const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     },
   });
 
-  // Update a cat
-  fastify.put('/:id', {
+  fastify.put('/cats/:id', {
     schema: {
       params: updateCatParamsSchema,
       body: UpdateCatSchema,
       response: {
         200: updateCatResponseSchema,
+        404: errorResponseSchema,
       },
+
       security: [{ cookieAuth: [] }],
     },
     preHandler: [
       authenticate,
       async (request, reply) => {
-        const { id } = request.params as { id: string };
+        const { id } = request.params;
         return authorize({
           action: 'manage',
           resource: 'cat',
@@ -91,9 +91,8 @@ const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       },
     ],
     handler: async (request, reply) => {
-      const { id } = request.params as { id: string };
+      const { id } = request.params;
       const updateCatDto = request.body;
-
       const updatedCat = await catsService.update(id, updateCatDto);
 
       if (!updatedCat) {
@@ -104,19 +103,19 @@ const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     },
   });
 
-  // Delete a cat
-  fastify.delete('/:id', {
+  fastify.delete('/cats/:id', {
     schema: {
       params: deleteCatParamsSchema,
       response: {
         200: deleteCatResponseSchema,
+        404: errorResponseSchema,
       },
       security: [{ cookieAuth: [] }],
     },
     preHandler: [
       authenticate,
       async (request, reply) => {
-        const { id } = request.params as { id: string };
+        const { id } = request.params;
         return authorize({
           action: 'manage',
           resource: 'cat',
@@ -125,10 +124,8 @@ const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       },
     ],
     handler: async (request, reply) => {
-      const { id } = request.params as { id: string };
-
+      const { id } = request.params;
       const deletedCat = await catsService.remove(id);
-
       if (!deletedCat) {
         return reply.status(404).send({ error: 'Cat not found' });
       }

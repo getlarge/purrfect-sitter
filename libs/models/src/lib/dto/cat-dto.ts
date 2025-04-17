@@ -1,4 +1,5 @@
 import { Type } from '@sinclair/typebox';
+import { Value } from '@sinclair/typebox/value';
 
 export const CatSchema = Type.Object({
   id: Type.String({ format: 'uuid' }),
@@ -33,6 +34,14 @@ export const UpdateCatSchema = Type.Partial(
   })
 );
 
-export type CatDto = typeof CatSchema['static'];
-export type CreateCatDto = typeof CreateCatSchema['static'];
-export type UpdateCatDto = typeof UpdateCatSchema['static'];
+export type CatDto = (typeof CatSchema)['static'];
+export type CreateCatDto = (typeof CreateCatSchema)['static'];
+export type UpdateCatDto = (typeof UpdateCatSchema)['static'];
+
+export function castCat(sitting: unknown): CatDto {
+  const c = Value.Convert(CatSchema, sitting);
+  if (!Value.Check(CatSchema, c)) {
+    throw new Error('Invalid data');
+  }
+  return c;
+}

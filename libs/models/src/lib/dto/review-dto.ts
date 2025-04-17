@@ -1,4 +1,5 @@
 import { Type } from '@sinclair/typebox';
+import { Value } from '@sinclair/typebox/value';
 
 export const ReviewSchema = Type.Object({
   id: Type.String({ format: 'uuid' }),
@@ -22,6 +23,15 @@ export const UpdateReviewSchema = Type.Partial(
   })
 );
 
-export type ReviewDto = typeof ReviewSchema['static'];
-export type CreateReviewDto = typeof CreateReviewSchema['static'];
-export type UpdateReviewDto = typeof UpdateReviewSchema['static'];
+export type ReviewDto = (typeof ReviewSchema)['static'];
+export type CreateReviewDto = (typeof CreateReviewSchema)['static'];
+export type UpdateReviewDto = (typeof UpdateReviewSchema)['static'];
+
+export const castReview = (review: unknown): ReviewDto => {
+  const r = Value.Convert(ReviewSchema, review);
+  if (!Value.Check(ReviewSchema, r)) {
+    throw new Error('Invalid review object');
+  }
+
+  return r;
+};

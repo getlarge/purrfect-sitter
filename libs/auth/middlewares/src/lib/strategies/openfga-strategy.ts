@@ -1,4 +1,4 @@
-import { CheckRequest, TupleKey, WriteRequest } from '@openfga/sdk';
+import type { CheckRequest, TupleKey, WriteRequest } from '@openfga/sdk';
 import { getOpenFgaClient } from '@purrfect-sitter/auth-repositories';
 import {
   IAuthorizationCheck,

@@ -75,8 +75,6 @@ export class DbAuthStrategy implements IAuthorizationStrategy {
       case 'update':
         return isOwner || isSitter || isAdmin;
       case 'post_updates':
-        // Check if this is an active sitting and user is the sitter
-
         return isOwner || (isSitter && isActive()) || isAdmin;
       case 'review':
         // Only owner can review a completed sitting

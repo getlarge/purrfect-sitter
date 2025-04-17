@@ -21,9 +21,6 @@
       "path": "../../models/tsconfig.lib.json"
     },
     {
-      "path": "../../database/tsconfig.lib.json"
-    },
-    {
       "path": "../../cat-sittings/repositories/tsconfig.lib.json"
     }
   ],
