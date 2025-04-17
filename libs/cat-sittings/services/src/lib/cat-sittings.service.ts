@@ -2,7 +2,9 @@ import { catRepository } from '@purrfect-sitter/cats-repositories';
 import { catSittingRepository } from '@purrfect-sitter/cat-sittings-repositories';
 import { CatSitting, CatSittingStatus } from '@purrfect-sitter/database';
 import {
+  castCatSitting,
   CreateCatSittingDto,
+  dateFromString,
   UpdateCatSittingDto,
   UpdateCatSittingStatusDto,
 } from '@purrfect-sitter/models';
@@ -20,27 +22,38 @@ export class CatSittingsService {
   }
 
   async findAll() {
-    return catSittingRepository.findAll();
+    const sittings = await catSittingRepository
+      .findAll();
+    return sittings.map((sitting) => castCatSitting(sitting));
   }
 
   async findBySitterId(sitterId: string) {
-    return catSittingRepository.findBySitterId(sitterId);
+    const sittings = await catSittingRepository
+      .findBySitterId(sitterId);
+    return sittings.map((sitting) => castCatSitting(sitting));
   }
 
   async findByCatId(catId: string) {
-    return catSittingRepository.findByCatId(catId);
+    const sittings = await catSittingRepository
+      .findByCatId(catId);
+    return sittings.map((sitting) => castCatSitting(sitting));
   }
 
   async findById(id: string) {
-    return catSittingRepository.findById(id);
+    const sitting = await catSittingRepository.findById(id);
+    if (!sitting) {
+      return null;
+    }
+    return castCatSitting(sitting);
   }
 
-  async findActiveSittings() {
-    return catSittingRepository.findActiveByTimeRange(new Date());
+   async findActiveSittings() {
+    const sittings = await catSittingRepository
+       .findActiveByTimeRange(new Date());
+     return sittings.map((sitting) => castCatSitting(sitting));
   }
 
   async create(userId: string, createCatSittingDto: CreateCatSittingDto) {
-    // Verify the cat exists and user has permission to create sitting
     const cat = await catRepository.findById(createCatSittingDto.catId);
     if (!cat) {
       throw new Error('Cat not found');
@@ -53,21 +66,29 @@ export class CatSittingsService {
       status: CatSittingStatus.REQUESTED,
     });
 
-    // Create OpenFGA relationship tuples for the new cat sitting
     await this.createAuthRelationships(newCatSitting);
 
-    return newCatSitting;
+    return castCatSitting(newCatSitting);
   }
 
   async update(id: string, updateCatSittingDto: UpdateCatSittingDto) {
-    const updated = await catSittingRepository.update(id, updateCatSittingDto);
+    const { startTime, endTime, ...partial } = updateCatSittingDto;
+    const update = {
+      ...partial,
+      ...(startTime && {
+        startTime: dateFromString(startTime),
+      }),
+      ...(endTime && {
+        endTime: dateFromString(endTime),
+      }),
+    };
+    const updated = await catSittingRepository.update(id, update);
 
-    // If status changed, update the OpenFGA relationships
     if (updated && updateCatSittingDto.status) {
       await this.updateAuthRelationships(updated);
     }
 
-    return updated;
+    return castCatSitting(updated);
   }
 
   async updateStatus(id: string, updateStatusDto: UpdateCatSittingStatusDto) {
@@ -79,21 +100,17 @@ export class CatSittingsService {
       await this.updateAuthRelationships(updated);
     }
 
-    return updated;
+    return castCatSitting(updated);
   }
 
   async remove(id: string) {
     const sitting = await catSittingRepository.delete(id);
-
     if (sitting) {
-      // Delete OpenFGA relationship tuples
       await this.deleteAuthRelationships(sitting);
     }
-
-    return sitting;
+    return castCatSitting(sitting);
   }
 
-  // Helper to create OpenFGA relationship tuples for authorization
   private async createAuthRelationships(catSitting: CatSitting) {
     const tuples: TupleKey[] = [
       {
@@ -119,14 +136,12 @@ export class CatSittingsService {
     }
   }
 
-  // Helper to update OpenFGA relationship tuples when status changes
   private async updateAuthRelationships(catSitting: CatSitting) {
     // No specific update needed in current model
     // This would be the place to handle any status-based authorization changes
     // For example, if completed sittings need special permissions
   }
 
-  // Helper to delete OpenFGA relationship tuples
   private async deleteAuthRelationships(catSitting: CatSitting) {
     const tuples: TupleKey[] = [
       {

@@ -1,5 +1,10 @@
 import { Type } from '@sinclair/typebox';
-import { CatSittingSchema, CreateCatSittingSchema, UpdateCatSittingSchema, UpdateCatSittingStatusSchema } from '../dto/cat-sitting-dto.js';
+import {
+  CatSittingSchema,
+  CreateCatSittingSchema,
+  UpdateCatSittingSchema,
+  UpdateCatSittingStatusSchema,
+} from '../dto/cat-sitting-dto.js';
 
 export const getCatSittingParamsSchema = Type.Object({
   id: Type.String({ format: 'uuid' }),

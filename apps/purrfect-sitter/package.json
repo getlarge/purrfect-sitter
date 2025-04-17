@@ -1,6 +1,7 @@
 {
   "name": "@purrfect-sitter/purrfect-sitter",
   "version": "0.0.1",
+  "type": "module",
   "private": true,
   "nx": {
     "name": "purrfect-sitter",
@@ -16,6 +17,7 @@
         ],
         "defaultConfiguration": "production",
         "options": {
+          "buildLibsFromSource": true,
           "platform": "node",
           "outputPath": "apps/purrfect-sitter/dist",
           "format": [

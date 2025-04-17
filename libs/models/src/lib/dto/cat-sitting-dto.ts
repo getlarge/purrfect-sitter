@@ -1,5 +1,6 @@
 import { Type } from '@sinclair/typebox';
 import { CatSittingStatus } from '@purrfect-sitter/database';
+import { Value } from '@sinclair/typebox/value';
 
 export const CatSittingSchema = Type.Object({
   id: Type.String({ format: 'uuid' }),
@@ -34,7 +35,16 @@ export const UpdateCatSittingStatusSchema = Type.Object({
   status: Type.Enum(CatSittingStatus),
 });
 
-export type CatSittingDto = typeof CatSittingSchema['static'];
-export type CreateCatSittingDto = typeof CreateCatSittingSchema['static'];
-export type UpdateCatSittingDto = typeof UpdateCatSittingSchema['static'];
-export type UpdateCatSittingStatusDto = typeof UpdateCatSittingStatusSchema['static'];
+export type CatSittingDto = (typeof CatSittingSchema)['static'];
+export type CreateCatSittingDto = (typeof CreateCatSittingSchema)['static'];
+export type UpdateCatSittingDto = (typeof UpdateCatSittingSchema)['static'];
+export type UpdateCatSittingStatusDto =
+  (typeof UpdateCatSittingStatusSchema)['static'];
+
+export function castCatSitting(sitting: unknown): CatSittingDto {
+  const s = Value.Convert(CatSittingSchema, sitting);
+  if (!Value.Check(CatSittingSchema, s)) {
+    throw new Error('Invalid data');
+  }
+  return s;
+}
