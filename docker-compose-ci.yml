@@ -1,0 +1,78 @@
+services:
+  purrfect-sitter-api:
+    image: purrfect-sitter:${API_TAG:-latest}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      openfga:
+        condition: service_started
+      kratos:
+        condition: service_started
+    ports:
+      - '3000:3000'
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      LOG_LEVEL: debug
+      AUTH_STRATEGY: ${AUTH_STRATEGY:-openfga}
+      KRATOS_URL: http://kratos:4433
+      OPENFGA_URL: http://openfga:8080
+      FGA_STORE_ID: ${FGA_STORE_ID}
+      DATABASE_URL: postgres://dbuser:secret@postgres:5432/purrfect-sitter-test?sslmode=disable
+
+  postgres:
+    extends:
+      file: docker-compose-base.yml
+      service: postgres
+    environment:
+      POSTGRES_USER: dbuser
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: purrfect-sitter-test
+
+  openfga-postgres:
+    extends:
+      file: docker-compose-base.yml
+      service: openfga-postgres
+    environment:
+      POSTGRES_USER: dbuser
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: openfga-test
+
+  openfga:
+    extends:
+      file: docker-compose-base.yml
+      service: openfga
+    depends_on:
+      openfga-postgres:
+        condition: service_healthy
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://dbuser:secret@openfga-postgres:5432/openfga-test?sslmode=disable
+      OPENFGA_LOG_FORMAT: json
+
+  kratos-postgres:
+    extends:
+      file: docker-compose-base.yml
+      service: kratos-postgres
+    environment:
+      POSTGRES_USER: dbuser
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: kratosdb-test
+
+  kratos:
+    extends:
+      file: docker-compose-base.yml
+      service: kratos
+    depends_on:
+      kratos-postgres:
+        condition: service_healthy
+    environment:
+      DSN: postgres://dbuser:secret@kratos-postgres:5432/kratosdb-test?sslmode=disable
+      LOG_FORMAT: json
+      COURIER_SMTP_CONNECTION_URI: smtps://test:test@mailslurper:1025/?skip_ssl_verify=true
+    command: serve -c /etc/config/kratos/kratos.base.yml -c /etc/config/kratos/kratos.test.yaml --dev --watch-courier
+
+  mailslurper:
+    extends:
+      file: docker-compose-base.yml
+      service: mailslurper

@@ -1,0 +1,110 @@
+services:
+  postgres:
+    image: postgres:16
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: dbuser
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: purrfect-sitter
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U dbuser']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  openfga-postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: dbuser
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: openfga
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U dbuser']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  openfga-migrate:
+    image: openfga/openfga:latest
+    command: migrate
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://dbuser:secret@openfga-postgres:5432/openfga?sslmode=disable
+    profiles:
+      - 'dev'
+      - 'ci'
+
+  openfga:
+    image: openfga/openfga:latest
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://dbuser:secret@openfga-postgres:5432/openfga?sslmode=disable
+      OPENFGA_LOG_FORMAT: json
+    command: run
+    ports:
+      # Needed for the http server
+      - '8080:8080'
+      # Needed for the grpc server (if used)
+      - '8081:8081'
+      # Needed for the playground (Do not enable in prod!)
+      - '8082:3000'
+
+  kratos-postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: dbuser
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: kratosdb
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U dbuser']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  kratos-migrate:
+    image: oryd/kratos:v1.3.1
+    environment:
+      DSN: postgres://dbuser:secret@kratos-postgres:5432/kratosdb?sslmode=disable
+      LOG_FORMAT: json
+    command: -c /etc/config/kratos/kratos.base.yml -c /etc/config/kratos/kratos.dev.yml migrate sql -e --yes
+    volumes:
+      - ./infra/ory-kratos:/etc/config/kratos:ro
+
+  kratos:
+    image: oryd/kratos:v1.3.1
+    ports:
+      - '4433:4433'
+      - '4434:4434'
+    restart: unless-stopped
+    environment:
+      DSN: postgres://dbuser:secret@kratos-postgres:5432/kratosdb?sslmode=disable
+      LOG_FORMAT: json
+      COURIER_SMTP_CONNECTION_URI: smtps://test:test@mailslurper:1025/?skip_ssl_verify=true
+    command: serve -c /etc/config/kratos/kratos.base.yml -c /etc/config/kratos/kratos.dev.yml --dev --watch-courier
+    volumes:
+      - ./infra/ory-kratos:/etc/config/kratos:ro
+
+  kratos-selfservice-ui-node:
+    image: oryd/kratos-selfservice-ui-node:v1.3.0
+    environment:
+      PORT: 4455
+      KRATOS_PUBLIC_URL: ${KRATOS_PUBLIC_DOCKER_URL:-http://host.docker.internal:4433}
+      KRATOS_BROWSER_URL: ${KRATOS_PUBLIC_URL:-http://127.0.0.1:4433}
+      KRATOS_ADMIN_URL: http://kratos:4434
+      COOKIE_SECRET: changeme
+      CSRF_COOKIE_NAME: cookie_name
+      CSRF_COOKIE_SECRET: changeme
+      DANGEROUSLY_DISABLE_SECURE_CSRF_COOKIES: true
+      # This is insecure and should only be used for development purposes
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+    ports:
+      - '4455:4455'
+    restart: on-failure
+
+  mailslurper:
+    image: oryd/mailslurper:latest-smtps
+    ports:
+      - '1025:1025'
+      - '4436:4436'
+      - '4437:4437'
