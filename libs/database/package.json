@@ -40,7 +40,7 @@
       "generate": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "drizzle-kit generate:pg --config=drizzle.config.ts",
+          "command": "drizzle-kit generate",
           "cwd": "libs/database"
         }
       },
