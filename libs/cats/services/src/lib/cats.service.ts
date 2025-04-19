@@ -88,7 +88,6 @@ export class CatsService {
     }
   }
 
-  // Helper to delete OpenFGA relationship tuples
   private async deleteAuthRelationships(catId: string, ownerId: string) {
     const tuples: TupleKey[] = [
       {
@@ -101,6 +100,7 @@ export class CatsService {
         relation: 'system',
         object: `cat:${catId}`,
       },
+
     ];
 
     try {
