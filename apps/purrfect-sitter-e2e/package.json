@@ -7,6 +7,9 @@
     "implicitDependencies": [
       "purrfect-sitter"
     ],
+    "tags": [
+      "type:e2e"
+    ],
     "targets": {
       "e2e": {
         "executor": "@nx/jest:jest",

@@ -81,6 +81,15 @@ export default [
               onlyDependOnLibsWithTags: ['type:core'],
             },
             {
+              sourceTag: 'type:e2e',
+              onlyDependOnLibsWithTags: [
+                'type:core',
+                'type:middlewares',
+                'type:repositories',
+                'type:services',
+              ],
+            },
+            {
               sourceTag: 'type:middlewares',
               onlyDependOnLibsWithTags: [
                 'type:core',
