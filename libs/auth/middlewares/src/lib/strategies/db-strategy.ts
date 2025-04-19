@@ -1,6 +1,7 @@
 import { catRepository } from '@purrfect-sitter/cats-repositories';
 import { catSittingRepository } from '@purrfect-sitter/cat-sittings-repositories';
 import { reviewRepository } from '@purrfect-sitter/reviews-repositories';
+import { userRepository } from '@purrfect-sitter/users-repositories';
 import {
   IAuthorizationCheck,
   IAuthorizationStrategy,
@@ -128,12 +129,10 @@ export class DbAuthStrategy implements IAuthorizationStrategy {
     }
   }
 
-  // Check if user is a system admin (hardcoded for demo)
   private async isSystemAdmin(userId: string): Promise<boolean> {
-    // For demo purposes, you might hardcode admin users
-    // In a real app, you'd check this from the database
-    const adminUsers = process.env.ADMIN_USERS?.split(',') || [];
-    return adminUsers.includes(userId);
+    const user = await userRepository.findById(userId);
+    if (!user) return false;
+    return user.role === 'admin';
   }
 }
 

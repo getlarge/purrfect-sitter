@@ -1,5 +1,4 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { userRepository } from '@purrfect-sitter/users-repositories';
 import {
   getKratosClient,
   ISessionUser,
@@ -13,28 +12,27 @@ export async function authenticate(
   try {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore all good
-    const sessionCookie = request.cookies?.['ory_kratos_session'] as
+    const cookie = request.cookies?.['ory_kratos_session'] as
       | string
       | undefined;
-    if (!sessionCookie) {
-      throw new Error('No session cookie found');
+    const xSessionToken = request.headers['authorization']?.replace(
+      /bearer /i,
+      ''
+    );
+    if (!cookie && !xSessionToken) {
+      throw new Error('No session cookie or token found');
     }
 
     const kratosClient = getKratosClient();
     const { data: session } = await kratosClient.toSession({
-      cookie: sessionCookie,
+      ...(xSessionToken ? { xSessionToken } : {}),
+      ...(cookie ? { cookie } : {}),
     });
 
-    const userId = session.identity?.metadata_public?.id;
-    const user = await userRepository.findById(userId);
-    if (!user) {
-      throw new Error('User not found');
-    }
-
     request.user = {
-      id: user.id,
-      email: user.email,
-      displayName: user.displayName ?? undefined,
+      id: session.identity?.id as string,
+      email: session.identity?.traits?.email as string,
+      displayName: session.identity?.traits?.display_name as string,
     } satisfies ISessionUser;
   } catch (error) {
     request.log.error('Session validation failed', error);
