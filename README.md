@@ -82,14 +82,14 @@ AUTH_STRATEGY=db  # or 'openfga'
 3. Run database migrations:
 
 ```bash
-nx generate database
-nx migrate database
+npx nx run database:generate
+npx nx run database:migrate
 ```
 
 4. Start the development server:
 
 ```bash
-nx serve purrfect-sitter
+npx nx run purrfect-sitter:serve
 ```
 
 ## API Endpoints
@@ -123,6 +123,6 @@ The API follows RESTful principles and provides the following endpoints:
 
 ## Testing
 
-- Unit tests: `nx test <project-name>`
-- E2E tests: `nx e2e purrfect-sitter-e2e`
+- Unit tests: `npx nx test <project-name>`
+- E2E tests: `npx nx e2e purrfect-sitter-e2e`
 - Test OpenFGA authorization model: `npm run test:fga`
