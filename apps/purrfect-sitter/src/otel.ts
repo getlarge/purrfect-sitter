@@ -31,3 +31,10 @@ export const openTelemetrySdk = new NodeSDK({
 });
 
 openTelemetrySdk.start();
+
+const shutdown = async () => {
+  await openTelemetrySdk.shutdown();
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);

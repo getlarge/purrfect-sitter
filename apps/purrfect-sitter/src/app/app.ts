@@ -22,18 +22,12 @@ type Fastify = FastifyInstance<
 const __dirname = import.meta.dirname;
 
 export async function app(fastify: Fastify, options: AppOptions) {
-
-  // This loads all plugins defined in plugins
-  // those should be support plugins that are reused
-  // through your application
   await fastify.register(AutoLoad, {
     dir: path.join(__dirname, 'plugins'),
     options: { ...options },
     forceESM: true,
   });
 
-  // This loads all plugins defined in routes
-  // define your routes in one of these
   await fastify.register(AutoLoad, {
     dir: path.join(__dirname, 'routes'),
     prefix: '/api',

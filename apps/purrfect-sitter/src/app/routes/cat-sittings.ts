@@ -12,6 +12,7 @@ import {
   updateCatSittingStatusResponseSchema,
   deleteCatSittingResponseSchema,
   errorResponseSchema,
+  updateCatSittingParamsSchema,
 } from '@purrfect-sitter/models';
 
 import { CatSittingsService } from '@purrfect-sitter/cat-sittings-services';
@@ -62,7 +63,7 @@ const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       ],
     },
     async (request, reply) => {
-      const { id } = request.params as { id: string };
+      const { id } = request.params;
       const sitting = await catSittingsService.findById(id);
       if (!sitting) {
         return reply.status(404).send({ error: 'Cat sitting not found' });
@@ -107,7 +108,7 @@ const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     '/cat-sittings/:id',
     {
       schema: {
-        params: params,
+        params: updateCatSittingParamsSchema,
         body: UpdateCatSittingSchema,
         response: {
           200: updateCatSittingResponseSchema,

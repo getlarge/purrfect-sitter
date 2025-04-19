@@ -1,4 +1,6 @@
-import { openTelemetrySdk } from './otel.js';
+import './otel.js';
+import 'pino-pretty';
+import 'pino';
 
 import { createDatabase, closeDatabase } from '@purrfect-sitter/database';
 import { app } from './app/app.js';
@@ -44,8 +46,6 @@ const shutdown = async () => {
   server.log.info('Shutting down server...');
   await server.close();
   await closeDatabase();
-
-  await openTelemetrySdk.shutdown();
 
   process.exit(0);
 };

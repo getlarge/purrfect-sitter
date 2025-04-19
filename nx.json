@@ -66,6 +66,13 @@
           "targetName": "typecheck"
         }
       }
+    },
+    {
+      "plugin": "@nx-tools/nx-container",
+      "options": {
+        "defaultEngine": "docker",
+        "defaultRegistry": "docker.io"
+      }
     }
   ],
   "targetDefaults": {
@@ -73,6 +80,17 @@
       "cache": true,
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
+    },
+    "lint": {
+      "configurations": {
+        "development": {
+          "args": ["-c", "eslint.config.mjs"]
+        },
+        "docker": {
+          "args": ["-c", "eslint.config.mjs", "--fix"]
+        }
+      },
+      "defaultConfiguration": "development"
     },
     "test": {
       "dependsOn": ["^build"]
