@@ -1,0 +1,20 @@
+version: v1.3.1
+
+dev: true
+
+log:
+  level: debug
+
+selfservice:
+  default_browser_return_url: http://127.0.0.1:4455/
+  flows:
+    recovery:
+      enabled: true
+    verification:
+      enabled: true
+
+serve:
+  public:
+    base_url: http://127.0.0.1:4433/
+  admin:
+    base_url: http://kratos:4434/

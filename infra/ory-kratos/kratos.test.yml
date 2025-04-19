@@ -1,0 +1,18 @@
+version: v1.3.1
+
+dev: true
+
+log:
+  level: error
+
+session:
+  cookie:
+    domain: 127.0.0.1
+    name: ory_kratos_session
+  lifespan: 1h
+
+serve:
+  public:
+    base_url: http://127.0.0.1:4433/
+  admin:
+    base_url: http://kratos:4434/

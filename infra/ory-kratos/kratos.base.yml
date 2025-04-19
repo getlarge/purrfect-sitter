@@ -1,0 +1,98 @@
+version: v1.3.1
+
+secrets:
+  cookie:
+    - PLEASE-CHANGE-ME-IN-PRODUCTION
+
+serve:
+  public:
+    base_url: http://127.0.0.1:4433/
+    cors:
+      enabled: true
+      allowed_origins:
+        - http://127.0.0.1:3000
+        - http://localhost:3000
+        - http://127.0.0.1:4455
+        - http://localhost:4455
+      allowed_methods:
+        - POST
+        - GET
+        - PUT
+        - PATCH
+        - DELETE
+      allowed_headers:
+        - Authorization
+        - Cookie
+        - Content-Type
+      exposed_headers:
+        - Content-Type
+      allow_credentials: true
+  admin:
+    base_url: http://kratos:4434/
+
+selfservice:
+  default_browser_return_url: http://127.0.0.1:4455/
+  allowed_return_urls:
+    - http://127.0.0.1:4455
+    - http://localhost:4455
+
+  methods:
+    password:
+      enabled: true
+    link:
+      enabled: true
+    oidc:
+      enabled: false
+
+  flows:
+    settings:
+      ui_url: http://127.0.0.1:4455/settings
+      privileged_session_max_age: 15m
+      required_aal: aal1
+    recovery:
+      enabled: true
+      ui_url: http://127.0.0.1:4455/recovery
+      after:
+        default_browser_return_url: http://127.0.0.1:4455/
+    verification:
+      enabled: true
+      ui_url: http://127.0.0.1:4455/verification
+      after:
+        default_browser_return_url: http://127.0.0.1:4455/
+    logout:
+      after:
+        default_browser_return_url: http://127.0.0.1:4455/login
+    login:
+      ui_url: http://127.0.0.1:4455/login
+      lifespan: 10m
+    registration:
+      lifespan: 10m
+      ui_url: http://127.0.0.1:4455/registration
+      after:
+        password:
+          hooks:
+            - hook: session
+
+log:
+  level: info
+  format: json
+  leak_sensitive_values: true
+
+identity:
+  schemas:
+    - id: user
+      url: file:///etc/config/kratos/identity-schemas/user.schema.json
+  default_schema_id: user
+
+hashers:
+  algorithm: bcrypt
+  bcrypt:
+    cost: 8
+
+session:
+  cookie:
+    domain: 127.0.0.1
+    name: ory_kratos_session
+    same_site: Lax
+    path: /
+  lifespan: 24h
