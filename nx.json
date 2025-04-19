@@ -86,7 +86,7 @@
         "development": {
           "args": ["-c", "eslint.config.mjs"]
         },
-        "docker": {
+        "fix": {
           "args": ["-c", "eslint.config.mjs", "--fix"]
         }
       },

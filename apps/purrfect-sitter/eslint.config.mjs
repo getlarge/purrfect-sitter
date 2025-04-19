@@ -12,7 +12,6 @@ export default [
           checkMissingDependencies: true,
           checkObsoleteDependencies: true,
           checkVersionMismatches: true,
-          ignoredDependencies: [],
           ignoredFiles: ['jest.config.ts', 'eslint.config.mjs'],
           includeTransitiveDependencies: true,
           useLocalPathsForWorkspaceDependencies: true,
