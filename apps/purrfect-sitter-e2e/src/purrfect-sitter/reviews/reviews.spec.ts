@@ -1,12 +1,17 @@
 import {
   CatDto,
   CatSittingDto,
+  CatSittingSchema,
+  CreateCatDto,
   CreateCatResponseSchema,
+  CreateCatSittingDto,
   CreateCatSittingResponseSchema,
+  CreateReviewDto,
   CreateReviewResponseSchema,
   DeleteReviewResponseSchema,
   GetReviewResponseSchema,
   ReviewDto,
+  UpdateReviewDto,
   UpdateReviewResponseSchema,
 } from '@purrfect-sitter/models';
 import {
@@ -16,6 +21,7 @@ import {
   createAdmin,
 } from '../../support/test-utils';
 import { AxiosInstance } from 'axios';
+import { randomBytes } from 'node:crypto';
 
 const AUTH_STRATEGY = process.env.AUTH_STRATEGY;
 
@@ -33,9 +39,21 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
   let review: ReviewDto;
 
   beforeAll(async () => {
-    catOwner = await createTestUser('cat_owner@test.com', 'cat_owner');
-    catSitter = await createTestUser('cat_sitter@test.com', 'cat_sitter');
-    admin = await createTestUser('admin@test.com', 'admin');
+    catOwner = await createTestUser(
+      `cat_owner_${randomBytes(4).toString('hex')}@test.com`,
+      randomBytes(8).toString('hex'),
+      'cat_owner'
+    );
+    catSitter = await createTestUser(
+      `cat_sitter_${randomBytes(4).toString('hex')}@test.com`,
+      randomBytes(8).toString('hex'),
+      'cat_sitter'
+    );
+    admin = await createTestUser(
+      `admin_${randomBytes(4).toString('hex')}@test.com`,
+      randomBytes(8).toString('hex'),
+      'admin'
+    );
     await createAdmin(admin.id);
 
     ownerClient = createAuthenticatedClient(catOwner.sessionToken);
@@ -49,7 +67,7 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
         description: 'A fluffy test cat',
         breed: 'Test Breed',
         age: '3',
-      }
+      } satisfies CreateCatDto
     );
     expect(catResponse.status).toBe(201);
     cat = catResponse.data.data;
@@ -60,8 +78,7 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
         sitterId: catSitter.id,
         startTime: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
         endTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-        status: 'completed',
-      });
+      } satisfies CreateCatSittingDto);
     expect(sittingResponse.status).toBe(201);
     catSitting = sittingResponse.data.data;
 
@@ -70,8 +87,8 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
       {
         catSittingId: catSitting.id,
         rating: 5,
-        comment: 'Excellent service!',
-      }
+        content: 'Excellent service!',
+      } satisfies CreateReviewDto
     );
     expect(reviewResponse.status).toBe(201);
     review = reviewResponse.data.data;
@@ -91,10 +108,9 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
             endTime: new Date(
               Date.now() - 3 * 24 * 60 * 60 * 1000
             ).toISOString(),
-            status: 'completed',
-          }
+          } satisfies CreateCatSittingDto
         );
-
+      expect(newSittingResponse.status).toBe(201);
       const newSitting = newSittingResponse.data.data;
 
       const reviewResponse = await ownerClient.post<CreateReviewResponseSchema>(
@@ -102,8 +118,8 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
         {
           catSittingId: newSitting.id,
           rating: 4,
-          comment: 'Very good service',
-        }
+          content: 'Very good service',
+        } satisfies CreateReviewDto
       );
 
       expect(reviewResponse.status).toBe(201);
@@ -128,7 +144,7 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
           ...review,
           rating: 4,
           content: 'Updated comment',
-        }
+        } satisfies UpdateReviewDto
       );
 
       expect(response.status).toBe(200);
@@ -162,7 +178,7 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
           ...review,
           rating: 5,
           content: 'Sitter trying to modify review',
-        }
+        } satisfies UpdateReviewDto
       );
 
       expect(updateResponse.status).toBe(403);
@@ -192,7 +208,7 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
           ...review,
           rating: 3,
           content: 'Admin modified this review',
-        }
+        } satisfies UpdateReviewDto
       );
 
       expect(response.status).toBe(200);
@@ -215,10 +231,9 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
             endTime: new Date(
               Date.now() - 5 * 24 * 60 * 60 * 1000
             ).toISOString(),
-            status: 'completed',
-          }
+          } satisfies CreateCatSittingDto
         );
-
+      expect(newSittingResponse.status).toBe(201);
       const newSitting = newSittingResponse.data.data;
 
       const reviewResponse = await ownerClient.post<CreateReviewResponseSchema>(
@@ -226,17 +241,17 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
         {
           catSittingId: newSitting.id,
           rating: 5,
-          comment: 'Review to be deleted by admin',
-        }
+          content: 'Review to be deleted by admin',
+        } satisfies CreateReviewDto
       );
-
+      expect(reviewResponse.status).toBe(201);
       const reviewToDelete = reviewResponse.data.data;
 
       const deleteResponse =
         await adminClient.delete<DeleteReviewResponseSchema>(
           `/reviews/${reviewToDelete.id}`
         );
-      expect(deleteResponse.status).toBe(204);
+      expect(deleteResponse.status).toBe(200);
 
       const getResponse = await adminClient.get(
         `/reviews/${reviewToDelete.id}`
