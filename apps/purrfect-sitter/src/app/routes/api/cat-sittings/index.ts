@@ -97,6 +97,7 @@ const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         );
         return reply.status(201).send({ data: sitting });
       } catch (error) {
+        fastify.log.error(error);
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
         return reply.status(400).send({ error: errorMessage });
@@ -129,7 +130,7 @@ const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       ],
     },
     async (request, reply) => {
-      const { id } = request.params as { id: string };
+      const { id } = request.params;
       const updateSittingDto = request.body;
       const updatedSitting = await catSittingsService.update(
         id,

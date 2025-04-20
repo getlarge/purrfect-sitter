@@ -90,6 +90,7 @@ const reviewsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         const review = await reviewsService.create(userId, createReviewDto);
         return reply.status(201).send({ data: review });
       } catch (error) {
+        fastify.log.error(error);
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
         return reply.status(400).send({ error: errorMessage });

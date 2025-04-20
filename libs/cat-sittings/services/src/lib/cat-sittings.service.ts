@@ -22,20 +22,17 @@ export class CatSittingsService {
   }
 
   async findAll() {
-    const sittings = await catSittingRepository
-      .findAll();
+    const sittings = await catSittingRepository.findAll();
     return sittings.map((sitting) => castCatSitting(sitting));
   }
 
   async findBySitterId(sitterId: string) {
-    const sittings = await catSittingRepository
-      .findBySitterId(sitterId);
+    const sittings = await catSittingRepository.findBySitterId(sitterId);
     return sittings.map((sitting) => castCatSitting(sitting));
   }
 
   async findByCatId(catId: string) {
-    const sittings = await catSittingRepository
-      .findByCatId(catId);
+    const sittings = await catSittingRepository.findByCatId(catId);
     return sittings.map((sitting) => castCatSitting(sitting));
   }
 
@@ -47,10 +44,11 @@ export class CatSittingsService {
     return castCatSitting(sitting);
   }
 
-   async findActiveSittings() {
-    const sittings = await catSittingRepository
-       .findActiveByTimeRange(new Date());
-     return sittings.map((sitting) => castCatSitting(sitting));
+  async findActiveSittings() {
+    const sittings = await catSittingRepository.findActiveByTimeRange(
+      new Date()
+    );
+    return sittings.map((sitting) => castCatSitting(sitting));
   }
 
   async create(userId: string, createCatSittingDto: CreateCatSittingDto) {
@@ -82,6 +80,7 @@ export class CatSittingsService {
         endTime: dateFromString(endTime),
       }),
     };
+    console.warn('update', update);
     const updated = await catSittingRepository.update(id, update);
 
     if (updated && updateCatSittingDto.status) {

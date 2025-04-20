@@ -4,15 +4,36 @@ import { castEntity } from './helpers.js';
 
 export const CatSittingSchema = Type.Object(
   {
-    id: Type.String({ format: 'uuid' }),
-    catId: Type.String({ format: 'uuid' }),
-    sitterId: Type.String({ format: 'uuid' }),
+    id: Type.String({
+      format: 'uuid',
+      default: '00000000-0000-0000-0000-000000000000',
+    }),
+    catId: Type.String({
+      format: 'uuid',
+      default: '00000000-0000-0000-0000-000000000000',
+    }),
+    sitterId: Type.String({
+      format: 'uuid',
+      default: '00000000-0000-0000-0000-000000000000',
+    }),
     status: Type.Enum(CatSittingStatus),
-    startTime: Type.String({ format: 'date-time' }),
-    endTime: Type.String({ format: 'date-time' }),
+    startTime: Type.String({
+      format: 'date-time',
+      default: new Date().toISOString(),
+    }),
+    endTime: Type.String({
+      format: 'date-time',
+      default: new Date().toISOString(),
+    }),
     attributes: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
-    createdAt: Type.String({ format: 'date-time' }),
-    updatedAt: Type.String({ format: 'date-time' }),
+    createdAt: Type.String({
+      format: 'date-time',
+      default: new Date().toISOString(),
+    }),
+    updatedAt: Type.String({
+      format: 'date-time',
+      default: new Date().toISOString(),
+    }),
   },
   { title: 'CatSitting' }
 );
