@@ -92,33 +92,21 @@
         ],
         "options": {
           "engine": "docker",
-          "metadata": {
-            "tags": [
-              "purrfect-sitter:latest"
-            ]
-          }
+          "tags": [
+            "purrfect-sitter:latest"
+          ]
         },
         "configurations": {
           "production": {
-            "metadata": {
-              "tags": [
-                "purrfect-sitter:latest"
-              ]
-            }
+            "tags": [
+              "purrfect-sitter:latest"
+            ]
           },
           "test": {
-            "metadata": {
-              "tags": [
-                "purrfect-sitter:test"
-              ]
-            }
-          },
-          "ci": {
-            "metadata": {
-              "tags": [
-                "purrfect-sitter:ci"
-              ]
-            }
+            "load": true,
+            "tags": [
+              "purrfect-sitter:test"
+            ]
           }
         }
       }

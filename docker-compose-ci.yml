@@ -1,6 +1,6 @@
 services:
   purrfect-sitter-api:
-    image: purrfect-sitter:${API_TAG:-latest}
+    image: purrfect-sitter:test
     depends_on:
       postgres:
         condition: service_healthy
@@ -70,7 +70,7 @@ services:
       DSN: postgres://dbuser:secret@kratos-postgres:5432/kratosdb-test?sslmode=disable
       LOG_FORMAT: json
       COURIER_SMTP_CONNECTION_URI: smtps://test:test@mailslurper:1025/?skip_ssl_verify=true
-    command: serve -c /etc/config/kratos/kratos.base.yml -c /etc/config/kratos/kratos.test.yaml --dev --watch-courier
+    command: serve -c /etc/config/kratos/kratos.base.yml -c /etc/config/kratos/kratos.test.yml --dev --watch-courier
 
   mailslurper:
     extends:
