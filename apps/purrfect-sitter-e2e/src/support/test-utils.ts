@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import { Configuration, FrontendApi, IdentityApi } from '@ory/kratos-client';
 import { OpenFgaApi } from '@openfga/sdk';
 import { userRepository } from '@purrfect-sitter/users-repositories';
@@ -51,7 +51,6 @@ export function getOpenFgaStoreId(): string {
   return openfgaStoreId;
 }
 
-// Helper function to create a Kratos identity and get a session token
 export async function createTestUser(
   email: string,
   password: string,
@@ -72,6 +71,11 @@ export async function createTestUser(
         },
       },
     },
+  });
+
+  await userRepository.create({
+    id: identityResponse.data.id,
+    role: 'user',
   });
 
   const { data: loginFlow } = await kratosPublicClient.createNativeLoginFlow(
@@ -107,20 +111,24 @@ export function createAuthenticatedClient(sessionToken: string) {
   client.interceptors.response.use(
     (response) => response,
     (error) => {
-      if (error.response) {
-        console.error(
-          `HTTP Error: ${error.response.status}`,
-          error.response.data
-        );
+      if (isAxiosError(error)) {
+        if (error.response) {
+          console.error(
+            `HTTP Error: ${error.response.status}`,
+            error.response.data
+          );
+        } else {
+          console.error('Network Error:', error.message);
+        }
+        return Promise.reject(error.cause);
       }
-      return Promise.reject(error);
+      return Promise.reject(new Error('Unknown error'));
     }
   );
 
   return client;
 }
 
-// Create a cat in the database through the API
 export async function createTestCat(
   ownerClient: ReturnType<typeof createAuthenticatedClient>,
   name: string,
@@ -134,7 +142,7 @@ export async function createTestCat(
     age: '3',
     attributes,
   });
-
+  expect(response.status).toBe(201);
   return {
     id: response.data.id,
     name,
@@ -142,7 +150,6 @@ export async function createTestCat(
   };
 }
 
-// Create a cat sitting in the database through the API
 export async function createTestCatSitting(
   ownerClient: ReturnType<typeof createAuthenticatedClient>,
   catId: string,
@@ -158,6 +165,8 @@ export async function createTestCatSitting(
     startTime: startTime.toISOString(),
     endTime: endTime.toISOString(),
   });
+
+  expect(response.status).toBe(201);
 
   return {
     id: response.data.id,
