@@ -18,7 +18,7 @@ const reviewsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   const { authenticate, authorize } = fastify;
   const reviewsService = new ReviewsService();
 
-  fastify.get('/reviews', {
+  fastify.get('/', {
     schema: {
       response: {
         200: getReviewsResponseSchema,
@@ -30,7 +30,7 @@ const reviewsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     },
   });
 
-  fastify.get('/reviews/:id', {
+  fastify.get('/:id', {
     schema: {
       params: getReviewParamsSchema,
       response: {
@@ -62,7 +62,7 @@ const reviewsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     },
   });
 
-  fastify.post('/reviews', {
+  fastify.post('/', {
     schema: {
       body: CreateReviewSchema,
       response: {
@@ -97,7 +97,7 @@ const reviewsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     },
   });
 
-  fastify.put('/reviews/:id', {
+  fastify.put('/:id', {
     schema: {
       params: updateReviewParamsSchema,
       body: UpdateReviewSchema,
@@ -131,7 +131,7 @@ const reviewsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     },
   });
 
-  fastify.delete('/reviews/:id', {
+  fastify.delete('/:id', {
     schema: {
       params: deleteReviewParamsSchema,
       response: {

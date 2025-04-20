@@ -18,7 +18,7 @@ const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   const { authenticate, authorize } = fastify;
   const catsService = new CatsService();
 
-  fastify.get('/cats', {
+  fastify.get('/', {
     schema: {
       response: {
         200: getCatsResponseSchema,
@@ -31,7 +31,7 @@ const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     },
   });
 
-  fastify.get('/cats/:id', {
+  fastify.get('/:id', {
     schema: {
       params: getCatParamsSchema,
       response: {
@@ -52,7 +52,7 @@ const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     },
   });
 
-  fastify.post('/cats', {
+  fastify.post('/', {
     schema: {
       body: CreateCatSchema,
       response: {
@@ -69,7 +69,7 @@ const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     },
   });
 
-  fastify.put('/cats/:id', {
+  fastify.put('/:id', {
     schema: {
       params: updateCatParamsSchema,
       body: UpdateCatSchema,
@@ -104,7 +104,7 @@ const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     },
   });
 
-  fastify.delete('/cats/:id', {
+  fastify.delete('/:id', {
     schema: {
       params: deleteCatParamsSchema,
       response: {

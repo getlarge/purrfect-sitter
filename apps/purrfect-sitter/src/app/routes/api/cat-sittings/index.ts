@@ -25,7 +25,7 @@ const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   const { authenticate, authorize } = fastify;
   const catSittingsService = new CatSittingsService();
 
-  fastify.get('/cat-sittings', {
+  fastify.get('/', {
     schema: {
       response: {
         200: getCatSittingsResponseSchema,
@@ -40,7 +40,7 @@ const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   });
 
   fastify.get(
-    '/cat-sittings/:id',
+    '/:id',
     {
       schema: {
         params: getCatSittingParamsSchema,
@@ -74,7 +74,7 @@ const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   );
 
   fastify.post(
-    '/cat-sittings',
+    '/',
     {
       schema: {
         body: CreateCatSittingSchema,
@@ -105,7 +105,7 @@ const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   );
 
   fastify.put(
-    '/cat-sittings/:id',
+    '/:id',
     {
       schema: {
         params: updateCatSittingParamsSchema,
@@ -145,7 +145,7 @@ const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   );
 
   fastify.put(
-    '/cat-sittings/:id/status',
+    '/:id/status',
     {
       schema: {
         params: params,
@@ -185,7 +185,7 @@ const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   );
 
   fastify.delete(
-    '/cat-sittings/:id',
+    '/:id',
     {
       schema: {
         params: params,

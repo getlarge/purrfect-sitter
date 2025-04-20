@@ -30,8 +30,8 @@ export async function app(fastify: Fastify, options: AppOptions) {
 
   await fastify.register(AutoLoad, {
     dir: path.join(__dirname, 'routes'),
-    prefix: '/api',
     options: { ...options },
+    dirNameRoutePrefix: true,
     forceESM: true,
   });
 
