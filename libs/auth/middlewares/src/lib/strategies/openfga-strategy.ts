@@ -1,11 +1,11 @@
-import type { CheckRequest, TupleKey, WriteRequest } from '@openfga/sdk';
+import type { CheckRequest } from '@openfga/sdk';
+import { catSittingRepository } from '@purrfect-sitter/cat-sittings-repositories';
 import { getOpenFgaClient } from '@purrfect-sitter/auth-repositories';
 import {
   IAuthorizationCheck,
   IAuthorizationStrategy,
 } from './strategy-interface.js';
 
-// OpenFGA-backed authorization strategy
 export class OpenFgaStrategy implements IAuthorizationStrategy {
   async check(params: IAuthorizationCheck): Promise<boolean> {
     const { userId, action, resource, resourceId } = params;
@@ -17,10 +17,7 @@ export class OpenFgaStrategy implements IAuthorizationStrategy {
         relation: this.mapActionToRelation(action, resource),
         object: `${resource}:${resourceId}`,
       },
-      // Contextual tuples for time-based conditions
-      contextual_tuples: {
-        tuple_keys: this.getContextualTuples(action, resource),
-      },
+      context: this.getContext(action, resource, resourceId),
     };
 
     try {
@@ -32,34 +29,7 @@ export class OpenFgaStrategy implements IAuthorizationStrategy {
     }
   }
 
-  // Write FGA relationship tuples when resources are created or updated
-  async writeTuples(tuples: TupleKey[]): Promise<void> {
-    const { client, storeId } = getOpenFgaClient();
-
-    const request: WriteRequest = {
-      writes: {
-        tuple_keys: tuples,
-      },
-    };
-
-    await client.write(storeId, request);
-  }
-
-  // Delete FGA relationship tuples when resources are deleted
-  async deleteTuples(tuples: TupleKey[]): Promise<void> {
-    const { client, storeId } = getOpenFgaClient();
-
-    const request: WriteRequest = {
-      deletes: {
-        tuple_keys: tuples,
-      },
-    };
-
-    await client.write(storeId, request);
-  }
-
   // Map API actions to OpenFGA relations
-  // TODO: replace global logic with a more flexible mapping based on route metadata
   private mapActionToRelation(action: string, resource: string): string {
     switch (resource) {
       case 'cat':
@@ -73,6 +43,10 @@ export class OpenFgaStrategy implements IAuthorizationStrategy {
         }
       case 'cat_sitting':
         switch (action) {
+          case 'view':
+            return 'can_view';
+          case 'update':
+            return 'can_update';
           case 'post_updates':
             return 'can_post_updates';
           case 'review':
@@ -82,6 +56,8 @@ export class OpenFgaStrategy implements IAuthorizationStrategy {
         }
       case 'review':
         switch (action) {
+          case 'delete':
+            return 'can_delete';
           case 'edit':
             return 'can_edit';
           case 'view':
@@ -96,44 +72,29 @@ export class OpenFgaStrategy implements IAuthorizationStrategy {
     }
   }
 
-  // Get contextual tuples for time-based conditions
-  private getContextualTuples(action: string, resource: string): TupleKey[] {
-    const contextualTuples: TupleKey[] = [];
-
-    // For active sitter condition
-    if (resource === 'cat_sitting' && action === 'post_updates') {
+  private async getContext(
+    action: string,
+    resource: string,
+    resourceId: string
+  ): Promise<object> {
+    if (
+      resource === 'cat_sitting' &&
+      ['update', 'post_updates'].includes(action)
+    ) {
       const now = new Date();
-
-      contextualTuples.push({
-        user: 'cat_sitting#sitter',
-        relation: 'is_active_timeslot',
-        object: '',
-        condition: {
-          name: 'is_active_timeslot',
-          context: {
-            current_time: now.toISOString(),
-          },
-        },
-      });
+      return {
+        current_time: now.toISOString(),
+      };
     }
 
-    // For completed sitting condition
     if (resource === 'cat_sitting' && action === 'review') {
-      contextualTuples.push({
-        user: 'cat#owner',
-        relation: 'is_cat_sitting_completed',
-        object: '',
-        condition: {
-          name: 'is_cat_sitting_completed',
-          context: {
-            completed_statuses: ['completed'],
-            cat_sitting_attributes: { status: 'completed' },
-          },
-        },
-      });
+      const catSitting = await catSittingRepository.findById(resourceId);
+      return {
+        cat_sitting_attributes: { status: catSitting?.status ?? 'unknown' },
+      };
     }
 
-    return contextualTuples;
+    return {};
   }
 }
 

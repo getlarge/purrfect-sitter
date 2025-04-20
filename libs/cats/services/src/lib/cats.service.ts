@@ -67,7 +67,6 @@ export class CatsService {
         relation: 'owner',
         object: `cat:${catId}`,
       },
-      // System tuple for future use (admin can manage all cats)
       {
         user: 'system:1',
         relation: 'system',
@@ -100,7 +99,6 @@ export class CatsService {
         relation: 'system',
         object: `cat:${catId}`,
       },
-
     ];
 
     try {

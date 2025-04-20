@@ -80,10 +80,13 @@ export class CatSittingsService {
         endTime: dateFromString(endTime),
       }),
     };
-    console.warn('update', update);
+
     const updated = await catSittingRepository.update(id, update);
 
-    if (updated && updateCatSittingDto.status) {
+    if (
+      updated &&
+      (updateCatSittingDto.startTime || updateCatSittingDto.endTime)
+    ) {
       await this.updateAuthRelationships(updated);
     }
 
@@ -94,10 +97,6 @@ export class CatSittingsService {
     const updated = await catSittingRepository.update(id, {
       status: updateStatusDto.status,
     });
-
-    if (updated) {
-      await this.updateAuthRelationships(updated);
-    }
 
     return castCatSitting(updated);
   }
@@ -113,13 +112,31 @@ export class CatSittingsService {
   private async createAuthRelationships(catSitting: CatSitting) {
     const tuples: TupleKey[] = [
       {
-        user: `cat:${catSitting.catId}`,
-        relation: 'cat',
+        user: `cat:${catSitting.catId}#owner`,
+        relation: 'can_review',
         object: `cat_sitting:${catSitting.id}`,
+        condition: {
+          name: 'is_cat_sitting_completed',
+          context: {
+            completed_statuses: [CatSittingStatus.COMPLETED],
+          },
+        },
       },
       {
-        user: `user:${catSitting.sitterId}`,
-        relation: 'sitter',
+        user: `cat_sitting:${catSitting.id}#sitter`,
+        relation: 'active_sitter',
+        object: `cat_sitting:${catSitting.id}`,
+        condition: {
+          name: 'is_active_timeslot',
+          context: {
+            start_time: catSitting.startTime.toISOString(),
+            end_time: catSitting.endTime.toISOString(),
+          },
+        },
+      },
+      {
+        user: 'system:1',
+        relation: 'system',
         object: `cat_sitting:${catSitting.id}`,
       },
     ];
@@ -136,21 +153,42 @@ export class CatSittingsService {
   }
 
   private async updateAuthRelationships(catSitting: CatSitting) {
-    // No specific update needed in current model
-    // This would be the place to handle any status-based authorization changes
-    // For example, if completed sittings need special permissions
+    const tuples: TupleKey[] = [
+      {
+        user: `cat_sitting:${catSitting.id}#sitter`,
+        relation: 'active_sitter',
+        object: `cat_sitting:${catSitting.id}`,
+        condition: {
+          name: 'is_active_timeslot',
+          context: {
+            start_time: catSitting.startTime.toISOString(),
+            end_time: catSitting.endTime.toISOString(),
+          },
+        },
+      },
+    ];
+    await this.openfga.write(this.openfgaStoreId, {
+      writes: {
+        tuple_keys: tuples,
+      },
+    });
   }
 
   private async deleteAuthRelationships(catSitting: CatSitting) {
     const tuples: TupleKey[] = [
       {
-        user: `cat:${catSitting.catId}`,
-        relation: 'cat',
+        user: `cat:${catSitting.catId}#owner`,
+        relation: 'can_review',
         object: `cat_sitting:${catSitting.id}`,
       },
       {
-        user: `user:${catSitting.sitterId}`,
-        relation: 'sitter',
+        user: `cat_sitting:${catSitting.id}#sitter`,
+        relation: 'active_sitter',
+        object: `cat_sitting:${catSitting.id}`,
+      },
+      {
+        user: 'system:1',
+        relation: 'system',
         object: `cat_sitting:${catSitting.id}`,
       },
     ];

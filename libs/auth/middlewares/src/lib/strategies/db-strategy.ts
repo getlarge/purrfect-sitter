@@ -74,11 +74,10 @@ export class DbAuthStrategy implements IAuthorizationStrategy {
       case 'view':
         return isOwner || isSitter || isAdmin;
       case 'update':
-        return isOwner || isSitter || isAdmin;
+        return isOwner || (isSitter && isActive()) || isAdmin;
       case 'post_updates':
         return isOwner || (isSitter && isActive()) || isAdmin;
       case 'review':
-        // Only owner can review a completed sitting
         return isOwner && sitting.status === 'completed';
       default:
         return false;
@@ -108,7 +107,7 @@ export class DbAuthStrategy implements IAuthorizationStrategy {
       case 'view':
         return isAuthor || isSubject || isAdmin;
       case 'edit':
-        return isAuthor || isAdmin;
+        return isAuthor;
       case 'delete':
         return isAdmin;
       default:
@@ -116,7 +115,6 @@ export class DbAuthStrategy implements IAuthorizationStrategy {
     }
   }
 
-  // System permissions
   private async checkSystemPermission(
     userId: string,
     action: string

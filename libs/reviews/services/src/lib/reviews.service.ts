@@ -84,7 +84,6 @@ export class ReviewsService {
     return castReview(deletedReview);
   }
 
-  // Helper to create OpenFGA relationship tuples for authorization
   private async createAuthRelationships(
     reviewId: string,
     catSittingId: string
@@ -93,6 +92,16 @@ export class ReviewsService {
       {
         user: `cat_sitting:${catSittingId}`,
         relation: 'cat_sitting',
+        object: `review:${reviewId}`,
+      },
+      {
+        user: `user:*`,
+        relation: 'can_view',
+        object: `review:${reviewId}`,
+      },
+      {
+        user: 'system:1',
+        relation: 'system',
         object: `review:${reviewId}`,
       },
     ];
@@ -108,7 +117,6 @@ export class ReviewsService {
     }
   }
 
-  // Helper to delete OpenFGA relationship tuples
   private async deleteAuthRelationships(
     reviewId: string,
     catSittingId: string
@@ -117,6 +125,16 @@ export class ReviewsService {
       {
         user: `cat_sitting:${catSittingId}`,
         relation: 'cat_sitting',
+        object: `review:${reviewId}`,
+      },
+      {
+        user: `user:*`,
+        relation: 'can_view',
+        object: `review:${reviewId}`,
+      },
+      {
+        user: 'system:1',
+        relation: 'system',
         object: `review:${reviewId}`,
       },
     ];
