@@ -1,14 +1,17 @@
 import { Type } from '@sinclair/typebox';
-import { Value } from '@sinclair/typebox/value';
+import { castEntity } from './helpers.js';
 
-export const ReviewSchema = Type.Object({
-  id: Type.String({ format: 'uuid' }),
-  catSittingId: Type.String({ format: 'uuid' }),
-  rating: Type.Integer({ minimum: 1, maximum: 5 }),
-  content: Type.Optional(Type.String()),
-  createdAt: Type.String({ format: 'date-time' }),
-  updatedAt: Type.String({ format: 'date-time' }),
-});
+export const ReviewSchema = Type.Object(
+  {
+    id: Type.String({ format: 'uuid' }),
+    catSittingId: Type.String({ format: 'uuid' }),
+    rating: Type.Integer({ minimum: 1, maximum: 5 }),
+    content: Type.Optional(Type.String()),
+    createdAt: Type.String({ format: 'date-time' }),
+    updatedAt: Type.String({ format: 'date-time' }),
+  },
+  { title: 'Review' }
+);
 
 export const CreateReviewSchema = Type.Object({
   catSittingId: Type.String({ format: 'uuid' }),
@@ -28,10 +31,5 @@ export type CreateReviewDto = (typeof CreateReviewSchema)['static'];
 export type UpdateReviewDto = (typeof UpdateReviewSchema)['static'];
 
 export const castReview = (review: unknown): ReviewDto => {
-  const r = Value.Convert(ReviewSchema, review);
-  if (!Value.Check(ReviewSchema, r)) {
-    throw new Error('Invalid review object');
-  }
-
-  return r;
+  return castEntity(ReviewSchema, review);
 };
