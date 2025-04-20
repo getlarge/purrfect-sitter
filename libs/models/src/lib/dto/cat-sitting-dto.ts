@@ -35,29 +35,38 @@ export const CatSittingSchema = Type.Object(
       default: new Date().toISOString(),
     }),
   },
-  { title: 'CatSitting' }
+  { title: 'CatSitting', additionalProperties: false }
 );
 
-export const CreateCatSittingSchema = Type.Object({
-  catId: Type.String({ format: 'uuid' }),
-  sitterId: Type.String({ format: 'uuid' }),
-  startTime: Type.String({ format: 'date-time' }),
-  endTime: Type.String({ format: 'date-time' }),
-  attributes: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
-});
-
-export const UpdateCatSittingSchema = Type.Partial(
-  Type.Object({
-    status: Type.Enum(CatSittingStatus),
+export const CreateCatSittingSchema = Type.Object(
+  {
+    catId: Type.String({ format: 'uuid' }),
+    sitterId: Type.String({ format: 'uuid' }),
     startTime: Type.String({ format: 'date-time' }),
     endTime: Type.String({ format: 'date-time' }),
     attributes: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
-  })
+  },
+  { additionalProperties: false }
 );
 
-export const UpdateCatSittingStatusSchema = Type.Object({
-  status: Type.Enum(CatSittingStatus),
-});
+export const UpdateCatSittingSchema = Type.Partial(
+  Type.Object(
+    {
+      status: Type.Enum(CatSittingStatus),
+      startTime: Type.String({ format: 'date-time' }),
+      endTime: Type.String({ format: 'date-time' }),
+      attributes: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+    },
+    { additionalProperties: false }
+  )
+);
+
+export const UpdateCatSittingStatusSchema = Type.Object(
+  {
+    status: Type.Enum(CatSittingStatus),
+  },
+  { additionalProperties: false }
+);
 
 export type CatSittingDto = (typeof CatSittingSchema)['static'];
 export type CreateCatSittingDto = (typeof CreateCatSittingSchema)['static'];

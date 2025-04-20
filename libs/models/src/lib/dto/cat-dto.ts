@@ -26,7 +26,7 @@ export const CatSchema = Type.Object(
       default: new Date().toISOString(),
     }),
   },
-  { title: 'Cat' }
+  { title: 'Cat', additionalProperties: false }
 );
 
 export const CreateCatSchema = Type.Object(
@@ -38,7 +38,7 @@ export const CreateCatSchema = Type.Object(
     isActive: Type.Optional(Type.Boolean()),
     attributes: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
   },
-  { title: 'CreateCat' }
+  { title: 'CreateCat', additionalProperties: false }
 );
 
 export const UpdateCatSchema = Type.Partial(
@@ -51,7 +51,7 @@ export const UpdateCatSchema = Type.Partial(
       isActive: Type.Boolean(),
       attributes: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
     },
-    { title: 'UpdateCat' }
+    { title: 'UpdateCat', additionalProperties: false }
   )
 );
 

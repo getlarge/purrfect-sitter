@@ -4,10 +4,7 @@ import 'pino';
 
 import { createDatabase, closeDatabase } from '@purrfect-sitter/database';
 import { app } from './app/app.js';
-import {
-  TypeBoxTypeProvider,
-  TypeBoxValidatorCompiler,
-} from '@fastify/type-provider-typebox';
+import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import Fastify from 'fastify';
 
 const host = process.env.HOST ?? 'localhost';
@@ -26,8 +23,12 @@ const server = Fastify({
       },
     },
   },
+  ajv: {
+    customOptions: {
+      removeAdditional: true,
+    },
+  },
 })
-  .setValidatorCompiler(TypeBoxValidatorCompiler)
   .withTypeProvider<TypeBoxTypeProvider>();
 
 // TODO: validate environment variables, should throw if OPENFGA_STORE_ID not set

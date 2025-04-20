@@ -17,7 +17,7 @@ export const UserSchema = Type.Object(
       default: new Date().toISOString(),
     }),
   },
-  { title: 'User' }
+  { title: 'User', additionalProperties: false }
 );
 
 export const CreateUserSchema = Type.Object(
@@ -25,7 +25,7 @@ export const CreateUserSchema = Type.Object(
     email: Type.String({ format: 'email' }),
     displayName: Type.Optional(Type.String()),
   },
-  { title: 'CreateUser' }
+  { title: 'CreateUser', additionalProperties: false }
 );
 
 export const UpdateUserSchema = Type.Partial(
@@ -34,7 +34,7 @@ export const UpdateUserSchema = Type.Partial(
       email: Type.String({ format: 'email' }),
       displayName: Type.Optional(Type.String()),
     },
-    { title: 'UpdateUser' }
+    { title: 'UpdateUser', additionalProperties: false }
   )
 );
 

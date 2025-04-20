@@ -22,20 +22,26 @@ export const ReviewSchema = Type.Object(
       default: new Date().toISOString(),
     }),
   },
-  { title: 'Review' }
+  { title: 'Review', additionalProperties: false }
 );
 
-export const CreateReviewSchema = Type.Object({
-  catSittingId: Type.String({ format: 'uuid' }),
-  rating: Type.Integer({ minimum: 1, maximum: 5 }),
-  content: Type.Optional(Type.String()),
-});
-
-export const UpdateReviewSchema = Type.Partial(
-  Type.Object({
+export const CreateReviewSchema = Type.Object(
+  {
+    catSittingId: Type.String({ format: 'uuid' }),
     rating: Type.Integer({ minimum: 1, maximum: 5 }),
     content: Type.Optional(Type.String()),
-  })
+  },
+  { additionalProperties: false }
+);
+
+export const UpdateReviewSchema = Type.Partial(
+  Type.Object(
+    {
+      rating: Type.Integer({ minimum: 1, maximum: 5 }),
+      content: Type.Optional(Type.String()),
+    },
+    { additionalProperties: false }
+  )
 );
 
 export type ReviewDto = (typeof ReviewSchema)['static'];

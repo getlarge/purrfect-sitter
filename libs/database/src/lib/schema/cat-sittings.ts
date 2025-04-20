@@ -27,7 +27,7 @@ export const catSittings = pgTable('cat_sittings', {
   endTime: timestamp('end_time').notNull(),
   attributes: jsonb('attributes').$type<Record<string, unknown>>(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
 });
 
 export type CatSitting = typeof catSittings.$inferSelect;
