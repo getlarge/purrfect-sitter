@@ -74,7 +74,7 @@ selfservice:
             - hook: session
 
 log:
-  level: info
+  level: debug
   format: json
   leak_sensitive_values: true
 
