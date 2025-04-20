@@ -8,12 +8,14 @@ import { openfgaClient } from './test-utils';
 
 var __TEARDOWN_MESSAGE__: string;
 var __TEST_VARIABLES__: {
-  openfgaStoreId?: string;
+  FGA_STORE_ID?: string;
 };
 
 process.env.AUTH_STRATEGY ??= 'openfga';
 process.env.DATABASE_URL ??=
   'postgres://dbuser:secret@localhost:5432/purrfect-sitter-test?sslmode=disable';
+// Dummy store ID for OpenFGA to avoid purrfect-sitter-api crashing
+process.env.FGA_STORE_ID = 'dummy-store-id';
 
 const execAsync = promisify(exec);
 
@@ -35,11 +37,6 @@ async function setupOpenFGA() {
 
     console.log('OpenFGA authorization model uploaded successfully');
 
-    globalThis.__TEST_VARIABLES__ = {
-      ...(globalThis.__TEST_VARIABLES__ || {}),
-      openfgaStoreId: store.id,
-    };
-
     return store.id;
   } catch (error) {
     console.error('Error setting up OpenFGA:', error);
@@ -52,19 +49,18 @@ module.exports = async function () {
   // TODO: check env variables presence, DATABASE_URL, AUTH_STRATEGY, etc.
   try {
     await execAsync('docker compose -f docker-compose-ci.yml up -d --wait');
+    await execAsync('npx nx run database:migrate');
 
-    // ? run db migrations?
     if (process.env.AUTH_STRATEGY === 'openfga') {
       const openfgaStoreId = await setupOpenFGA();
 
+      globalThis.__TEST_VARIABLES__ = {
+        ...(globalThis.__TEST_VARIABLES__ || {}),
+        FGA_STORE_ID: openfgaStoreId,
+      };
+      process.env.FGA_STORE_ID = openfgaStoreId;
       await execAsync(
-        'docker compose -f docker-compose-ci.yml restart purrfect-sitter-api',
-        {
-          env: {
-            ...process.env,
-            FGA_STORE_ID: openfgaStoreId,
-          },
-        }
+        'docker compose -f docker-compose-ci.yml restart purrfect-sitter-api'
       );
     }
 
