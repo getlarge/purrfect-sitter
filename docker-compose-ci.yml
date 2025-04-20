@@ -17,7 +17,7 @@ services:
       AUTH_STRATEGY: ${AUTH_STRATEGY:-openfga}
       KRATOS_URL: http://kratos:4433
       OPENFGA_URL: http://openfga:8080
-      FGA_STORE_ID: ${FGA_STORE_ID}
+      FGA_STORE_ID: ${FGA_STORE_ID:-dummy-store}
       DATABASE_URL: postgres://dbuser:secret@postgres:5432/purrfect-sitter-test?sslmode=disable
 
   postgres:
@@ -38,13 +38,25 @@ services:
       POSTGRES_PASSWORD: secret
       POSTGRES_DB: openfga-test
 
+  openfga-migrate:
+    extends:
+      file: docker-compose-base.yml
+      service: openfga-migrate
+    depends_on:
+      openfga-postgres:
+        condition: service_healthy
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://dbuser:secret@openfga-postgres:5432/openfga-test?sslmode=disable
+      OPENFGA_LOG_FORMAT: json
+
   openfga:
     extends:
       file: docker-compose-base.yml
       service: openfga
     depends_on:
-      openfga-postgres:
-        condition: service_healthy
+      openfga-migrate:
+        condition: service_completed_successfully
     environment:
       OPENFGA_DATASTORE_ENGINE: postgres
       OPENFGA_DATASTORE_URI: postgres://dbuser:secret@openfga-postgres:5432/openfga-test?sslmode=disable
@@ -59,13 +71,24 @@ services:
       POSTGRES_PASSWORD: secret
       POSTGRES_DB: kratosdb-test
 
+  kratos-migrate:
+    extends:
+      file: docker-compose-base.yml
+      service: kratos-migrate
+    depends_on:
+      kratos-postgres:
+        condition: service_healthy
+    environment:
+      DSN: postgres://dbuser:secret@kratos-postgres:5432/kratosdb-test?sslmode=disable
+      LOG_FORMAT: json
+
   kratos:
     extends:
       file: docker-compose-base.yml
       service: kratos
     depends_on:
-      kratos-postgres:
-        condition: service_healthy
+      kratos-migrate:
+        condition: service_completed_successfully
     environment:
       DSN: postgres://dbuser:secret@kratos-postgres:5432/kratosdb-test?sslmode=disable
       LOG_FORMAT: json

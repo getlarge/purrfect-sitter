@@ -31,9 +31,6 @@ services:
     environment:
       OPENFGA_DATASTORE_ENGINE: postgres
       OPENFGA_DATASTORE_URI: postgres://dbuser:secret@openfga-postgres:5432/openfga?sslmode=disable
-    profiles:
-      - 'dev'
-      - 'ci'
 
   openfga:
     image: openfga/openfga:latest
