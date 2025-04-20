@@ -7,5 +7,12 @@
     "noImplicitAny": false
   },
   "include": ["jest.config.ts", "src/**/*.ts"],
-  "references": []
+  "references": [
+    {
+      "path": "../../libs/users/repositories"
+    },
+    {
+      "path": "../../libs/models"
+    }
+  ]
 }

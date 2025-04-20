@@ -4,6 +4,18 @@
   "include": [],
   "references": [
     {
+      "path": "../../libs/users/repositories"
+    },
+    {
+      "path": "../../libs/reviews/repositories"
+    },
+    {
+      "path": "../../libs/cat-sittings/repositories"
+    },
+    {
+      "path": "../../libs/cats/repositories"
+    },
+    {
       "path": "../../libs/database"
     },
     {
@@ -19,10 +31,10 @@
       "path": "../../libs/models"
     },
     {
-      "path": "../../libs/auth/repositories"
+      "path": "../../libs/auth/middlewares"
     },
     {
-      "path": "../../libs/auth/middlewares"
+      "path": "../../libs/auth/repositories"
     },
     {
       "path": "./tsconfig.app.json"

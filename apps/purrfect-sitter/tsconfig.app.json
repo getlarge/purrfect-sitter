@@ -19,6 +19,18 @@
   ],
   "references": [
     {
+      "path": "../../libs/users/repositories/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/reviews/repositories/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/cat-sittings/repositories/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/cats/repositories/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/database/tsconfig.lib.json"
     },
     {
@@ -34,10 +46,10 @@
       "path": "../../libs/models/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/auth/repositories/tsconfig.lib.json"
+      "path": "../../libs/auth/middlewares/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/auth/middlewares/tsconfig.lib.json"
+      "path": "../../libs/auth/repositories/tsconfig.lib.json"
     }
   ]
 }
