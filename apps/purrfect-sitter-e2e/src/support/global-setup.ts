@@ -10,12 +10,19 @@ var __TEARDOWN_MESSAGE__: string;
 var __TEST_VARIABLES__: {
   FGA_STORE_ID?: string;
 };
-
+globalThis.__TEST_VARIABLES__ ??= {};
 process.env.AUTH_STRATEGY ??= 'openfga';
 process.env.DATABASE_URL ??=
   'postgres://dbuser:secret@localhost:5432/purrfect-sitter-test?sslmode=disable';
 // Dummy store ID for OpenFGA to avoid purrfect-sitter-api crashing
 process.env.FGA_STORE_ID = 'dummy-store-id';
+
+globalThis.__TEST_VARIABLES__ = {
+  ...(globalThis.__TEST_VARIABLES__ || {}),
+  FGA_STORE_ID: process.env.FGA_STORE_ID,
+  AUTH_STRATEGY: process.env.AUTH_STRATEGY,
+  DATABASE_URL: process.env.DATABASE_URL,
+};
 
 const execAsync = promisify(exec);
 
@@ -52,10 +59,7 @@ module.exports = async function () {
     await execAsync('npx nx run database:migrate');
 
     const openfgaStoreId = await setupOpenFGA();
-    globalThis.__TEST_VARIABLES__ = {
-      ...(globalThis.__TEST_VARIABLES__ || {}),
-      FGA_STORE_ID: openfgaStoreId,
-    };
+    globalThis.__TEST_VARIABLES__.FGA_STORE_ID = openfgaStoreId;
     process.env.FGA_STORE_ID = openfgaStoreId;
     await execAsync(
       'docker compose -f docker-compose-ci.yml up -d --wait purrfect-sitter-api'

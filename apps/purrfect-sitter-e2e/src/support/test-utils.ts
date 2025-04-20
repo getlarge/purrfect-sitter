@@ -42,13 +42,12 @@ export const openfgaClient = new OpenFgaApi({
 });
 
 export function getOpenFgaStoreId(): string {
-  const { openfgaStoreId } = globalThis.__TEST_VARIABLES__ || {};
-
-  if (!openfgaStoreId) {
+  const { FGA_STORE_ID } = globalThis.__TEST_VARIABLES__ || {};
+  if (!FGA_STORE_ID) {
     throw new Error('OpenFGA store ID not found in test variables');
   }
 
-  return openfgaStoreId;
+  return FGA_STORE_ID;
 }
 
 export async function createTestUser(
