@@ -17,19 +17,25 @@ export class OpenFgaStrategy implements IAuthorizationStrategy {
         relation: this.mapActionToRelation(action, resource),
         object: `${resource}:${resourceId}`,
       },
-      context: this.getContext(action, resource, resourceId),
+      context: await this.getContext(action, resource, resourceId),
     };
 
     try {
-      const { allowed } = await client.check(storeId, request);
-      return allowed ?? false;
+      const { allowed, resolution } = await client.check(storeId, request);
+      const granted = allowed ?? false;
+      if (!granted) {
+        console.warn(
+          `Authorization check failed for user ${userId} on ${resource}:${resourceId} with action ${action}`,
+          resolution
+        );
+      }
+      return granted;
     } catch (error) {
       console.error('OpenFGA check failed', error);
       return false;
     }
   }
 
-  // Map API actions to OpenFGA relations
   private mapActionToRelation(action: string, resource: string): string {
     switch (resource) {
       case 'cat':
@@ -47,6 +53,8 @@ export class OpenFgaStrategy implements IAuthorizationStrategy {
             return 'can_view';
           case 'update':
             return 'can_update';
+          case 'delete':
+            return 'can_delete';
           case 'post_updates':
             return 'can_post_updates';
           case 'review':
@@ -77,21 +85,20 @@ export class OpenFgaStrategy implements IAuthorizationStrategy {
     resource: string,
     resourceId: string
   ): Promise<object> {
-    if (
-      resource === 'cat_sitting' &&
-      ['update', 'post_updates'].includes(action)
-    ) {
-      const now = new Date();
-      return {
-        current_time: now.toISOString(),
-      };
-    }
+    if (resource === 'cat_sitting') {
+      if (['delete', 'update', 'post_updates'].includes(action)) {
+        const now = new Date();
+        return {
+          current_time: now.toISOString(),
+        };
+      }
 
-    if (resource === 'cat_sitting' && action === 'review') {
-      const catSitting = await catSittingRepository.findById(resourceId);
-      return {
-        cat_sitting_attributes: { status: catSitting?.status ?? 'unknown' },
-      };
+      if (action === 'review') {
+        const catSitting = await catSittingRepository.findById(resourceId);
+        return {
+          cat_sitting_attributes: { status: catSitting?.status ?? 'unknown' },
+        };
+      }
     }
 
     return {};

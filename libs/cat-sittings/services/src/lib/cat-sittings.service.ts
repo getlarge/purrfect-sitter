@@ -8,7 +8,11 @@ import {
   UpdateCatSittingDto,
   UpdateCatSittingStatusDto,
 } from '@purrfect-sitter/models';
-import type { OpenFgaApi, TupleKey } from '@openfga/sdk';
+import type {
+  OpenFgaApi,
+  TupleKey,
+  TupleKeyWithoutCondition,
+} from '@openfga/sdk';
 import { getOpenFgaClient } from '@purrfect-sitter/auth-repositories';
 
 export class CatSittingsService {
@@ -112,6 +116,16 @@ export class CatSittingsService {
   private async createAuthRelationships(catSitting: CatSitting) {
     const tuples: TupleKey[] = [
       {
+        user: `cat:${catSitting.catId}`,
+        relation: 'cat',
+        object: `cat_sitting:${catSitting.id}`,
+      },
+      {
+        user: `user:${catSitting.sitterId}`,
+        relation: 'sitter',
+        object: `cat_sitting:${catSitting.id}`,
+      },
+      {
         user: `cat:${catSitting.catId}#owner`,
         relation: 'can_review',
         object: `cat_sitting:${catSitting.id}`,
@@ -153,29 +167,52 @@ export class CatSittingsService {
   }
 
   private async updateAuthRelationships(catSitting: CatSitting) {
-    const tuples: TupleKey[] = [
-      {
-        user: `cat_sitting:${catSitting.id}#sitter`,
-        relation: 'active_sitter',
-        object: `cat_sitting:${catSitting.id}`,
-        condition: {
-          name: 'is_active_timeslot',
-          context: {
-            start_time: catSitting.startTime.toISOString(),
-            end_time: catSitting.endTime.toISOString(),
+    // can't simply update the condition, need to delete and recreate
+    // https://github.com/openfga/openfga/issues/2151
+    // ideally, should be atomic
+    await this.openfga.write(this.openfgaStoreId, {
+      deletes: {
+        tuple_keys: [
+          {
+            user: `cat_sitting:${catSitting.id}#sitter`,
+            relation: 'active_sitter',
+            object: `cat_sitting:${catSitting.id}`,
           },
-        },
+        ],
       },
-    ];
+    });
     await this.openfga.write(this.openfgaStoreId, {
       writes: {
-        tuple_keys: tuples,
+        tuple_keys: [
+          {
+            user: `cat_sitting:${catSitting.id}#sitter`,
+            relation: 'active_sitter',
+            object: `cat_sitting:${catSitting.id}`,
+            condition: {
+              name: 'is_active_timeslot',
+              context: {
+                start_time: catSitting.startTime.toISOString(),
+                end_time: catSitting.endTime.toISOString(),
+              },
+            },
+          },
+        ],
       },
     });
   }
 
   private async deleteAuthRelationships(catSitting: CatSitting) {
-    const tuples: TupleKey[] = [
+    const tuples: TupleKeyWithoutCondition[] = [
+      {
+        user: `cat:${catSitting.catId}`,
+        relation: 'cat',
+        object: `cat_sitting:${catSitting.id}`,
+      },
+      {
+        user: `user:${catSitting.sitterId}`,
+        relation: 'sitter',
+        object: `cat_sitting:${catSitting.id}`,
+      },
       {
         user: `cat:${catSitting.catId}#owner`,
         relation: 'can_review',

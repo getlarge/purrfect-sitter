@@ -34,6 +34,7 @@ const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     },
     preHandler: [authenticate],
     handler: async (_request, _reply) => {
+      // TODO: filter based on user role
       const sittings = await catSittingsService.findAll();
       return { data: sittings };
     },
@@ -47,6 +48,7 @@ const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         response: {
           200: getCatSittingResponseSchema,
           404: errorResponseSchema,
+          403: errorResponseSchema,
         },
         security: [{ cookieAuth: [] }],
       },
@@ -81,6 +83,7 @@ const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         response: {
           201: createCatSittingResponseSchema,
           400: errorResponseSchema,
+          403: errorResponseSchema,
         },
         security: [{ cookieAuth: [] }],
       },
@@ -114,6 +117,7 @@ const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         response: {
           200: updateCatSittingResponseSchema,
           404: errorResponseSchema,
+          403: errorResponseSchema,
         },
         security: [{ cookieAuth: [] }],
       },
@@ -154,6 +158,7 @@ const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         response: {
           200: updateCatSittingStatusResponseSchema,
           404: errorResponseSchema,
+          403: errorResponseSchema,
         },
         security: [{ cookieAuth: [] }],
       },
@@ -193,6 +198,7 @@ const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         response: {
           200: deleteCatSittingResponseSchema,
           404: errorResponseSchema,
+          403: errorResponseSchema,
         },
         security: [{ cookieAuth: [] }],
       },
@@ -201,7 +207,7 @@ const catSittingsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         async (request, reply) => {
           const { id } = request.params;
           return authorize({
-            action: 'update',
+            action: 'delete',
             resource: 'cat_sitting',
             resourceId: id,
           })(request, reply);
