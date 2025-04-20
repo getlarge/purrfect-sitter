@@ -51,24 +51,19 @@ module.exports = async function () {
     await execAsync('docker compose -f docker-compose-ci.yml up -d --wait');
     await execAsync('npx nx run database:migrate');
 
-    if (process.env.AUTH_STRATEGY === 'openfga') {
-      const openfgaStoreId = await setupOpenFGA();
-
-      globalThis.__TEST_VARIABLES__ = {
-        ...(globalThis.__TEST_VARIABLES__ || {}),
-        FGA_STORE_ID: openfgaStoreId,
-      };
-      process.env.FGA_STORE_ID = openfgaStoreId;
-      await execAsync(
-        'docker compose -f docker-compose-ci.yml restart purrfect-sitter-api'
-      );
-    }
-
+    const openfgaStoreId = await setupOpenFGA();
+    globalThis.__TEST_VARIABLES__ = {
+      ...(globalThis.__TEST_VARIABLES__ || {}),
+      FGA_STORE_ID: openfgaStoreId,
+    };
+    process.env.FGA_STORE_ID = openfgaStoreId;
+    await execAsync(
+      'docker compose -f docker-compose-ci.yml up -d --wait purrfect-sitter-api'
+    );
     console.log('Starting API server with test configuration...');
 
     globalThis.__TEARDOWN_MESSAGE__ =
       '\nTearing down E2E test environment...\n';
-
     console.log('E2E test environment setup completed successfully');
   } catch (error) {
     console.error('Error setting up E2E test environment:', error);
