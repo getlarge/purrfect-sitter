@@ -221,7 +221,6 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
 
       const newSitting = newSittingResponse.data.data;
 
-      // Create a review
       const reviewResponse = await ownerClient.post<CreateReviewResponseSchema>(
         '/reviews',
         {
@@ -246,7 +245,6 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
     });
   });
 
-  // Cleanup
   afterAll(async () => {
     await adminClient.delete(`/reviews/${review.id}`);
     await adminClient.delete(`/cat-sittings/${catSitting.id}`);

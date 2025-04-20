@@ -106,19 +106,23 @@ describe(`Cat Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
       const deleteResponse = await ownerClient.delete<DeleteCatResponseSchema>(
         `/cats/${catToDelete.id}`
       );
-      expect(deleteResponse.status).toBe(204);
+      expect(deleteResponse.status).toBe(200);
 
-      const getResponse = await ownerClient.get(`/cats/${catToDelete.id}`);
+      const getResponse = await ownerClient.get<GetCatResponseSchema>(
+        `/cats/${catToDelete.id}`
+      );
       expect(getResponse.status).toBe(404);
     });
   });
 
   describe('Cat Sitter', () => {
     it('can view cats', async () => {
-      const response = await sitterClient.get(`/cats/${cat.id}`);
+      const response = await sitterClient.get<GetCatResponseSchema>(
+        `/cats/${cat.id}`
+      );
 
       expect(response.status).toBe(200);
-      expect(response.data).toHaveProperty('id', cat.id);
+      expect(response.data.data).toHaveProperty('id', cat.id);
     });
 
     it("cannot update someone else's cat", async () => {
@@ -141,40 +145,50 @@ describe(`Cat Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
 
   describe('Admin', () => {
     it('can view any cat', async () => {
-      const response = await adminClient.get(`/cats/${cat.id}`);
+      const response = await adminClient.get<GetCatResponseSchema>(
+        `/cats/${cat.id}`
+      );
 
       expect(response.status).toBe(200);
-      expect(response.data).toHaveProperty('id', cat.id);
+      expect(response.data.data).toHaveProperty('id', cat.id);
     });
 
     it('can update any cat', async () => {
-      const response = await adminClient.put(`/cats/${cat.id}`, {
-        name: 'Admin Updated',
-        description: 'Admin has updated this cat',
-        breed: 'Admin Breed',
-        age: '5',
-      });
+      const response = await adminClient.put<CreateCatResponseSchema>(
+        `/cats/${cat.id}`,
+        {
+          name: 'Admin Updated',
+          description: 'Admin has updated this cat',
+          breed: 'Admin Breed',
+          age: '5',
+        }
+      );
 
       expect(response.status).toBe(200);
-      expect(response.data.name).toBe('Admin Updated');
+      expect(response.data.data.name).toBe('Admin Updated');
     });
 
     it('can delete any cat', async () => {
-      const createResponse = await ownerClient.post('/cats', {
-        name: 'Admin Will Delete',
-        description: 'This cat will be deleted by admin',
-        breed: 'Test Breed',
-        age: '1',
-      });
+      const createResponse = await ownerClient.post<CreateCatResponseSchema>(
+        '/cats',
+        {
+          name: 'Admin Will Delete',
+          description: 'This cat will be deleted by admin',
+          breed: 'Test Breed',
+          age: '1',
+        }
+      );
 
-      const catToDelete = createResponse.data;
+      const catToDelete = createResponse.data.data;
 
-      const deleteResponse = await adminClient.delete(
+      const deleteResponse = await adminClient.delete<DeleteCatResponseSchema>(
         `/cats/${catToDelete.id}`
       );
       expect(deleteResponse.status).toBe(204);
 
-      const getResponse = await adminClient.get(`/cats/${catToDelete.id}`);
+      const getResponse = await adminClient.get<GetCatResponseSchema>(
+        `/cats/${catToDelete.id}`
+      );
       expect(getResponse.status).toBe(404);
     });
   });

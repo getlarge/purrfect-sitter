@@ -204,7 +204,7 @@ describe(`Cat Sitting Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
 
       const otherSitting = otherSittingResponse.data.data;
 
-      const getResponse = await sitterClient.get(
+      const getResponse = await sitterClient.get<GetCatSittingResponseSchema>(
         `/cat-sittings/${otherSitting.id}`
       );
       expect(getResponse.status).toBe(403);
