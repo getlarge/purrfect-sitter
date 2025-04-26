@@ -105,3 +105,27 @@ services:
       - '1025:1025'
       - '4436:4436'
       - '4437:4437'
+
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.123.0
+    command: ['--config=/conf/collector-config.yml']
+    volumes:
+      - ./infra/otlp/collector-config.yml:/conf/collector-config.yml
+    ports:
+      - '55679:55679'
+      - '9464:9464'
+      - '4317:4317'
+      - '4318:4318'
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    ports:
+      - '9411:9411'
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    volumes:
+      - ./infra/otlp/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - '9090:9090'

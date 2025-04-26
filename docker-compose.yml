@@ -84,3 +84,26 @@ services:
       service: mailslurper
     profiles:
       - 'dev'
+
+  collector:
+    extends:
+      file: docker-compose-base.yml
+      service: collector
+    depends_on:
+      - zipkin
+    profiles:
+      - 'dev'
+
+  zipkin:
+    extends:
+      file: docker-compose-base.yml
+      service: zipkin
+    profiles:
+      - 'dev'
+
+  prometheus:
+    extends:
+      file: docker-compose-base.yml
+      service: prometheus
+    profiles:
+      - 'dev'
