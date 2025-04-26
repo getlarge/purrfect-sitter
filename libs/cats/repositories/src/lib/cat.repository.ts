@@ -1,6 +1,7 @@
-import { eq } from 'drizzle-orm';
+import * as drizzle from 'drizzle-orm';
 import { getDb, Cat, NewCat, cats } from '@purrfect-sitter/database';
 
+const { eq } = drizzle;
 export class CatRepository {
   async findById(id: string): Promise<Cat | undefined> {
     const db = getDb();

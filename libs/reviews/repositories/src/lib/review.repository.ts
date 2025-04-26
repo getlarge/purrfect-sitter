@@ -1,6 +1,7 @@
-import { eq } from 'drizzle-orm';
+import * as drizzleOrm from 'drizzle-orm';
 import { getDb, NewReview, Review, reviews } from '@purrfect-sitter/database';
 
+const { eq } = drizzleOrm;
 export class ReviewRepository {
   async findById(id: string): Promise<Review | undefined> {
     const db = getDb();

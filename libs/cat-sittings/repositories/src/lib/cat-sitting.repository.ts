@@ -1,4 +1,4 @@
-import { and, eq, gte, lte } from 'drizzle-orm';
+import * as drizzleOrm from 'drizzle-orm';
 import {
   getDb,
   CatSitting,
@@ -6,6 +6,8 @@ import {
   NewCatSitting,
   catSittings,
 } from '@purrfect-sitter/database';
+
+const { and, eq, gte, lte } = drizzleOrm;
 
 export class CatSittingRepository {
   async findById(id: string): Promise<CatSitting | undefined> {

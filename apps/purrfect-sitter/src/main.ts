@@ -1,4 +1,3 @@
-import './otel.js';
 import 'pino-pretty';
 import 'pino';
 
@@ -12,7 +11,7 @@ const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 
 createDatabase();
 
-const server = Fastify({
+const server = await Fastify({
   logger: {
     level: process.env.LOG_LEVEL || 'info',
     transport: {
@@ -28,8 +27,7 @@ const server = Fastify({
       removeAdditional: true,
     },
   },
-})
-  .withTypeProvider<TypeBoxTypeProvider>();
+}).withTypeProvider<TypeBoxTypeProvider>();
 
 // TODO: validate environment variables, should throw if OPENFGA_STORE_ID not set
 const appOptions = {

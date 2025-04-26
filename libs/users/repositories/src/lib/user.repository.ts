@@ -1,5 +1,7 @@
-import { eq } from 'drizzle-orm';
+import * as drizzleOrm from 'drizzle-orm';
 import { getDb, NewUser, User, users } from '@purrfect-sitter/database';
+
+const { eq } = drizzleOrm;
 
 export class UserRepository {
   async findById(id: string): Promise<User | undefined> {

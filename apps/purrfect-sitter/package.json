@@ -60,7 +60,12 @@
         },
         "configurations": {
           "development": {
-            "buildTarget": "purrfect-sitter:build:development"
+            "buildTarget": "purrfect-sitter:build:development",
+            "runtimeArgs": [
+              "--import",
+              "./apps/purrfect-sitter/src/instrumentation.mts",
+              "--experimental-strip-types"
+            ]
           },
           "production": {
             "buildTarget": "purrfect-sitter:build:production",
