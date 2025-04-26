@@ -3,6 +3,7 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify';
 import AutoLoad from '@fastify/autoload';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { Server, IncomingMessage, ServerResponse } from 'node:http';
+import { writeFileSync } from 'node:fs';
 
 export interface AppOptions {
   kratosUrl: string;
@@ -36,6 +37,11 @@ export async function app(fastify: Fastify, options: AppOptions) {
   });
 
   fastify.addHook('onReady', () => {
-    console.log(fastify.swagger());
+    if (process.env.NODE_ENV === 'local') {
+      writeFileSync(
+        path.join(import.meta.dirname, '..', '..', 'openapi.json'),
+        JSON.stringify(fastify.swagger(), null, 2)
+      );
+    }
   });
 }
