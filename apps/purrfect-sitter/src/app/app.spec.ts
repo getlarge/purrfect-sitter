@@ -6,7 +6,12 @@ describe('GET /', () => {
 
   beforeEach(() => {
     server = Fastify();
-    server.register(app);
+    server.register(app, {
+      kratosUrl: 'http://localhost:4433',
+      openfgaUrl: 'http://localhost:8080',
+      openfgaStoreId: 'default',
+      authStrategy: 'openfga',
+    });
   });
 
   it('should respond with a message', async () => {
