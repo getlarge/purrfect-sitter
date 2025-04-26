@@ -12,6 +12,9 @@
       "path": "../../libs/users/repositories"
     },
     {
+      "path": "../../libs/database"
+    },
+    {
       "path": "../../libs/models"
     }
   ]
