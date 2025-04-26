@@ -93,7 +93,11 @@
       "defaultConfiguration": "development"
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "options": {
+        "jestConfig": "{projectRoot}/jest.config.ts",
+        "passWithNoTests": true
+      }
     },
     "@nx/js:swc": {
       "cache": true,
