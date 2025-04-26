@@ -1,5 +1,6 @@
 import { Configuration, FrontendApi } from '@ory/kratos-client';
 import { OpenFgaApi } from '@openfga/sdk';
+import { telemetryConfig } from './telemetry.js';
 
 export interface IAuthConfig {
   kratosUrl: string;
@@ -14,7 +15,6 @@ export interface ISessionUser {
   displayName?: string;
 }
 
-// Singleton instances
 let kratosClient: FrontendApi;
 let openfgaClient: OpenFgaApi;
 let authConfig: IAuthConfig;
@@ -40,6 +40,7 @@ export const getOpenFgaClient = () => {
     }
     openfgaClient = new OpenFgaApi({
       apiUrl: authConfig.openfgaUrl,
+      telemetry: telemetryConfig,
     });
   }
   return { client: openfgaClient, storeId: authConfig.openfgaStoreId };
