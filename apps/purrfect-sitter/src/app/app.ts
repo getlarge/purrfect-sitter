@@ -37,11 +37,13 @@ export async function app(fastify: Fastify, options: AppOptions) {
   });
 
   fastify.addHook('onReady', () => {
-    if (process.env.NODE_ENV === 'local') {
+    if (process.env.NX_TASK_TARGET_TARGET === 'gen-openapi') {
       writeFileSync(
         path.join(import.meta.dirname, '..', '..', 'openapi.json'),
         JSON.stringify(fastify.swagger(), null, 2)
       );
+      fastify.log.info('Generated OpenAPI spec');
+      process.exit(0);
     }
   });
 }

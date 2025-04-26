@@ -63,7 +63,8 @@
             "buildTarget": "purrfect-sitter:build:development"
           },
           "production": {
-            "buildTarget": "purrfect-sitter:build:production"
+            "buildTarget": "purrfect-sitter:build:production",
+            "watch": false
           }
         }
       },
@@ -79,6 +80,18 @@
           "lint:fix"
         ],
         "command": "node tools/scripts/lockfile.mjs apps/purrfect-sitter"
+      },
+      "gen-openapi": {
+        "executor": "nx:run-commands",
+        "dependsOn": [
+          "build"
+        ],
+        "options": {
+          "commands": [
+            "node apps/purrfect-sitter/dist/main.js"
+          ],
+          "readyWhen": "Generated OpenAPI spec"
+        }
       },
       "container": {
         "executor": "@nx-tools/nx-container:build",
