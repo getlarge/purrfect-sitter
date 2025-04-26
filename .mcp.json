@@ -1,20 +1,21 @@
 {
   "mcpServers": {
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "env": {}
+    },
     "node-runner": {
       "type": "stdio",
       "command": "npx",
-      "args": [
-        "-y",
-        "mcp-node"
-      ],
+      "args": ["-y", "mcp-node"],
       "env": {}
     },
     "nx-purrfect-sitter": {
       "type": "stdio",
       "command": "npx",
-      "args": [
-        "nx-mcp"
-      ],
+      "args": ["-y", "nx-mcp", "./"],
       "env": {}
     }
   }
