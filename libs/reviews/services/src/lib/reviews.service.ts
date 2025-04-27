@@ -40,7 +40,6 @@ export class ReviewsService {
   }
 
   async create(userId: string, createReviewDto: CreateReviewDto) {
-    // Verify the cat sitting exists and is completed
     const catSitting = await catSittingRepository.findById(
       createReviewDto.catSittingId
     );
@@ -77,7 +76,6 @@ export class ReviewsService {
 
     const deletedReview = await reviewRepository.delete(id);
     if (deletedReview) {
-      // Delete OpenFGA relationship tuples
       await this.deleteAuthRelationships(id, review.catSittingId);
     }
 

@@ -33,8 +33,8 @@ type review
   relations
     define admin: admin from system
     define author: owner from cat_sitting
-    define can_delete: admin
-    define can_edit: author
+    define can_delete: admin or author
+    define can_edit: admin or author
     define can_view: [user, user:*]
     define cat: cat from cat_sitting
     define cat_sitting: [cat_sitting]

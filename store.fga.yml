@@ -34,15 +34,15 @@ model: |
 
   type review
     relations
-      define admin: admin from system
-      define author: owner from cat_sitting
-      define can_delete: admin
-      define can_edit: author
-      define can_view: [user, user:*]
-      define cat: cat from cat_sitting
-      define cat_sitting: [cat_sitting]
-      define subject: sitter from cat_sitting
-      define system: [system]
+    define admin: admin from system
+    define author: owner from cat_sitting
+    define can_delete: admin or author
+    define can_edit: admin or author
+    define can_view: [user, user:*]
+    define cat: cat from cat_sitting
+    define cat_sitting: [cat_sitting]
+    define subject: sitter from cat_sitting
+    define system: [system]
 
   condition is_active_timeslot(current_time: timestamp, end_time: timestamp, start_time: timestamp) {
     current_time >= start_time && current_time <= end_time

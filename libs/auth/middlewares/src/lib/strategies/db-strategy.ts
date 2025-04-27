@@ -7,12 +7,10 @@ import {
   IAuthorizationStrategy,
 } from './strategy-interface.js';
 
-// Database-backed authorization strategy
 export class DbAuthStrategy implements IAuthorizationStrategy {
   async check(params: IAuthorizationCheck): Promise<boolean> {
     const { userId, action, resource, resourceId } = params;
 
-    // Basic checks for the resources
     switch (resource) {
       case 'cat':
         return this.checkCatPermission(userId, action, resourceId);
@@ -27,7 +25,6 @@ export class DbAuthStrategy implements IAuthorizationStrategy {
     }
   }
 
-  // Cat permissions
   private async checkCatPermission(
     userId: string,
     action: string,
@@ -48,7 +45,6 @@ export class DbAuthStrategy implements IAuthorizationStrategy {
     }
   }
 
-  // Cat sitting permissions
   private async checkCatSittingPermission(
     userId: string,
     action: string,
@@ -90,7 +86,6 @@ export class DbAuthStrategy implements IAuthorizationStrategy {
     }
   }
 
-  // Review permissions
   private async checkReviewPermission(
     userId: string,
     action: string,
@@ -106,16 +101,14 @@ export class DbAuthStrategy implements IAuthorizationStrategy {
     if (!cat) return false;
 
     const isAuthor = cat.ownerId === userId; // Review author is the cat owner
-    const isSubject = sitting.sitterId === userId; // Review subject is the sitter
     const isAdmin = await this.isSystemAdmin(userId);
 
     switch (action) {
       case 'view':
-        return isAuthor || isSubject || isAdmin;
+        return true; // All reviews are public
       case 'edit':
-        return isAuthor;
       case 'delete':
-        return isAdmin;
+        return isAuthor || isAdmin;
       default:
         return false;
     }

@@ -246,11 +246,6 @@ export class CatSittingsService {
         object: `cat_sitting:${catSitting.id}`,
       },
       {
-        user: `cat_sitting:${catSitting.id}#sitter`,
-        relation: 'active_sitter',
-        object: `cat_sitting:${catSitting.id}`,
-      },
-      {
         user: 'system:1',
         relation: 'system',
         object: `cat_sitting:${catSitting.id}`,
