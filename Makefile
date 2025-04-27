@@ -21,7 +21,7 @@ e2e-test-openfga:
 	AUTH_STRATEGY=openfga npx nx e2e purrfect-sitter-e2e
 
 # Run all E2E tests
-e2e-test-all: e2e-test-db e2e-test-openfga
+e2e-test-all: e2e-test-openfga e2e-test-db
 
 # Start development environment
 start-dev: stop-e2e-services

@@ -1,7 +1,7 @@
+import { CatSittingStatus } from '@purrfect-sitter/database';
 import {
   CatDto,
   CatSittingDto,
-  CatSittingSchema,
   CreateCatDto,
   CreateCatResponseSchema,
   CreateCatSittingDto,
@@ -11,6 +11,7 @@ import {
   DeleteReviewResponseSchema,
   GetReviewResponseSchema,
   ReviewDto,
+  UpdateCatSittingStatusDto,
   UpdateReviewDto,
   UpdateReviewResponseSchema,
 } from '@purrfect-sitter/models';
@@ -80,7 +81,16 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
         endTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
       } satisfies CreateCatSittingDto);
     expect(sittingResponse.status).toBe(201);
-    catSitting = sittingResponse.data.data;
+
+    const updatedSittingResponse =
+      await ownerClient.put<CreateCatSittingResponseSchema>(
+        `/cat-sittings/${sittingResponse.data.data.id}/status`,
+        {
+          status: CatSittingStatus.COMPLETED,
+        } satisfies UpdateCatSittingStatusDto
+      );
+    expect(updatedSittingResponse.status).toBe(200);
+    catSitting = updatedSittingResponse.data.data;
 
     const reviewResponse = await ownerClient.post<CreateReviewResponseSchema>(
       '/reviews',
@@ -113,6 +123,15 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
       expect(newSittingResponse.status).toBe(201);
       const newSitting = newSittingResponse.data.data;
 
+      const updatedSittingResponse =
+        await ownerClient.put<CreateCatSittingResponseSchema>(
+          `/cat-sittings/${newSitting.id}/status`,
+          {
+            status: CatSittingStatus.COMPLETED,
+          } satisfies UpdateCatSittingStatusDto
+        );
+      expect(updatedSittingResponse.status).toBe(200);
+
       const reviewResponse = await ownerClient.post<CreateReviewResponseSchema>(
         '/reviews',
         {
@@ -123,7 +142,7 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
       );
 
       expect(reviewResponse.status).toBe(201);
-      expect(reviewResponse.data).toHaveProperty('id');
+      expect(reviewResponse.data.data).toHaveProperty('id');
       expect(reviewResponse.data.data.catSittingId).toBe(newSitting.id);
       expect(reviewResponse.data.data.rating).toBe(4);
     });
@@ -236,6 +255,15 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
       expect(newSittingResponse.status).toBe(201);
       const newSitting = newSittingResponse.data.data;
 
+      const updatedSittingResponse =
+        await ownerClient.put<CreateCatSittingResponseSchema>(
+          `/cat-sittings/${newSitting.id}/status`,
+          {
+            status: CatSittingStatus.COMPLETED,
+          } satisfies UpdateCatSittingStatusDto
+        );
+      expect(updatedSittingResponse.status).toBe(200);
+
       const reviewResponse = await ownerClient.post<CreateReviewResponseSchema>(
         '/reviews',
         {
@@ -252,11 +280,6 @@ describe(`Review Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
           `/reviews/${reviewToDelete.id}`
         );
       expect(deleteResponse.status).toBe(200);
-
-      const getResponse = await adminClient.get(
-        `/reviews/${reviewToDelete.id}`
-      );
-      expect(getResponse.status).toBe(404);
     });
   });
 

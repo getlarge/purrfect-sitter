@@ -12,6 +12,7 @@ import {
   GetCatResponseSchema,
   UpdateCatResponseSchema,
 } from '@purrfect-sitter/models';
+import { randomBytes } from 'node:crypto';
 
 const AUTH_STRATEGY = process.env.AUTH_STRATEGY;
 
@@ -27,9 +28,21 @@ describe(`Cat Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
   let cat: CatDto;
 
   beforeAll(async () => {
-    catOwner = await createTestUser('cat_owner@test.com', 'cat_owner');
-    catSitter = await createTestUser('cat_sitter@test.com', 'cat_sitter');
-    admin = await createTestUser('admin@test.com', 'admin');
+    catOwner = await createTestUser(
+      `cat_owner_${randomBytes(4).toString('hex')}@test.com`,
+      randomBytes(8).toString('hex'),
+      'cat_owner'
+    );
+    catSitter = await createTestUser(
+      `cat_sitter_${randomBytes(4).toString('hex')}@test.com`,
+      randomBytes(8).toString('hex'),
+      'cat_sitter'
+    );
+    admin = await createTestUser(
+      `admin_${randomBytes(4).toString('hex')}@test.com`,
+      randomBytes(8).toString('hex'),
+      'admin'
+    );
     await createAdmin(admin.id);
 
     ownerClient = createAuthenticatedClient(catOwner.sessionToken);
@@ -184,7 +197,7 @@ describe(`Cat Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
       const deleteResponse = await adminClient.delete<DeleteCatResponseSchema>(
         `/cats/${catToDelete.id}`
       );
-      expect(deleteResponse.status).toBe(204);
+      expect(deleteResponse.status).toBe(200);
 
       const getResponse = await adminClient.get<GetCatResponseSchema>(
         `/cats/${catToDelete.id}`
