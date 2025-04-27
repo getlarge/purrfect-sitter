@@ -30,7 +30,7 @@ jobs:
           cache: 'npm'
 
       - run: npm install
-      - run: npm dedupe
+      - run: npm install
 
       - run: npx nx report --verbose
 
