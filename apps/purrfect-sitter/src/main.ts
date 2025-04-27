@@ -34,7 +34,7 @@ const appOptions = {
   kratosUrl: process.env.KRATOS_URL || 'http://localhost:4433',
   openfgaUrl: process.env.OPENFGA_URL || 'http://localhost:8080',
   openfgaStoreId: process.env.FGA_STORE_ID || '',
-  authStrategy: (process.env.AUTH_STRATEGY || 'db') as 'db' | 'openfga',
+  authStrategy: (process.env.AUTH_STRATEGY || 'openfga') as 'db' | 'openfga',
 };
 
 await server.register(app, appOptions);

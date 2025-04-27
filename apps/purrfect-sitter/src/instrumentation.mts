@@ -20,6 +20,8 @@ import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
 import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
 
+process.env.AUTH_STRATEGY ??= 'openfga';
+
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
 
 /**
@@ -45,6 +47,7 @@ function awaitAttributes(detector: ResourceDetector) {
 }
 
 export const openTelemetrySdk = new NodeSDK({
+  serviceName: `purrfect-sitter-${process.env.AUTH_STRATEGY}`,
   traceExporter: new OTLPTraceExporter(),
   metricReader: new PeriodicExportingMetricReader({
     exporter: new OTLPMetricExporter(),
@@ -58,6 +61,24 @@ export const openTelemetrySdk = new NodeSDK({
     }),
     new PinoInstrumentation({}),
     new PgInstrumentation({ requireParentSpan: true }),
+  ],
+  spanProcessors: [
+    {
+      onStart(span) {
+        span.setAttributes({
+          'auth.strategy': process.env.AUTH_STRATEGY,
+        });
+      },
+      onEnd(_span) {
+        //
+      },
+      forceFlush() {
+        return Promise.resolve();
+      },
+      shutdown() {
+        return Promise.resolve();
+      },
+    },
   ],
   // resourceDetectors: getResourceDetectors().map(
   //   awaitAttributes
