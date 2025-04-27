@@ -24,13 +24,14 @@ jobs:
       # Uncomment this line to enable task distribution
       # - run: npx nx-cloud start-ci-run --distribute-on="3 linux-medium-js" --stop-agents-after="build"
 
-      # Cache node_modules
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'npm'
 
       - run: npm install
+
+      - run: npx nx report --verbose
 
       - uses: nrwl/nx-set-shas@v4
 
