@@ -123,6 +123,57 @@ The API follows RESTful principles and provides the following endpoints:
 
 ## Testing
 
-- Unit tests: `npx nx test <project-name>`
-- E2E tests: `npx nx e2e purrfect-sitter-e2e`
-- Test OpenFGA authorization model: `npm run test:fga`
+### Unit Testing
+
+- Run unit tests for a specific project:
+  ```bash
+  npx nx test <project-name>
+  ```
+- Run tests with coverage:
+  ```bash
+  npx nx test <project-name> --coverage
+  ```
+
+### E2E Testing
+
+This project includes comprehensive end-to-end tests that validate both authorization strategies.
+
+#### Test Structure
+
+E2E tests are located in the `apps/purrfect-sitter-e2e/` directory:
+
+- `src/purrfect-sitter/` - Main test suites
+  - `cats/` - Tests for cat management APIs
+  - `cat-sittings/` - Tests for cat sitting APIs
+  - `reviews/` - Tests for review APIs
+- `src/support/` - Test utilities and setup
+
+#### Test Environment Setup
+
+E2E tests use a dedicated test environment with:
+
+- Test-specific Kratos configuration
+- Dedicated PostgreSQL database
+- Separate OpenFGA store
+
+#### Running E2E Tests
+
+Run E2E tests using the Makefile commands:
+
+```bash
+# Run with database strategy
+make e2e-test-db
+
+# Run with OpenFGA strategy
+make e2e-test-openfga
+
+# Run with both strategies sequentially
+make e2e-test-all
+```
+
+Or directly with Nx:
+
+```bash
+# Set strategy via environment variable
+AUTH_STRATEGY=db npx nx e2e purrfect-sitter-e2e
+```
