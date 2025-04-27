@@ -70,11 +70,17 @@ export class DbAuthStrategy implements IAuthorizationStrategy {
       new Date(sitting.startTime) <= now &&
       new Date(sitting.endTime) >= now;
 
+    const isPending = () =>
+      sitting.status === 'requested' &&
+      new Date(sitting.startTime) > now
+
     switch (action) {
       case 'view':
         return isOwner || isSitter || isAdmin;
+      case 'delete':
+        return isOwner || (isSitter && isPending()) || isAdmin;
       case 'update':
-        return isOwner || (isSitter && isActive()) || isAdmin;
+        return isOwner || (isSitter && isPending()) || isAdmin;
       case 'post_updates':
         return isOwner || (isSitter && isActive()) || isAdmin;
       case 'review':

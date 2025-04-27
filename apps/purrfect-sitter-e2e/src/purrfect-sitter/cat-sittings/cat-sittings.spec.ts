@@ -167,15 +167,15 @@ describe(`Cat Sitting Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
       expect(response.data.data).toHaveProperty('id', catSitting.id);
     });
 
-    it("can update a cat sitting they're assigned to", async () => {
+    it("can update a cat sitting they're assigned to when sitting is not yet approved and started", async () => {
       const newSittingResponse =
         await ownerClient.post<CreateCatSittingResponseSchema>(
           '/cat-sittings',
           {
             catId: cat.id,
             sitterId: catSitter.id,
-            startTime: new Date().toISOString(),
-            endTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+            startTime: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
+            endTime: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
           } satisfies CreateCatSittingDto
         );
       expect(newSittingResponse.status).toBe(201);
@@ -194,6 +194,39 @@ describe(`Cat Sitting Resource Authorization Tests [${AUTH_STRATEGY}]`, () => {
       expect(updateResponse.data.data.attributes?.['note']).toBe(
         'Added some notes from the sitter'
       );
+    });
+
+    it("cannot update a cat sitting they're assigned to when sitting is active", async () => {
+      const newSittingResponse =
+        await ownerClient.post<CreateCatSittingResponseSchema>(
+          '/cat-sittings',
+          {
+            catId: cat.id,
+            sitterId: catSitter.id,
+            startTime: new Date().toISOString(),
+            endTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          } satisfies CreateCatSittingDto
+        );
+      expect(newSittingResponse.status).toBe(201);
+      const newSitting = newSittingResponse.data.data;
+
+      await ownerClient.put<UpdateCatSittingResponseSchema>(
+        `/cat-sittings/${newSitting.id}/status`,
+        {
+          status: CatSittingStatus.ACTIVE,
+        } satisfies UpdateCatSittingStatusDto
+      );
+
+      const updateResponse =
+        await sitterClient.put<UpdateCatSittingResponseSchema>(
+          `/cat-sittings/${newSitting.id}`,
+          {
+            ...newSitting,
+            attributes: { note: 'Added some notes from the sitter' },
+          } satisfies UpdateCatSittingDto
+        );
+
+      expect(updateResponse.status).toBe(403);
     });
 
     it("cannot view cat sittings they're not assigned to", async () => {

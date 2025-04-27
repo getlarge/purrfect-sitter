@@ -149,6 +149,17 @@ export class CatSittingsService {
         },
       },
       {
+        user: `cat_sitting:${catSitting.id}#sitter`,
+        relation: 'pending_sitter',
+        object: `cat_sitting:${catSitting.id}`,
+        condition: {
+          name: 'is_pending_timeslot',
+          context: {
+            start_time: catSitting.startTime.toISOString(),
+          },
+        },
+      },
+      {
         user: 'system:1',
         relation: 'system',
         object: `cat_sitting:${catSitting.id}`,
@@ -178,6 +189,11 @@ export class CatSittingsService {
             relation: 'active_sitter',
             object: `cat_sitting:${catSitting.id}`,
           },
+          {
+            user: `cat_sitting:${catSitting.id}#sitter`,
+            relation: 'pending_sitter',
+            object: `cat_sitting:${catSitting.id}`,
+          },
         ],
       },
     });
@@ -193,6 +209,17 @@ export class CatSittingsService {
               context: {
                 start_time: catSitting.startTime.toISOString(),
                 end_time: catSitting.endTime.toISOString(),
+              },
+            },
+          },
+          {
+            user: `cat_sitting:${catSitting.id}#sitter`,
+            relation: 'pending_sitter',
+            object: `cat_sitting:${catSitting.id}`,
+            condition: {
+              name: 'is_pending_timeslot',
+              context: {
+                start_time: catSitting.startTime.toISOString(),
               },
             },
           },

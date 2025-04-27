@@ -58,7 +58,6 @@ export const openTelemetrySdk = new NodeSDK({
     }),
     new PinoInstrumentation({}),
     new PgInstrumentation({ requireParentSpan: true }),
-    // TODO: check https://github.com/openfga/js-sdk/tree/main/example/opentelemetry for OpenFGA Telemetry
   ],
   // resourceDetectors: getResourceDetectors().map(
   //   awaitAttributes
