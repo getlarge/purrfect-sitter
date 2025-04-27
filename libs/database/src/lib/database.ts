@@ -18,6 +18,10 @@ export function createDatabase() {
     db = drizzle(pool, { schema });
   }
 
+  db.$client.on('error', (error) => {
+    console.error('Database error:', error);
+  });
+
   return { pool, db };
 }
 
