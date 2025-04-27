@@ -20,17 +20,15 @@ type Fastify = FastifyInstance<
   TypeBoxTypeProvider
 >;
 
-const __dirname = import.meta.dirname;
-
 export async function app(fastify: Fastify, options: AppOptions) {
   await fastify.register(AutoLoad, {
-    dir: path.join(__dirname, 'plugins'),
+    dir: path.join(import.meta.dirname, 'plugins'),
     options: { ...options },
     forceESM: true,
   });
 
   await fastify.register(AutoLoad, {
-    dir: path.join(__dirname, 'routes'),
+    dir: path.join(import.meta.dirname, 'routes'),
     options: { ...options },
     dirNameRoutePrefix: true,
     forceESM: true,

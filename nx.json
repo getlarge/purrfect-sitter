@@ -21,22 +21,8 @@
       "options": {
         "typecheck": {
           "targetName": "typecheck"
-        },
-        "build": {
-          "targetName": "build",
-          "configName": "tsconfig.lib.json",
-          "buildDepsName": "build-deps",
-          "watchDepsName": "watch-deps"
         }
-      },
-      "exclude": [
-        "libs/database/*",
-        "libs/models/*",
-        "libs/auth/*",
-        "libs/cats/*",
-        "libs/cat-sittings/*",
-        "libs/reviews/*"
-      ]
+      }
     },
     {
       "plugin": "@nx/eslint/plugin",
@@ -50,22 +36,6 @@
         "targetName": "test"
       },
       "exclude": ["apps/purrfect-sitter-e2e/**/*"]
-    },
-    {
-      "plugin": "@nx/js/typescript",
-      "include": [
-        "libs/database/*",
-        "libs/models/*",
-        "libs/auth/*",
-        "libs/cats/*",
-        "libs/cat-sittings/*",
-        "libs/reviews/*"
-      ],
-      "options": {
-        "typecheck": {
-          "targetName": "typecheck"
-        }
-      }
     },
     {
       "plugin": "@nx-tools/nx-container",
