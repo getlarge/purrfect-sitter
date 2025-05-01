@@ -96,3 +96,5 @@ session:
     same_site: Lax
     path: /
   lifespan: 24h
+  whoami:
+    required_aal: aal1

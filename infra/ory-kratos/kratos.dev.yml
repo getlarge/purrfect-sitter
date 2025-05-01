@@ -15,3 +15,14 @@ serve:
     base_url: http://127.0.0.1:4433/
   admin:
     base_url: http://kratos:4434/
+
+tracing:
+  provider: otel
+  service_name: Ory Kratos
+  deployment_environment: development
+  providers:
+    otlp:
+      server_url: collector:4318
+      insecure: true
+      sampling:
+        sampling_ratio: 0.4

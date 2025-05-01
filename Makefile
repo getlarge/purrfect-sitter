@@ -5,7 +5,7 @@ build-test-image:
 	npx nx container purrfect-sitter --configuration=test
 
 # Start E2E test environment
-start-e2e-services: stop-dev
+start-e2e-services:
 	docker compose -f docker-compose-ci.yml up -d
 
 # Stop E2E test environment
@@ -24,7 +24,7 @@ e2e-test-openfga:
 e2e-test-all: e2e-test-openfga e2e-test-db
 
 # Start development environment
-start-dev: stop-e2e-services
+start-dev:
 	docker compose --profile dev up -d
 
 # Stop development environment
