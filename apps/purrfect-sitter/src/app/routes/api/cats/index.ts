@@ -22,6 +22,7 @@ const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     schema: {
       response: {
         200: getCatsResponseSchema,
+        401: errorResponseSchema,
       },
       security: [{ cookieAuth: [] }],
     },
@@ -36,6 +37,8 @@ const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       params: getCatParamsSchema,
       response: {
         200: getCatResponseSchema,
+        400: errorResponseSchema,
+        401: errorResponseSchema,
         404: errorResponseSchema,
       },
       security: [{ cookieAuth: [] }],
@@ -57,6 +60,8 @@ const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       body: CreateCatSchema,
       response: {
         201: createCatResponseSchema,
+        400: errorResponseSchema,
+        401: errorResponseSchema,
       },
       security: [{ cookieAuth: [] }],
     },
@@ -75,6 +80,9 @@ const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       body: UpdateCatSchema,
       response: {
         200: updateCatResponseSchema,
+        400: errorResponseSchema,
+        401: errorResponseSchema,
+        403: errorResponseSchema,
         404: errorResponseSchema,
       },
 
@@ -109,6 +117,9 @@ const catsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       params: deleteCatParamsSchema,
       response: {
         200: deleteCatResponseSchema,
+        400: errorResponseSchema,
+        401: errorResponseSchema,
+        403: errorResponseSchema,
         404: errorResponseSchema,
       },
       security: [{ cookieAuth: [] }],

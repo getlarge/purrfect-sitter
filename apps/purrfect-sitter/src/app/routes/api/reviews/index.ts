@@ -22,6 +22,7 @@ const reviewsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     schema: {
       response: {
         200: getReviewsResponseSchema,
+        401: errorResponseSchema,
       },
     },
     handler: async (request, reply) => {
@@ -35,6 +36,9 @@ const reviewsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       params: getReviewParamsSchema,
       response: {
         200: getReviewResponseSchema,
+        401: errorResponseSchema,
+        403: errorResponseSchema,
+        400: errorResponseSchema,
         404: errorResponseSchema,
       },
       security: [{ cookieAuth: [] }],
@@ -68,6 +72,8 @@ const reviewsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       response: {
         201: createReviewResponseSchema,
         400: errorResponseSchema,
+        401: errorResponseSchema,
+        403: errorResponseSchema,
       },
       security: [{ cookieAuth: [] }],
     },
@@ -104,6 +110,9 @@ const reviewsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       body: UpdateReviewSchema,
       response: {
         200: updateReviewResponseSchema,
+        400: errorResponseSchema,
+        401: errorResponseSchema,
+        403: errorResponseSchema,
         404: errorResponseSchema,
       },
       security: [{ cookieAuth: [] }],
@@ -137,6 +146,9 @@ const reviewsRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       params: deleteReviewParamsSchema,
       response: {
         200: deleteReviewResponseSchema,
+        400: errorResponseSchema,
+        401: errorResponseSchema,
+        403: errorResponseSchema,
         404: errorResponseSchema,
       },
       security: [{ cookieAuth: [] }],

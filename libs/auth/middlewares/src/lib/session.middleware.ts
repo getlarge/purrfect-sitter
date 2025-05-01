@@ -37,7 +37,7 @@ export async function authenticate(
   } catch (error) {
     request.log.error('Session validation failed', error);
     reply.status(401).send({
-      message: 'Unauthorized',
+      error: 'Unauthorized',
     });
   }
 }

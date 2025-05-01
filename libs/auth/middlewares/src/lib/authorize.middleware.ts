@@ -48,7 +48,7 @@ export const authorize = (params: IAuthorizationParams) => {
     } catch (error) {
       request.log.error('Authorization failed', error);
       reply.status(403).send({
-        message: 'Forbidden',
+        error: 'Forbidden',
       });
     }
   };
