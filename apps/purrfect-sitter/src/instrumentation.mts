@@ -62,24 +62,6 @@ export const openTelemetrySdk = new NodeSDK({
     new PinoInstrumentation({}),
     new PgInstrumentation({ requireParentSpan: true }),
   ],
-  spanProcessors: [
-    {
-      onStart(span) {
-        span.setAttributes({
-          'auth.strategy': process.env.AUTH_STRATEGY,
-        });
-      },
-      onEnd(_span) {
-        //
-      },
-      forceFlush() {
-        return Promise.resolve();
-      },
-      shutdown() {
-        return Promise.resolve();
-      },
-    },
-  ],
   // resourceDetectors: getResourceDetectors().map(
   //   awaitAttributes
   // ) as ResourceDetector[],
