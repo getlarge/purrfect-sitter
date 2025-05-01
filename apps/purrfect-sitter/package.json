@@ -74,7 +74,7 @@
         }
       },
       "create-auth-model": {
-        "executor": "@nx/workspace:run-commands",
+        "executor": "nx:run-commands",
         "options": {
           "command": "FGA_STORE_ID=$(fga store create --name=purrfect-sitter | jq -r '.store.id') fga model write --file=purrfect-sitter-model.fga "
         }
