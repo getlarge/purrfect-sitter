@@ -7,7 +7,7 @@ import {
   catSittings,
 } from '@purrfect-sitter/database';
 
-const { and, eq, gte, lte } = drizzleOrm;
+const { and, eq, gte, lte } = drizzleOrm.getOperators();
 
 export class CatSittingRepository {
   async findById(id: string): Promise<CatSitting | undefined> {
