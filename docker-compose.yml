@@ -39,6 +39,11 @@ services:
     depends_on:
       openfga-migrate:
         condition: service_completed_successfully
+    environment:
+      OPENFGA_TRACE_ENABLED: 'true'
+      OPENFGA_TRACE_OTLP_ENDPOINT: collector:4317
+      OPENFGA_TRACE_OTLP_TLS_ENABLED: 'false'
+    command: run
     profiles:
       - 'dev'
 

@@ -1,0 +1,6 @@
+datastore:
+  engine: postgres
+  uri: postgres://user:password@localhost:5432/mydatabase
+log:
+  level: debug
+  format: json

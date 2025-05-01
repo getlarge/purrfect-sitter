@@ -29,15 +29,17 @@ services:
     image: openfga/openfga:latest
     command: migrate
     environment:
-      OPENFGA_DATASTORE_ENGINE: postgres
       OPENFGA_DATASTORE_URI: postgres://dbuser:secret@openfga-postgres:5432/openfga?sslmode=disable
+    volumes:
+      - ./infra/openfga/config.yml:/etc/openfga/config.yml
 
   openfga:
     image: openfga/openfga:latest
     environment:
-      OPENFGA_DATASTORE_ENGINE: postgres
       OPENFGA_DATASTORE_URI: postgres://dbuser:secret@openfga-postgres:5432/openfga?sslmode=disable
       OPENFGA_LOG_FORMAT: json
+    volumes:
+      - ./infra/openfga/config.yml:/etc/openfga/config.yml
     command: run
     ports:
       # Needed for the http server
