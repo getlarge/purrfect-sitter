@@ -177,3 +177,48 @@ Or directly with Nx:
 # Set strategy via environment variable
 AUTH_STRATEGY=db npx nx e2e purrfect-sitter-e2e
 ```
+
+## Performance Analysis
+
+### Authorization Benchmarking
+
+This project includes tools for benchmarking and analyzing the performance differences between database query-based authorization and OpenFGA-based authorization.
+
+#### Benchmarking Scripts
+
+Located in `tools/scripts/`:
+
+- `benchmark-auth-strategies.ts` - Runs identical scenarios against both authorization strategies and captures telemetry data.
+
+  - Creates users, cats, cat sittings, and reviews
+  - Executes three scenarios:
+    1. Simple case: View cat (public resource)
+    2. Medium case: Cat sitting management (create, update, status changes)
+    3. Complex case: Review management (nested authorization checks)
+  - Automatically cleans up all created resources
+
+#### Running Benchmark Tests
+
+1. Ensure Zipkin and OpenTelemetry collector are running:
+
+   ```bash
+   make start-dev
+   ```
+
+2. Start the Purrfect Sitter application:
+
+   ```bash
+   AUTH_STRATEGY=openfga npx nx run purrfect-sitter:serve:local
+   ```
+
+3. Run the benchmark script:
+
+   ```bash
+   npx tsx tools/scripts/benchmark-auth-strategies.ts
+   ```
+
+#### Visualization
+
+- View traces in Zipkin UI (http://localhost:9411)
+- Examine generated CSV/JSON reports for quantitative comparison
+- Use the data to create charts showing performance differences between strategies
