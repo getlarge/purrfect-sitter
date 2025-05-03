@@ -197,28 +197,76 @@ Located in `tools/scripts/`:
     3. Complex case: Review management (nested authorization checks)
   - Automatically cleans up all created resources
 
+- `trace-analyzer.ts` - Analyzes OpenTelemetry trace data from Zipkin:
+  - Fetches traces from Zipkin API
+  - Groups traces by scenario
+  - Calculates performance metrics for each scenario:
+    - Total execution time
+    - Total transaction time (end-to-end HTTP request duration)
+    - Operation count
+    - Time ratio between strategies
+    - Operation count ratio
+  - Aggregates metrics across iterations for better analysis
+  - Generates both detailed and aggregated CSV/JSON reports
+
 #### Running Benchmark Tests
 
-1. Ensure Zipkin and OpenTelemetry collector are running:
+1. Ensure all services are running:
 
    ```bash
    make start-dev
    ```
 
-2. Start the Purrfect Sitter application:
+2. Ensure the database is running and migrations are applied:
+
+   ```bash
+   npx nx run database:generate
+   DATABASE_URL=postgresql://dbuser:secret@localhost:5432/purrfect-sitter npx nx run database:migrate
+   ```
+
+3. Ensure the OpenFGA model is created:
+
+   ```bash
+   npx nx run purrfect-sitter:create-auth-model
+   ```
+
+4. Start the Purrfect Sitter application:
 
    ```bash
    AUTH_STRATEGY=openfga npx nx run purrfect-sitter:serve:local
    ```
 
-3. Run the benchmark script:
+5. Run the benchmark script:
 
    ```bash
-   npx tsx tools/scripts/benchmark-auth-strategies.ts
+   node --experimental-strip-types tools/scripts/benchmark-auth-strategies.ts
    ```
+
+   This script:
+   - Creates test users (cat owner, cat sitter, admin)
+   - Sets up necessary data (cats, cat sittings)
+   - Executes multiple iterations of each scenario with headers for tracing
+   - Sends HTTP requests with `X-Benchmark-Scenario` headers to identify scenarios in traces
+
+6. Analyze the results:
+   ```bash
+   node --experimental-strip-types tools/scripts/trace-analyzer.ts
+   ```
+
+   This will:
+   - Fetch OpenFGA traces from Zipkin
+   - Calculate metrics for individual scenario iterations
+   - Aggregate metrics by scenario type across iterations
+   - Generate two report types:
+     - `auth-comparison-[timestamp].json/.csv` - Aggregated metrics with averages
+     - `auth-comparison-detailed-[timestamp].json/.csv` - Detailed per-iteration metrics
 
 #### Visualization
 
 - View traces in Zipkin UI (http://localhost:9411)
-- Examine generated CSV/JSON reports for quantitative comparison
+- Examine generated CSV/JSON reports for quantitative comparison:
+  - Look at the `totalScenarioTime` field for end-to-end transaction times
+  - Compare metrics between different scenario types
+  - Analyze the aggregated reports for overall performance patterns
 - Use the data to create charts showing performance differences between strategies
+- Run benchmarks with both AUTH_STRATEGY=db and AUTH_STRATEGY=openfga to compare approaches

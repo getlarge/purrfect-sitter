@@ -55,9 +55,22 @@ export const openTelemetrySdk = new NodeSDK({
   instrumentations: [
     new DnsInstrumentation(),
     new NetInstrumentation(),
-    new HttpInstrumentation(),
+    new HttpInstrumentation({
+      enabled: true,
+      headersToSpanAttributes: {
+        server: {
+          requestHeaders: ['x-benchmark-scenario'],
+          responseHeaders: []
+        },
+        client: {
+          requestHeaders: ['x-benchmark-scenario'],
+          responseHeaders: []
+        }
+      }
+    }),
     new FastifyOtelInstrumentation({
       registerOnInitialization: true,
+      enabled: true,
     }),
     new PinoInstrumentation({}),
     new PgInstrumentation({ requireParentSpan: true }),
