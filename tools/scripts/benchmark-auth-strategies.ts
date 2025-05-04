@@ -29,6 +29,7 @@ const KRATOS_URL = process.env.KRATOS_PUBLIC_URL || 'http://localhost:4433';
 const KRATOS_ADMIN_URL =
   process.env.KRATOS_ADMIN_URL || 'http://localhost:4434';
 const ITERATIONS = process.env.ITERATIONS ? +process.env.ITERATIONS : 5;
+const BENCHMARK_RUN_ID = process.env.BENCHMARK_RUN_ID || Date.now().toString();
 
 const FGA_STORE_ID = process.env.FGA_STORE_ID;
 const FGA_MODEL_ID = process.env.FGA_MODEL_ID;
@@ -293,7 +294,10 @@ async function scenarioViewCat(
     // Owner views cat
     const ownerResponse = await ownerClient.get(`/cats/${catId}`, {
       headers: {
-        'X-Benchmark-Scenario': `1-view-cat-owner-${iteration}`,
+        'X-Benchmark-Scenario': `1-view-cat-owner`,
+        'X-Benchmark-Iteration': `${iteration}`,
+        'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
+        'X-Benchmark-Expected-Status': '200',
       },
     });
     console.log(`\tOwner view cat: ${ownerResponse.status}`);
@@ -301,7 +305,10 @@ async function scenarioViewCat(
     // Sitter views cat
     const sitterResponse = await sitterClient.get(`/cats/${catId}`, {
       headers: {
-        'X-Benchmark-Scenario': `1-view-cat-sitter-${iteration}`,
+        'X-Benchmark-Scenario': `1-view-cat-sitter`,
+        'X-Benchmark-Iteration': `${iteration}`,
+        'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
+        'X-Benchmark-Expected-Status': '200',
       },
     });
     console.log(`\tSitter view cat: ${sitterResponse.status}`);
@@ -333,7 +340,10 @@ async function scenarioCatSittingManagement(
       },
       {
         headers: {
-          'X-Benchmark-Scenario': `2-create-sitting-${iteration}`,
+          'X-Benchmark-Scenario': `2-create-sitting`,
+          'X-Benchmark-Iteration': `${iteration}`,
+          'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
+          'X-Benchmark-Expected-Status': '201',
         },
       }
     );
@@ -346,7 +356,10 @@ async function scenarioCatSittingManagement(
       `/cat-sittings/${catSitting.id}`,
       {
         headers: {
-          'X-Benchmark-Scenario': `2-view-sitting-sitter-${iteration}`,
+          'X-Benchmark-Scenario': `2-view-sitting-sitter`,
+          'X-Benchmark-Iteration': `${iteration}`,
+          'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
+          'X-Benchmark-Expected-Status': '200',
         },
       }
     );
@@ -361,7 +374,10 @@ async function scenarioCatSittingManagement(
       },
       {
         headers: {
-          'X-Benchmark-Scenario': `2-update-sitting-${iteration}`,
+          'X-Benchmark-Scenario': `2-update-sitting`,
+          'X-Benchmark-Iteration': `${iteration}`,
+          'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
+          'X-Benchmark-Expected-Status': '200',
         },
       }
     );
@@ -390,7 +406,10 @@ async function scenarioCatSittingManagement(
       },
       {
         headers: {
-          'X-Benchmark-Scenario': `2-activate-sitting-${iteration}`,
+          'X-Benchmark-Scenario': `2-activate-sitting`,
+          'X-Benchmark-Iteration': `${iteration}`,
+          'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
+          'X-Benchmark-Expected-Status': '200',
         },
       }
     );
@@ -406,7 +425,10 @@ async function scenarioCatSittingManagement(
         },
         {
           headers: {
-            'X-Benchmark-Scenario': `2-update-active-sitting-${iteration}`,
+            'X-Benchmark-Scenario': `2-update-active-sitting`,
+            'X-Benchmark-Iteration': `${iteration}`,
+            'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
+            'X-Benchmark-Expected-Status': '403',
           },
         }
       );
@@ -427,7 +449,10 @@ async function scenarioCatSittingManagement(
       },
       {
         headers: {
-          'X-Benchmark-Scenario': `2-complete-sitting-${iteration}`,
+          'X-Benchmark-Scenario': `2-complete-sitting`,
+          'X-Benchmark-Iteration': `${iteration}`,
+          'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
+          'X-Benchmark-Expected-Status': '200',
         },
       }
     );
@@ -459,7 +484,10 @@ async function scenarioReviewManagement(
       },
       {
         headers: {
-          'X-Benchmark-Scenario': `3-create-review-${iteration}`,
+          'X-Benchmark-Scenario': `3-create-review`,
+          'X-Benchmark-Iteration': `${iteration}`,
+          'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
+          'X-Benchmark-Expected-Status': '201',
         },
       }
     );
@@ -477,7 +505,10 @@ async function scenarioReviewManagement(
         },
         {
           headers: {
-            'X-Benchmark-Scenario': `3-edit-review-sitter-${iteration}`,
+            'X-Benchmark-Scenario': `3-edit-review-sitter`,
+            'X-Benchmark-Iteration': `${iteration}`,
+            'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
+            'X-Benchmark-Expected-Status': '403',
           },
         }
       );
@@ -499,7 +530,10 @@ async function scenarioReviewManagement(
       },
       {
         headers: {
-          'X-Benchmark-Scenario': `3-edit-review-owner-${iteration}`,
+          'X-Benchmark-Scenario': `3-edit-review-owner`,
+          'X-Benchmark-Iteration': `${iteration}`,
+          'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
+          'X-Benchmark-Expected-Status': '200',
         },
       }
     );
@@ -514,7 +548,10 @@ async function scenarioReviewManagement(
       },
       {
         headers: {
-          'X-Benchmark-Scenario': `3-edit-review-admin-${iteration}`,
+          'X-Benchmark-Scenario': `3-edit-review-admin`,
+          'X-Benchmark-Iteration': `${iteration}`,
+          'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
+          'X-Benchmark-Expected-Status': '200',
         },
       }
     );
@@ -528,7 +565,6 @@ async function scenarioReviewManagement(
   }
 }
 
-// Cleanup resources
 async function cleanup() {
   console.log('\nCleaning up resources...');
 
@@ -544,7 +580,6 @@ async function cleanup() {
 
     const adminClient = createAuthenticatedClient(admin.sessionToken);
 
-    // Clean up reviews
     for (const reviewId of createdResources.reviews) {
       try {
         await adminClient.delete(`/reviews/${reviewId}`);
@@ -554,7 +589,6 @@ async function cleanup() {
       }
     }
 
-    // Clean up cat sittings
     for (const sittingId of createdResources.catSittings) {
       try {
         await adminClient.delete(`/cat-sittings/${sittingId}`);
@@ -567,7 +601,6 @@ async function cleanup() {
       }
     }
 
-    // Clean up cats
     for (const catId of createdResources.cats) {
       try {
         await adminClient.delete(`/cats/${catId}`);
@@ -577,7 +610,6 @@ async function cleanup() {
       }
     }
 
-    // Delete users last (including admin user for cleanup)
     createdResources.users.push(admin.id);
     for (const userId of createdResources.users) {
       try {
@@ -595,7 +627,6 @@ async function cleanup() {
   }
 }
 
-// Main function
 async function main() {
   process.on('SIGINT', async () => {
     console.log('\nReceived SIGINT, cleaning up before exit...');
@@ -613,6 +644,8 @@ async function main() {
   const healthResponse = await axios.get(`${API_BASE_URL}/health`);
   console.log(`API Health: ${healthResponse.status}`);
   console.log(`Current auth strategy: ${healthResponse.data.authStrategy}`);
+  console.log(`Current benchmark run ID: ${BENCHMARK_RUN_ID}`);
+  console.log(`Iterations: ${ITERATIONS}`);
 
   const authStrategy = healthResponse.data.authStrategy;
   await runAuthBenchmark(authStrategy);

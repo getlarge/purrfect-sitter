@@ -2,13 +2,15 @@ import axios from 'axios';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
-// TODO: one last thing to fix, we need to make sure that whatever how many times we run the benchmark, we always get the same aggregated results
-
 const ZIPKIN_URL = process.env.ZIPKIN_URL || 'http://localhost:9411';
 const OUTPUT_DIR = process.env.OUTPUT_DIR || './benchmark-results';
 const TRACE_LOOKBACK = process.env.TRACE_LOOKBACK
   ? parseInt(process.env.TRACE_LOOKBACK)
-  : 3600000;
+  : 900000; // Default 15 minutes
+const TRACE_LIMIT = process.env.TRACE_LIMIT
+  ? parseInt(process.env.TRACE_LIMIT)
+  : 10000;
+const RUN_ID = process.env.BENCHMARK_RUN_ID;
 
 interface Trace {
   traceId: string;
@@ -23,14 +25,19 @@ interface Trace {
 
 interface StrategyComparisonResult {
   scenario: string;
-  totalDbTime: number;
-  totalOpenfgaTime: number;
-  dbOperationCount: number;
-  openfgaOperationCount: number;
+  totalTime: {
+    db: number;
+    openfga: number;
+  };
+  operationCount: {
+    db: number;
+    openfga: number;
+  };
   timeRatio: number;
   operationCountRatio: number;
-  dbScenarioTime: number;
-  openfgaScenarioTime: number;
+  iterations: number;
+  runId: string;
+  statusCodes?: Record<string, number[]>;
 }
 
 type ZipkinTrace = {
@@ -46,12 +53,12 @@ type ZipkinTrace = {
   tags?: Record<string, string>;
 };
 
-const fetchTraces = async (
+async function fetchTraces(
   serviceName: string,
   lookback = TRACE_LOOKBACK
-): Promise<Trace[]> => {
+): Promise<Trace[]> {
   console.log(
-    `Fetching traces for service ${serviceName} (lookback: ${lookback}ms)`
+    `Fetching traces for service ${serviceName} (lookback: ${lookback}ms, limit: ${TRACE_LIMIT})`
   );
 
   try {
@@ -64,7 +71,7 @@ const fetchTraces = async (
         params: {
           serviceName,
           lookback,
-          limit: 1000,
+          limit: TRACE_LIMIT,
           endTs,
         },
       }
@@ -98,12 +105,12 @@ const fetchTraces = async (
     console.error('Error fetching traces:', error.message);
     return [];
   }
-};
+}
 
-const getAuthorizationTraces = async (): Promise<{
+async function getAuthorizationTraces(): Promise<{
   dbTraces: Trace[];
   openfgaTraces: Trace[];
-}> => {
+}> {
   const dbTraces = await fetchTraces('purrfect-sitter-db');
   const purrfectSitterOpenfgaTraces = await fetchTraces(
     'purrfect-sitter-openfga'
@@ -132,9 +139,9 @@ const getAuthorizationTraces = async (): Promise<{
     dbTraces,
     openfgaTraces: validOpenfgaTraces,
   };
-};
+}
 
-const groupTracesByTraceId = (traces: Trace[]): Record<string, Trace[]> => {
+function groupTracesByTraceId(traces: Trace[]): Record<string, Trace[]> {
   return traces.reduce((grouped, trace) => {
     if (!grouped[trace.traceId]) {
       grouped[trace.traceId] = [];
@@ -142,10 +149,92 @@ const groupTracesByTraceId = (traces: Trace[]): Record<string, Trace[]> => {
     grouped[trace.traceId].push(trace);
     return grouped;
   }, {} as Record<string, Trace[]>);
-};
+}
 
-const groupTracesByScenario = (traces: Trace[]): Record<string, Trace[]> => {
-  const scenarios: Record<string, Trace[]> = {};
+function parseArrayValue(value: string | undefined): string | null {
+  if (!value) return null;
+
+  try {
+    if (value.startsWith('[') && value.endsWith(']')) {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed[0];
+      }
+    }
+  } catch (e) {
+    // If parsing fails, continue with normal handling
+  }
+
+  return value;
+}
+
+function getRunId(trace: Trace): string | null {
+  const rawValue =
+    trace.tags['X-Benchmark-Run-ID'] ||
+    trace.tags['x-benchmark-run-id'] ||
+    trace.tags['http.request.header.x_benchmark_run_id'];
+
+  return parseArrayValue(rawValue);
+}
+
+function getScenarioName(trace: Trace): string | null {
+  const rawValue =
+    trace.tags['X-Benchmark-Scenario'] ||
+    trace.tags['x-benchmark-scenario'] ||
+    trace.tags['http.request.header.x_benchmark_scenario'];
+
+  return parseArrayValue(rawValue);
+}
+
+function getIterationNumber(trace: Trace): number | null {
+  const rawValue =
+    trace.tags['X-Benchmark-Iteration'] ||
+    trace.tags['x-benchmark-iteration'] ||
+    trace.tags['http.request.header.x_benchmark_iteration'];
+
+  const parsedValue = parseArrayValue(rawValue);
+  return parsedValue ? Number(parsedValue) : null;
+}
+
+function getExpectedStatusCode(trace: Trace): number | null {
+  const rawValue =
+    trace.tags['X-Benchmark-Expected-Status'] ||
+    trace.tags['x-benchmark-expected-status'] ||
+    trace.tags['http.request.header.x_benchmark_expected_status'];
+
+  const parsedValue = parseArrayValue(rawValue);
+  return parsedValue ? Number(parsedValue) : null;
+}
+
+function getActualStatusCode(trace: Trace): number | null {
+  const statusCode = trace.tags['http.status_code'];
+  return statusCode ? Number(statusCode) : null;
+}
+
+function findRunIds(traces: Trace[]): string[] {
+  const runIds = new Set<string>();
+
+  for (const trace of traces) {
+    const runId = getRunId(trace);
+    if (runId) {
+      runIds.add(runId);
+    }
+  }
+
+  return Array.from(runIds);
+}
+
+function filterTracesByRunId(traces: Trace[], runId: string): Trace[] {
+  return traces.filter((trace) => {
+    const traceRunId = getRunId(trace);
+    return traceRunId === runId;
+  });
+}
+
+function groupTracesByScenarioAndIteration(
+  traces: Trace[]
+): Record<string, Record<number, Trace[]>> {
+  const scenarios: Record<string, Record<number, Trace[]>> = {};
   const tracesByTraceId = groupTracesByTraceId(traces);
 
   if (traces.length > 0) {
@@ -156,36 +245,44 @@ const groupTracesByScenario = (traces: Trace[]): Record<string, Trace[]> => {
   }
 
   for (const trace of traces) {
-    const scenarioTag =
-      trace.tags['X-Benchmark-Scenario'] ||
-      trace.tags['x-benchmark-scenario'] ||
-      trace.tags['http.request.header.x_benchmark_scenario'];
+    const scenarioName = getScenarioName(trace);
+    const iteration = getIterationNumber(trace);
 
-    if (scenarioTag) {
-      scenarios[scenarioTag] = scenarios[scenarioTag] || [];
-      scenarios[scenarioTag].push(trace);
+    if (scenarioName && iteration !== null) {
+      scenarios[scenarioName] = scenarios[scenarioName] || {};
+      scenarios[scenarioName][iteration] =
+        scenarios[scenarioName][iteration] || [];
+
+      scenarios[scenarioName][iteration].push(trace);
 
       const relatedTraces = tracesByTraceId[trace.traceId] || [];
       for (const relatedTrace of relatedTraces) {
         if (
           relatedTrace !== trace &&
-          !scenarios[scenarioTag].some((t) => t.id === relatedTrace.id)
+          !scenarios[scenarioName][iteration].some(
+            (t) => t.id === relatedTrace.id
+          )
         ) {
-          scenarios[scenarioTag].push(relatedTrace);
+          scenarios[scenarioName][iteration].push(relatedTrace);
         }
       }
     }
   }
 
-  console.log('Traces grouped by scenario:');
-  Object.entries(scenarios).forEach(([scenario, scenarioTraces]) => {
-    console.log(`  ${scenario}: ${scenarioTraces.length} traces`);
+  console.log('Traces grouped by scenario and iteration:');
+  Object.entries(scenarios).forEach(([scenario, iterations]) => {
+    console.log(`  ${scenario}:`);
+    Object.entries(iterations).forEach(([iteration, iterationTraces]) => {
+      console.log(
+        `    Iteration ${iteration}: ${iterationTraces.length} traces`
+      );
+    });
   });
 
   return scenarios;
-};
+}
 
-const calculateRootSpanDurations = (traces: Trace[]): number[] => {
+function calculateRootSpanDurations(traces: Trace[]): number[] {
   const tracesByTraceId = groupTracesByTraceId(traces);
 
   return Object.values(tracesByTraceId).map((tracesGroup) => {
@@ -196,137 +293,170 @@ const calculateRootSpanDurations = (traces: Trace[]): number[] => {
     );
     return longestSpan.duration;
   });
-};
+}
 
-const calculateMetrics = (
-  dbScenarios: Record<string, Trace[]>,
-  openfgaScenarios: Record<string, Trace[]>
-): StrategyComparisonResult[] => {
-  const results: StrategyComparisonResult[] = [];
+function calculateIterationMetrics(
+  dbScenarios: Record<string, Record<number, Trace[]>>,
+  openfgaScenarios: Record<string, Record<number, Trace[]>>
+): Record<string, StrategyComparisonResult[]> {
+  const results: Record<string, StrategyComparisonResult[]> = {};
   const allScenarios = new Set([
     ...Object.keys(dbScenarios),
     ...Object.keys(openfgaScenarios),
   ]);
 
   for (const scenario of allScenarios) {
-    const dbTraces = dbScenarios[scenario] || [];
-    const openfgaTraces = openfgaScenarios[scenario] || [];
+    results[scenario] = [];
 
-    if (dbTraces.length === 0 && openfgaTraces.length === 0) {
-      continue;
+    const dbIterations = dbScenarios[scenario]
+      ? Object.keys(dbScenarios[scenario]).map(Number)
+      : [];
+    const openfgaIterations = openfgaScenarios[scenario]
+      ? Object.keys(openfgaScenarios[scenario]).map(Number)
+      : [];
+    const allIterations = [...new Set([...dbIterations, ...openfgaIterations])];
+
+    for (const iteration of allIterations) {
+      const dbTraces =
+        (dbScenarios[scenario] && dbScenarios[scenario][iteration]) || [];
+      const openfgaTraces =
+        (openfgaScenarios[scenario] && openfgaScenarios[scenario][iteration]) ||
+        [];
+
+      if (dbTraces.length === 0 && openfgaTraces.length === 0) {
+        continue;
+      }
+
+      const runId = getRunId(dbTraces[0] || openfgaTraces[0]) || 'unknown';
+
+      const totalDbTime =
+        dbTraces.reduce((sum, trace) => sum + trace.duration, 0) / 1000;
+      const totalOpenfgaTime =
+        openfgaTraces.reduce((sum, trace) => sum + trace.duration, 0) / 1000;
+      const dbOperationCount = dbTraces.length;
+      const openfgaOperationCount = openfgaTraces.length;
+      const timeRatio =
+        totalOpenfgaTime > 0 ? totalDbTime / totalOpenfgaTime : 0;
+      const operationCountRatio =
+        openfgaOperationCount > 0
+          ? dbOperationCount / openfgaOperationCount
+          : 0;
+
+      const statusCodes: Record<string, number[]> = {};
+      const allTraces = [...dbTraces, ...openfgaTraces];
+
+      for (const trace of allTraces) {
+        const expectedStatus = getExpectedStatusCode(trace);
+        const actualStatus = getActualStatusCode(trace);
+
+        if (expectedStatus && actualStatus) {
+          const key = `${expectedStatus}`;
+          if (!statusCodes[key]) {
+            statusCodes[key] = [];
+          }
+          statusCodes[key].push(actualStatus);
+        }
+      }
+
+      results[scenario].push({
+        scenario: `${scenario}-${iteration}`,
+        totalTime: {
+          db: totalDbTime,
+          openfga: totalOpenfgaTime,
+        },
+        operationCount: {
+          db: dbOperationCount,
+          openfga: openfgaOperationCount,
+        },
+        timeRatio,
+        operationCountRatio,
+        iterations: 1,
+        runId,
+        statusCodes:
+          Object.keys(statusCodes).length > 0 ? statusCodes : undefined,
+      });
     }
-
-    const totalDbTime =
-      dbTraces.reduce((sum, trace) => sum + trace.duration, 0) / 1000;
-    const totalOpenfgaTime =
-      openfgaTraces.reduce((sum, trace) => sum + trace.duration, 0) / 1000;
-    const dbOperationCount = dbTraces.length;
-    const openfgaOperationCount = openfgaTraces.length;
-    const timeRatio = totalOpenfgaTime > 0 ? totalDbTime / totalOpenfgaTime : 0;
-    const operationCountRatio =
-      openfgaOperationCount > 0 ? dbOperationCount / openfgaOperationCount : 0;
-
-    // Calculate separate scenario times for each strategy
-    const dbScenarioTime =
-      dbTraces.length > 0
-        ? calculateRootSpanDurations(dbTraces).reduce(
-            (sum, duration) => sum + duration,
-            0
-          ) / 1000
-        : 0;
-
-    const openfgaScenarioTime =
-      openfgaTraces.length > 0
-        ? calculateRootSpanDurations(openfgaTraces).reduce(
-            (sum, duration) => sum + duration,
-            0
-          ) / 1000
-        : 0;
-
-    results.push({
-      scenario,
-      totalDbTime,
-      totalOpenfgaTime,
-      dbOperationCount,
-      openfgaOperationCount,
-      timeRatio,
-      operationCountRatio,
-      dbScenarioTime,
-      openfgaScenarioTime,
-    });
   }
 
   return results;
-};
+}
 
-const aggregateScenariosByType = (
-  results: StrategyComparisonResult[]
-): StrategyComparisonResult[] => {
-  const scenariosByType: Record<string, StrategyComparisonResult[]> = {};
-
-  for (const result of results) {
-    const scenarioMatch = result.scenario.match(
-      /\["([^-]+-[^-]+-[^-]+(?:-[^-]+)*)-(\d+)"\]/
-    );
-
-    if (scenarioMatch) {
-      const [, scenarioType] = scenarioMatch;
-      scenariosByType[scenarioType] = scenariosByType[scenarioType] || [];
-      scenariosByType[scenarioType].push(result);
-    } else {
-      scenariosByType[result.scenario] = scenariosByType[result.scenario] || [];
-      scenariosByType[result.scenario].push(result);
-    }
-  }
-
+function aggregateScenarioIterations(
+  iterationResults: Record<string, StrategyComparisonResult[]>
+): StrategyComparisonResult[] {
   const aggregatedResults: StrategyComparisonResult[] = [];
 
-  for (const [scenarioType, scenarios] of Object.entries(scenariosByType)) {
-    if (scenarios.length <= 1) {
-      aggregatedResults.push(...scenarios);
-      continue;
+  for (const [scenarioName, iterations] of Object.entries(iterationResults)) {
+    if (iterations.length === 0) continue;
+
+    const iterationsByRunId: Record<string, StrategyComparisonResult[]> = {};
+
+    for (const iteration of iterations) {
+      if (!iterationsByRunId[iteration.runId]) {
+        iterationsByRunId[iteration.runId] = [];
+      }
+      iterationsByRunId[iteration.runId].push(iteration);
     }
 
-    const avgDbTime =
-      scenarios.reduce((sum, s) => sum + s.totalDbTime, 0) / scenarios.length;
-    const avgOpenfgaTime =
-      scenarios.reduce((sum, s) => sum + s.totalOpenfgaTime, 0) /
-      scenarios.length;
-    const avgDbOpCount =
-      scenarios.reduce((sum, s) => sum + s.dbOperationCount, 0) /
-      scenarios.length;
-    const avgOpenfgaOpCount =
-      scenarios.reduce((sum, s) => sum + s.openfgaOperationCount, 0) /
-      scenarios.length;
-    const avgTimeRatio =
-      scenarios.reduce((sum, s) => sum + s.timeRatio, 0) / scenarios.length;
-    const avgOpCountRatio =
-      scenarios.reduce((sum, s) => sum + s.operationCountRatio, 0) /
-      scenarios.length;
-    const avgDbScenarioTime =
-      scenarios.reduce((sum, s) => sum + s.dbScenarioTime, 0) /
-      scenarios.length;
-    const avgOpenfgaScenarioTime =
-      scenarios.reduce((sum, s) => sum + s.openfgaScenarioTime, 0) /
-      scenarios.length;
+    for (const [runId, runIterations] of Object.entries(iterationsByRunId)) {
+      const iterationCount = runIterations.length;
 
-    aggregatedResults.push({
-      scenario: `${scenarioType} (avg of ${scenarios.length} iterations)`,
-      totalDbTime: avgDbTime,
-      totalOpenfgaTime: avgOpenfgaTime,
-      dbOperationCount: avgDbOpCount,
-      openfgaOperationCount: avgOpenfgaOpCount,
-      timeRatio: avgTimeRatio,
-      operationCountRatio: avgOpCountRatio,
-      dbScenarioTime: avgDbScenarioTime,
-      openfgaScenarioTime: avgOpenfgaScenarioTime,
-    });
+      const avg = (values: number[]) =>
+        values.reduce((sum, val) => sum + val, 0) / values.length;
+
+      const avgDbTime = avg(runIterations.map((it) => it.totalTime.db));
+      const avgOpenfgaTime = avg(
+        runIterations.map((it) => it.totalTime.openfga)
+      );
+      const avgDbOpCount = avg(runIterations.map((it) => it.operationCount.db));
+      const avgOpenfgaOpCount = avg(
+        runIterations.map((it) => it.operationCount.openfga)
+      );
+      const avgTimeRatio = avg(runIterations.map((it) => it.timeRatio));
+      const avgOpCountRatio = avg(
+        runIterations.map((it) => it.operationCountRatio)
+      );
+
+      const mergedStatusCodes: Record<string, number[]> = {};
+      for (const iteration of runIterations) {
+        if (iteration.statusCodes) {
+          for (const [expected, actual] of Object.entries(
+            iteration.statusCodes
+          )) {
+            if (!mergedStatusCodes[expected]) {
+              mergedStatusCodes[expected] = [];
+            }
+            mergedStatusCodes[expected].push(...actual);
+          }
+        }
+      }
+
+      aggregatedResults.push({
+        scenario: `${scenarioName} (avg of ${iterationCount} iterations)`,
+        totalTime: {
+          db: avgDbTime,
+          openfga: avgOpenfgaTime,
+        },
+        operationCount: {
+          db: avgDbOpCount,
+          openfga: avgOpenfgaOpCount,
+        },
+        timeRatio: avgTimeRatio,
+        operationCountRatio: avgOpCountRatio,
+        iterations: iterationCount,
+        runId,
+        statusCodes:
+          Object.keys(mergedStatusCodes).length > 0
+            ? mergedStatusCodes
+            : undefined,
+      });
+    }
   }
 
   return aggregatedResults;
-};
+}
 
-const ensureDirectoryExists = async (filePath: string): Promise<void> => {
+async function ensureDirectoryExists(filePath: string): Promise<void> {
   const dir = dirname(filePath);
   try {
     await mkdir(dir, { recursive: true });
@@ -335,43 +465,88 @@ const ensureDirectoryExists = async (filePath: string): Promise<void> => {
       throw error;
     }
   }
-};
+}
 
-const generateJsonReport = async (
+async function generateJsonReport(
   results: StrategyComparisonResult[],
   filePath: string
-): Promise<void> => {
+): Promise<void> {
   await ensureDirectoryExists(filePath);
   await writeFile(filePath, JSON.stringify(results, null, 2));
   console.log(`JSON report written to ${filePath}`);
-};
+}
 
-const generateMermaidCharts = async (
+async function generateMermaidCharts(
   results: StrategyComparisonResult[],
   filePath: string
-): Promise<void> => {
+): Promise<void> {
   await ensureDirectoryExists(filePath);
 
-  // Helper function to create a clean scenario name
   const cleanScenarioName = (scenario: string) => {
     return scenario
       .replace(/\[|\]|"/g, '')
       .replace(/ \(avg of \d+ iterations\)/, '');
   };
 
-  // Create a markdown table from the results
   const createMarkdownTable = (results: StrategyComparisonResult[]) => {
-    let table = '| # | Scenario | DB Time (ms) | OpenFGA Time (ms) | DB Operations | OpenFGA Operations | Time Ratio (DB/OpenFGA) | DB Scenario Time (ms) | OpenFGA Scenario Time (ms) |\n';
-    table += '|---|----------|--------------|------------------|---------------|-------------------|-------------------------|----------------------|---------------------------|\n';
+    let table =
+      '| # | Scenario | DB Time (ms) | OpenFGA Time (ms) | DB Operations | OpenFGA Operations | Time Ratio (DB/OpenFGA) | Iterations | Run ID |\n';
+    table +=
+      '|---|----------|--------------|------------------|---------------|-------------------|-------------------------|------------|--------|\n';
 
     results.forEach((result, i) => {
-      table += `| ${i} | ${cleanScenarioName(result.scenario)} | ${result.totalDbTime.toFixed(2)} | ${result.totalOpenfgaTime.toFixed(2)} | ${result.dbOperationCount} | ${result.openfgaOperationCount} | ${result.timeRatio.toFixed(3)} | ${result.dbScenarioTime.toFixed(2)} | ${result.openfgaScenarioTime.toFixed(2)} |\n`;
+      table += `| ${i} | ${cleanScenarioName(
+        result.scenario
+      )} | ${result.totalTime.db.toFixed(
+        2
+      )} | ${result.totalTime.openfga.toFixed(
+        2
+      )} | ${result.operationCount.db.toFixed(
+        2
+      )} | ${result.operationCount.openfga.toFixed(
+        2
+      )} | ${result.timeRatio.toFixed(3)} | ${result.iterations} | ${
+        result.runId
+      } |\n`;
     });
 
-    return table;
+    let statusTable = '';
+    const hasStatusInfo = results.some(
+      (r) => r.statusCodes && Object.keys(r.statusCodes).length > 0
+    );
+
+    if (hasStatusInfo) {
+      statusTable = '\n\n### Status Code Validation\n';
+      statusTable += '| Scenario | Expected Status | Actual Status | Valid |\n';
+      statusTable += '|----------|----------------|---------------|-------|\n';
+
+      results.forEach((result) => {
+        if (result.statusCodes) {
+          Object.entries(result.statusCodes).forEach(([expected, actuals]) => {
+            const statusCounts = actuals.reduce((counts, status) => {
+              counts[status] = (counts[status] || 0) + 1;
+              return counts;
+            }, {} as Record<number, number>);
+
+            const actualStatusList = Object.entries(statusCounts)
+              .map(([status, count]) => `${status} (${count} times)`)
+              .join(', ');
+
+            const allMatch = actuals.every((s) => s === Number(expected));
+
+            statusTable += `| ${cleanScenarioName(
+              result.scenario
+            )} | ${expected} | ${actualStatusList} | ${
+              allMatch ? '✅' : '❌'
+            } |\n`;
+          });
+        }
+      });
+    }
+
+    return table + statusTable;
   };
 
-  // Scenario Times Chart using XY Chart
   const scenarioTimesChart = `
 \`\`\`mermaid
 ---
@@ -391,15 +566,15 @@ config:
       plotColorPalette: "#4285F4, #EA4335"
 ---
 xychart-beta
-    title "Performance Comparison: DB vs OpenFGA - Scenario Times (ms) (lower is better)"
+    title "Performance Comparison: DB vs OpenFGA - Total Time (ms) (lower is better)"
     x-axis [${results.map((_, i) => i).join(',')}]
     y-axis "Time (ms)" 0 --> ${Math.ceil(
       Math.max(
-        ...results.map((r) => Math.max(r.dbScenarioTime, r.openfgaScenarioTime))
+        ...results.map((r) => Math.max(r.totalTime.db, r.totalTime.openfga))
       ) * 1.2
     )}
-    bar [${results.map((r) => r.dbScenarioTime.toFixed(2)).join(',')}]
-    bar [${results.map((r) => r.openfgaScenarioTime.toFixed(2)).join(',')}]
+    bar [${results.map((r) => r.totalTime.db.toFixed(2)).join(',')}]
+    bar [${results.map((r) => r.totalTime.openfga.toFixed(2)).join(',')}]
 \`\`\`
 
 ### Legend
@@ -407,15 +582,9 @@ xychart-beta
 - Second bar (red): OpenFGA Strategy
 
 ### Scenario Names for Chart Reference
-${results
-  .map(
-    (r, i) => `${i}. ${cleanScenarioName(r.scenario)}`
-  )
-  .join('\n')}
-
+${results.map((r, i) => `${i}. ${cleanScenarioName(r.scenario)}`).join('\n')}
 `;
 
-  // Operations Count Chart
   const operationsCountChart = `
 \`\`\`mermaid
 ---
@@ -440,12 +609,12 @@ xychart-beta
     y-axis "Operation Count" 0 --> ${Math.ceil(
       Math.max(
         ...results.map((r) =>
-          Math.max(r.dbOperationCount, r.openfgaOperationCount)
+          Math.max(r.operationCount.db, r.operationCount.openfga)
         )
       ) * 1.2
     )}
-    bar [${results.map((r) => r.dbOperationCount.toFixed(0)).join(',')}]
-    bar [${results.map((r) => r.openfgaOperationCount.toFixed(0)).join(',')}]
+    bar [${results.map((r) => r.operationCount.db.toFixed(0)).join(',')}]
+    bar [${results.map((r) => r.operationCount.openfga.toFixed(0)).join(',')}]
 \`\`\`
 
 ### Legend
@@ -453,15 +622,9 @@ xychart-beta
 - Second bar (red): OpenFGA Strategy
 
 ### Scenario Names for Chart Reference
-${results
-  .map(
-    (r, i) => `${i}. ${cleanScenarioName(r.scenario)}`
-  )
-  .join('\n')}
-
+${results.map((r, i) => `${i}. ${cleanScenarioName(r.scenario)}`).join('\n')}
 `;
 
-  // Time Ratio Chart
   const timeRatioChart = `
 \`\`\`mermaid
 ---
@@ -495,15 +658,9 @@ xychart-beta
 - Second line (red): Break-even (1.0)
 
 ### Scenario Names for Chart Reference
-${results
-  .map(
-    (r, i) => `${i}. ${cleanScenarioName(r.scenario)}`
-  )
-  .join('\n')}
-
+${results.map((r, i) => `${i}. ${cleanScenarioName(r.scenario)}`).join('\n')}
 `;
 
-  // Create the data table
   const dataTable = createMarkdownTable(results);
 
   const fullReport = `# Authorization Strategy Performance Comparison
@@ -514,7 +671,7 @@ This report compares the performance of two authorization strategies:
 - **Database (DB) strategy**: Direct database queries for permission checks
 - **OpenFGA strategy**: Delegated authorization checks using OpenFGA
 
-## Scenario Times
+## Total Execution Time
 ${scenarioTimesChart}
 
 ## Operation Counts
@@ -534,37 +691,37 @@ ${JSON.stringify(results, null, 2)}
 
   await writeFile(filePath, fullReport);
   console.log(`Mermaid charts written to ${filePath}`);
-};
+}
 
-const generateCSVReport = async (
+async function generateCSVReport(
   results: StrategyComparisonResult[],
   filePath: string
-): Promise<void> => {
+): Promise<void> {
   await ensureDirectoryExists(filePath);
 
   const header =
-    'Scenario,DB Time (ms),OpenFGA Time (ms),DB Operations,OpenFGA Operations,Time Ratio (DB/OpenFGA),Operation Count Ratio (DB/OpenFGA),DB Scenario Time (ms),OpenFGA Scenario Time (ms)\n';
+    'Scenario,DB Time (ms),OpenFGA Time (ms),DB Operations,OpenFGA Operations,Time Ratio (DB/OpenFGA),Operation Count Ratio (DB/OpenFGA),Iterations,Run ID\n';
   const rows = results
     .map((result) =>
       [
         result.scenario,
-        result.totalDbTime.toFixed(2),
-        result.totalOpenfgaTime.toFixed(2),
-        result.dbOperationCount,
-        result.openfgaOperationCount,
+        result.totalTime.db.toFixed(2),
+        result.totalTime.openfga.toFixed(2),
+        result.operationCount.db.toFixed(2),
+        result.operationCount.openfga.toFixed(2),
         result.timeRatio.toFixed(2),
         result.operationCountRatio.toFixed(2),
-        result.dbScenarioTime.toFixed(2),
-        result.openfgaScenarioTime.toFixed(2),
+        result.iterations,
+        result.runId,
       ].join(',')
     )
     .join('\n');
 
   await writeFile(filePath, header + rows);
   console.log(`CSV report written to ${filePath}`);
-};
+}
 
-const main = async () => {
+async function main() {
   console.log('Starting trace analysis...');
 
   const { dbTraces, openfgaTraces } = await getAuthorizationTraces();
@@ -579,17 +736,44 @@ const main = async () => {
     return;
   }
 
-  const dbScenarios = groupTracesByScenario(dbTraces);
-  const openfgaScenarios = groupTracesByScenario(openfgaTraces);
-  const detailedResults = calculateMetrics(dbScenarios, openfgaScenarios);
+  const availableRunIds = findRunIds([...dbTraces, ...openfgaTraces]);
+  console.log(
+    `Found ${availableRunIds.length} unique benchmark runs:`,
+    availableRunIds
+  );
 
-  console.log('\nDetailed Results:');
-  console.table(detailedResults);
+  const runIdToAnalyze = RUN_ID || availableRunIds[availableRunIds.length - 1];
+  console.log(`Analyzing run ID: ${runIdToAnalyze}`);
 
-  const aggregatedResults = aggregateScenariosByType(detailedResults);
+  const filteredDbTraces = runIdToAnalyze
+    ? filterTracesByRunId(dbTraces, runIdToAnalyze)
+    : dbTraces;
+  const filteredOpenfgaTraces = runIdToAnalyze
+    ? filterTracesByRunId(openfgaTraces, runIdToAnalyze)
+    : openfgaTraces;
+
+  console.log(
+    `Using ${filteredDbTraces.length} DB traces and ${filteredOpenfgaTraces.length} OpenFGA traces for run ${runIdToAnalyze}`
+  );
+
+  const dbScenarios = groupTracesByScenarioAndIteration(filteredDbTraces);
+  const openfgaScenarios = groupTracesByScenarioAndIteration(
+    filteredOpenfgaTraces
+  );
+
+  const iterationResults = calculateIterationMetrics(
+    dbScenarios,
+    openfgaScenarios
+  );
+  const aggregatedResults = aggregateScenarioIterations(iterationResults);
 
   console.log('\nAggregated Results:');
   console.table(aggregatedResults);
+
+  const allIterationResults = Object.values(iterationResults).flat();
+
+  console.log('\nDetailed Results by Iteration:');
+  console.table(allIterationResults);
 
   const timestamp = new Date().toISOString().replace(/:/g, '-');
 
@@ -603,11 +787,11 @@ const main = async () => {
       `${OUTPUT_DIR}/auth-comparison-${timestamp}.json`
     ),
     generateCSVReport(
-      detailedResults,
+      allIterationResults,
       `${OUTPUT_DIR}/auth-comparison-detailed-${timestamp}.csv`
     ),
     generateJsonReport(
-      detailedResults,
+      allIterationResults,
       `${OUTPUT_DIR}/auth-comparison-detailed-${timestamp}.json`
     ),
     generateMermaidCharts(
@@ -617,6 +801,6 @@ const main = async () => {
   ]);
 
   console.log('Analysis complete!');
-};
+}
 
 main().catch(console.error);

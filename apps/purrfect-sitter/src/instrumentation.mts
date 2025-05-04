@@ -59,11 +59,21 @@ export const openTelemetrySdk = new NodeSDK({
       enabled: true,
       headersToSpanAttributes: {
         server: {
-          requestHeaders: ['x-benchmark-scenario'],
+          requestHeaders: [
+            'x-benchmark-scenario',
+            'x-benchmark-iteration', 
+            'x-benchmark-run-id',
+            'x-benchmark-expected-status'
+          ],
           responseHeaders: []
         },
         client: {
-          requestHeaders: ['x-benchmark-scenario'],
+          requestHeaders: [
+            'x-benchmark-scenario',
+            'x-benchmark-iteration', 
+            'x-benchmark-run-id',
+            'x-benchmark-expected-status'
+          ],
           responseHeaders: []
         }
       }
