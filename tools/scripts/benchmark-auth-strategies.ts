@@ -597,35 +597,37 @@ async function cleanup() {
 
 // Main function
 async function main() {
-  try {
-    process.on('SIGINT', async () => {
-      console.log('\nReceived SIGINT, cleaning up before exit...');
-      await cleanup();
-      process.exit(0);
-    });
-
-    process.on('SIGTERM', async () => {
-      console.log('\nReceived SIGTERM, cleaning up before exit...');
-      await cleanup();
-      process.exit(0);
-    });
-
-    // Check health endpoint to make sure API is running and get current strategy
-    const healthResponse = await axios.get(`${API_BASE_URL}/health`);
-    console.log(`API Health: ${healthResponse.status}`);
-    console.log(`Current auth strategy: ${healthResponse.data.authStrategy}`);
-
-    const authStrategy = healthResponse.data.authStrategy;
-    await runAuthBenchmark(authStrategy);
-
-    console.log('\nBenchmark completed successfully!');
-    console.log('Check Zipkin for trace visualization.');
-  } finally {
+  process.on('SIGINT', async () => {
+    console.log('\nReceived SIGINT, cleaning up before exit...');
     await cleanup();
-  }
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', async () => {
+    console.log('\nReceived SIGTERM, cleaning up before exit...');
+    await cleanup();
+    process.exit(0);
+  });
+
+  // Check health endpoint to make sure API is running and get current strategy
+  const healthResponse = await axios.get(`${API_BASE_URL}/health`);
+  console.log(`API Health: ${healthResponse.status}`);
+  console.log(`Current auth strategy: ${healthResponse.data.authStrategy}`);
+
+  const authStrategy = healthResponse.data.authStrategy;
+  await runAuthBenchmark(authStrategy);
+
+  console.log('\nBenchmark completed successfully!');
+  console.log('Check Zipkin for trace visualization.');
 }
 
-main().catch(async (error) => {
-  console.error('Unhandled error:', error);
-  process.exit(1);
-});
+main()
+  .then(async () => {
+    await cleanup();
+    process.exit(0);
+  })
+  .catch(async (error) => {
+    console.error('Unhandled error:', error);
+    await cleanup();
+    process.exit(1);
+  });
