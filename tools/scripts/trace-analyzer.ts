@@ -73,6 +73,7 @@ async function fetchTraces(
           lookback,
           limit: TRACE_LIMIT,
           endTs,
+          tagQuery: `http.request.header.x_benchmark_run_id=["${RUN_ID}"]`,
         },
       }
     );
