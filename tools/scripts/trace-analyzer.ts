@@ -1,16 +1,22 @@
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
+
+import { BENCHMARK_SCENARIOS, getScenarioById } from './benchmark-scenarios.ts';
+import { inspect } from 'node:util';
+import { setTimeout } from 'node:timers/promises';
+import { URL } from 'node:url';
 
 const ZIPKIN_URL = process.env.ZIPKIN_URL || 'http://localhost:9411';
 const OUTPUT_DIR = process.env.OUTPUT_DIR || './benchmark-results';
 const TRACE_LOOKBACK = process.env.TRACE_LOOKBACK
   ? parseInt(process.env.TRACE_LOOKBACK)
-  : 900000; // Default 15 minutes
+  : 7200000; // Default 120 minutes
 const TRACE_LIMIT = process.env.TRACE_LIMIT
   ? parseInt(process.env.TRACE_LIMIT)
-  : 10000;
+  : 1000;
 const RUN_ID = process.env.BENCHMARK_RUN_ID;
+const ITERATIONS = process.env.ITERATIONS ? +process.env.ITERATIONS : 5;
 
 interface Trace {
   traceId: string;
@@ -55,35 +61,52 @@ type ZipkinTrace = {
 
 async function fetchTraces(
   serviceName: string,
+  scenario?: string,
+  iteration?: number,
   lookback = TRACE_LOOKBACK
 ): Promise<Trace[]> {
-  console.log(
-    `Fetching traces for service ${serviceName} (lookback: ${lookback}ms, limit: ${TRACE_LIMIT})`
-  );
-
-  try {
-    const endTs = Date.now();
-    console.log(`Using endTs: ${endTs}, lookback: ${lookback}ms`);
-
-    const response = await axios.get<ZipkinTrace[][]>(
-      `${ZIPKIN_URL}/api/v2/traces`,
-      {
-        params: {
-          serviceName,
-          lookback,
-          limit: TRACE_LIMIT,
-          endTs,
-          tagQuery: `http.request.header.x_benchmark_run_id=["${RUN_ID}"]`,
-        },
-      }
+  const tagQueryParams = [
+    `http.request.header.x_benchmark_run_id=["${RUN_ID}"]`,
+  ];
+  if (scenario) {
+    tagQueryParams.push(
+      `http.request.header.x_benchmark_scenario=["${scenario}"]`
     );
+  }
 
+  if (iteration !== undefined) {
+    tagQueryParams.push(
+      `http.request.header.x_benchmark_iteration=["${iteration}"]`
+    );
+  }
+
+  const tagQuery = tagQueryParams.join(' and ');
+  const endTs = Date.now();
+
+  const url = new URL('/api/v2/traces', ZIPKIN_URL);
+  url.searchParams.append('serviceName', serviceName);
+  url.searchParams.append('limit', TRACE_LIMIT.toString());
+  url.searchParams.append('endTs', endTs.toString());
+  url.searchParams.append('tagQuery', tagQuery);
+  url.searchParams.append('lookback', lookback.toString());
+
+  console.debug('Fetching traces params:', {
+    serviceName,
+    limit: TRACE_LIMIT,
+    lookback,
+    last: `last ${lookback / 1000} seconds`,
+    endTs,
+    tagQuery,
+  });
+  console.debug('Fetching traces URL:', url.toString());
+  try {
+    const response = await axios.get<ZipkinTrace[][]>(url.toString());
     if (
       !response.data ||
       !Array.isArray(response.data) ||
       response.data.length === 0
     ) {
-      console.log('No traces found');
+      console.warn('No traces found');
       return [];
     }
 
@@ -100,56 +123,43 @@ async function fetchTraces(
       }))
     );
 
-    console.log(`Found ${traces.length} spans`);
+    console.debug(
+      `Found ${traces.length} spans across ${response.data.length} traces`
+    );
     return traces;
   } catch (error) {
-    console.error('Error fetching traces:', error.message);
+    if (isAxiosError(error)) {
+      console.error(inspect(error.cause));
+    }
     return [];
   }
 }
 
-async function getAuthorizationTraces(): Promise<{
-  dbTraces: Trace[];
-  openfgaTraces: Trace[];
-}> {
-  const dbTraces = await fetchTraces('purrfect-sitter-db');
-  const purrfectSitterOpenfgaTraces = await fetchTraces(
-    'purrfect-sitter-openfga'
-  );
-  const openfgaServiceTraces = await fetchTraces('openfga');
-
-  console.log(
-    `Retrieved ${purrfectSitterOpenfgaTraces.length} purrfect-sitter-openfga traces`
-  );
-  console.log(
-    `Retrieved ${openfgaServiceTraces.length} openfga service traces`
-  );
-
-  const validOpenfgaTraces = [
-    ...purrfectSitterOpenfgaTraces,
-    ...openfgaServiceTraces.filter(
-      (trace) =>
-        trace.tags['object'] || trace.tags['relation'] || trace.tags['user']
-    ),
-  ];
-
-  console.log(`Using ${dbTraces.length} DB traces`);
-  console.log(`Using ${validOpenfgaTraces.length} OpenFGA traces`);
-
-  return {
-    dbTraces,
-    openfgaTraces: validOpenfgaTraces,
-  };
+interface TraceInfo {
+  traceId: string;
+  spanCount: number;
+  duration: number;
 }
 
 function groupTracesByTraceId(traces: Trace[]): Record<string, Trace[]> {
   return traces.reduce((grouped, trace) => {
-    if (!grouped[trace.traceId]) {
-      grouped[trace.traceId] = [];
-    }
+    grouped[trace.traceId] ??= [];
     grouped[trace.traceId].push(trace);
     return grouped;
   }, {} as Record<string, Trace[]>);
+}
+
+function calculateTraceMetrics(traces: Trace[]): TraceInfo[] {
+  const tracesByTraceId = groupTracesByTraceId(traces);
+
+  return Object.entries(tracesByTraceId).map(([traceId, spans]) => {
+    const totalDuration = spans.reduce((sum, span) => sum + span.duration, 0);
+    return {
+      traceId,
+      spanCount: spans.length,
+      duration: totalDuration,
+    };
+  });
 }
 
 function parseArrayValue(value: string | undefined): string | null {
@@ -170,39 +180,24 @@ function parseArrayValue(value: string | undefined): string | null {
 }
 
 function getRunId(trace: Trace): string | null {
-  const rawValue =
-    trace.tags['X-Benchmark-Run-ID'] ||
-    trace.tags['x-benchmark-run-id'] ||
-    trace.tags['http.request.header.x_benchmark_run_id'];
-
+  const rawValue = trace.tags['http.request.header.x_benchmark_run_id'];
   return parseArrayValue(rawValue);
 }
 
 function getScenarioName(trace: Trace): string | null {
-  const rawValue =
-    trace.tags['X-Benchmark-Scenario'] ||
-    trace.tags['x-benchmark-scenario'] ||
-    trace.tags['http.request.header.x_benchmark_scenario'];
-
+  const rawValue = trace.tags['http.request.header.x_benchmark_scenario'];
   return parseArrayValue(rawValue);
 }
 
 function getIterationNumber(trace: Trace): number | null {
-  const rawValue =
-    trace.tags['X-Benchmark-Iteration'] ||
-    trace.tags['x-benchmark-iteration'] ||
-    trace.tags['http.request.header.x_benchmark_iteration'];
-
+  const rawValue = trace.tags['http.request.header.x_benchmark_iteration'];
   const parsedValue = parseArrayValue(rawValue);
   return parsedValue ? Number(parsedValue) : null;
 }
 
 function getExpectedStatusCode(trace: Trace): number | null {
   const rawValue =
-    trace.tags['X-Benchmark-Expected-Status'] ||
-    trace.tags['x-benchmark-expected-status'] ||
     trace.tags['http.request.header.x_benchmark_expected_status'];
-
   const parsedValue = parseArrayValue(rawValue);
   return parsedValue ? Number(parsedValue) : null;
 }
@@ -210,90 +205,6 @@ function getExpectedStatusCode(trace: Trace): number | null {
 function getActualStatusCode(trace: Trace): number | null {
   const statusCode = trace.tags['http.status_code'];
   return statusCode ? Number(statusCode) : null;
-}
-
-function findRunIds(traces: Trace[]): string[] {
-  const runIds = new Set<string>();
-
-  for (const trace of traces) {
-    const runId = getRunId(trace);
-    if (runId) {
-      runIds.add(runId);
-    }
-  }
-
-  return Array.from(runIds);
-}
-
-function filterTracesByRunId(traces: Trace[], runId: string): Trace[] {
-  return traces.filter((trace) => {
-    const traceRunId = getRunId(trace);
-    return traceRunId === runId;
-  });
-}
-
-function groupTracesByScenarioAndIteration(
-  traces: Trace[]
-): Record<string, Record<number, Trace[]>> {
-  const scenarios: Record<string, Record<number, Trace[]>> = {};
-  const tracesByTraceId = groupTracesByTraceId(traces);
-
-  if (traces.length > 0) {
-    const sample = traces[0];
-    console.log('Sample trace tags:');
-    console.log(`Trace ID: ${sample.traceId}, Service: ${sample.serviceName}`);
-    console.log('Tags:', JSON.stringify(sample.tags, null, 2));
-  }
-
-  for (const trace of traces) {
-    const scenarioName = getScenarioName(trace);
-    const iteration = getIterationNumber(trace);
-
-    if (scenarioName && iteration !== null) {
-      scenarios[scenarioName] = scenarios[scenarioName] || {};
-      scenarios[scenarioName][iteration] =
-        scenarios[scenarioName][iteration] || [];
-
-      scenarios[scenarioName][iteration].push(trace);
-
-      const relatedTraces = tracesByTraceId[trace.traceId] || [];
-      for (const relatedTrace of relatedTraces) {
-        if (
-          relatedTrace !== trace &&
-          !scenarios[scenarioName][iteration].some(
-            (t) => t.id === relatedTrace.id
-          )
-        ) {
-          scenarios[scenarioName][iteration].push(relatedTrace);
-        }
-      }
-    }
-  }
-
-  console.log('Traces grouped by scenario and iteration:');
-  Object.entries(scenarios).forEach(([scenario, iterations]) => {
-    console.log(`  ${scenario}:`);
-    Object.entries(iterations).forEach(([iteration, iterationTraces]) => {
-      console.log(
-        `    Iteration ${iteration}: ${iterationTraces.length} traces`
-      );
-    });
-  });
-
-  return scenarios;
-}
-
-function calculateRootSpanDurations(traces: Trace[]): number[] {
-  const tracesByTraceId = groupTracesByTraceId(traces);
-
-  return Object.values(tracesByTraceId).map((tracesGroup) => {
-    const longestSpan = tracesGroup.reduce(
-      (longest, current) =>
-        current.duration > longest.duration ? current : longest,
-      tracesGroup[0]
-    );
-    return longestSpan.duration;
-  });
 }
 
 function calculateIterationMetrics(
@@ -307,6 +218,7 @@ function calculateIterationMetrics(
   ]);
 
   for (const scenario of allScenarios) {
+    console.log(`Processing scenario: ${scenario}`);
     results[scenario] = [];
 
     const dbIterations = dbScenarios[scenario]
@@ -330,12 +242,25 @@ function calculateIterationMetrics(
 
       const runId = getRunId(dbTraces[0] || openfgaTraces[0]) || 'unknown';
 
+      // Calculate trace metrics including spans
+      const dbTraceMetrics = calculateTraceMetrics(dbTraces);
+      const openfgaTraceMetrics = calculateTraceMetrics(openfgaTraces);
+
       const totalDbTime =
-        dbTraces.reduce((sum, trace) => sum + trace.duration, 0) / 1000;
+        dbTraceMetrics.reduce((sum, trace) => sum + trace.duration, 0) / 1000;
       const totalOpenfgaTime =
-        openfgaTraces.reduce((sum, trace) => sum + trace.duration, 0) / 1000;
-      const dbOperationCount = dbTraces.length;
-      const openfgaOperationCount = openfgaTraces.length;
+        openfgaTraceMetrics.reduce((sum, trace) => sum + trace.duration, 0) /
+        1000;
+
+      // Count total spans rather than just unique trace IDs
+      const dbOperationCount = dbTraceMetrics.reduce(
+        (sum, trace) => sum + trace.spanCount,
+        0
+      );
+      const openfgaOperationCount = openfgaTraceMetrics.reduce(
+        (sum, trace) => sum + trace.spanCount,
+        0
+      );
       const timeRatio =
         totalOpenfgaTime > 0 ? totalDbTime / totalOpenfgaTime : 0;
       const operationCountRatio =
@@ -484,9 +409,19 @@ async function generateMermaidCharts(
   await ensureDirectoryExists(filePath);
 
   const cleanScenarioName = (scenario: string) => {
-    return scenario
+    // Remove iteration and avg markers
+    const basicClean = scenario
       .replace(/\[|\]|"/g, '')
-      .replace(/ \(avg of \d+ iterations\)/, '');
+      .replace(/ \(avg of \d+ iterations\)/, '')
+      .replace(/-\d+$/, ''); // Remove iteration number suffix
+
+    // Try to find the scenario in our predefined list for a friendlier name
+    const scenarioInfo = getScenarioById(basicClean);
+    if (scenarioInfo) {
+      return scenarioInfo.name;
+    }
+
+    return basicClean;
   };
 
   const createMarkdownTable = (results: StrategyComparisonResult[]) => {
@@ -552,78 +487,93 @@ async function generateMermaidCharts(
 \`\`\`mermaid
 ---
 config:
-  xyChart:
-    width: 900
-    height: 600
-    titleFontSize: 18
-    labelFontSize: 14
-    titlePadding: 20
-  themeVariables:
-    xyChart:
-      titleColor: "#333333"
-      axisLabelColor: "#555555"
-      xAxisLabelColor: "#555555"
-      yAxisLabelColor: "#555555"
-      plotColorPalette: "#4285F4, #EA4335"
+  theme: mc
+  gantt:
+    fontSize: 12
+    sectionFontSize: 15
+    barHeight: 20
+    barGap: 8
+    gridLineStartPadding: 50
+    leftPadding: 200
 ---
-xychart-beta
-    title "Performance Comparison: DB vs OpenFGA - Total Time (ms) (lower is better)"
-    x-axis [${results.map((_, i) => i).join(',')}]
-    y-axis "Time (ms)" 0 --> ${Math.ceil(
-      Math.max(
-        ...results.map((r) => Math.max(r.totalTime.db, r.totalTime.openfga))
-      ) * 1.2
-    )}
-    bar [${results.map((r) => r.totalTime.db.toFixed(2)).join(',')}]
-    bar [${results.map((r) => r.totalTime.openfga.toFixed(2)).join(',')}]
+gantt
+    title Performance Comparison: DB vs OpenFGA - Total Time (ms) (lower is better)
+    axisFormat %L
+
+${results
+  .map(
+    (r, i) => `
+    section ${i}. ${cleanScenarioName(r.scenario)}
+    DB (${r.totalTime.db.toFixed(2)} ms) :crit, db${i}, 0, ${(
+      r.totalTime.db * 100
+    ).toFixed(0)}ms
+    OpenFGA (${r.totalTime.openfga.toFixed(2)} ms) :active, fga${i}, 0, ${(
+      r.totalTime.openfga * 100
+    ).toFixed(0)}ms
+`
+  )
+  .join('')}
 \`\`\`
 
-### Legend
-- First bar (blue): DB Strategy
-- Second bar (red): OpenFGA Strategy
-
-### Scenario Names for Chart Reference
-${results.map((r, i) => `${i}. ${cleanScenarioName(r.scenario)}`).join('\n')}
+### Scenario Details
+${results
+  .map((r, i) => {
+    const scenarioId = r.scenario
+      .replace(/-\d+$/, '')
+      .replace(/ \(avg of \d+ iterations\)/, '');
+    const scenarioInfo = getScenarioById(scenarioId);
+    const description = scenarioInfo?.description || '';
+    return `${i}. **${cleanScenarioName(r.scenario)}**: ${description}`;
+  })
+  .join('\n')}
 `;
 
   const operationsCountChart = `
 \`\`\`mermaid
----
-config:
-  xyChart:
-    width: 900
-    height: 600
-    titleFontSize: 18
-    labelFontSize: 14
-    titlePadding: 20
-  themeVariables:
-    xyChart:
-      titleColor: "#333333"
-      axisLabelColor: "#555555"
-      xAxisLabelColor: "#555555"
-      yAxisLabelColor: "#555555"
-      plotColorPalette: "#4285F4, #EA4335"
----
-xychart-beta
-    title "Performance Comparison: DB vs OpenFGA - Operation Counts"
-    x-axis [${results.map((_, i) => i).join(',')}]
-    y-axis "Operation Count" 0 --> ${Math.ceil(
-      Math.max(
-        ...results.map((r) =>
-          Math.max(r.operationCount.db, r.operationCount.openfga)
-        )
-      ) * 1.2
-    )}
-    bar [${results.map((r) => r.operationCount.db.toFixed(0)).join(',')}]
-    bar [${results.map((r) => r.operationCount.openfga.toFixed(0)).join(',')}]
+gantt
+    title Performance Comparison: DB vs OpenFGA - Span Counts
+    dateFormat  X
+    axisFormat %s spans
+
+    section Legend
+    DB Strategy (blue) :crit, db, 0, 1
+    OpenFGA Strategy (red) :active, fga, 0, 1
+
+${results
+  .map((r, i) => {
+    // Find scenario details if available
+    const scenarioId = r.scenario
+      .replace(/-\d+$/, '')
+      .replace(/ \(avg of \d+ iterations\)/, '');
+    const scenarioInfo = getScenarioById(scenarioId);
+    const description = scenarioInfo?.description
+      ? ` (${scenarioInfo.description})`
+      : '';
+
+    return `
+    section ${i}. ${cleanScenarioName(r.scenario)}
+    DB (${r.operationCount.db.toFixed(
+      0
+    )} spans) :crit, dbops${i}, 0, ${r.operationCount.db.toFixed(0)}
+    OpenFGA (${r.operationCount.openfga.toFixed(
+      0
+    )} spans) :active, fgaops${i}, 0, ${r.operationCount.openfga.toFixed(0)}
+`;
+  })
+  .join('')}
 \`\`\`
 
-### Legend
-- First bar (blue): DB Strategy
-- Second bar (red): OpenFGA Strategy
-
-### Scenario Names for Chart Reference
-${results.map((r, i) => `${i}. ${cleanScenarioName(r.scenario)}`).join('\n')}
+### Scenario Details
+${results
+  .map((r, i) => {
+    const scenarioId = r.scenario
+      .replace(/-\d+$/, '')
+      .replace(/ \(avg of \d+ iterations\)/, '');
+    const scenarioInfo = getScenarioById(scenarioId);
+    const description = scenarioInfo?.description || '';
+    return `${i}. **${cleanScenarioName(r.scenario)}**: ${description}`;
+  })
+  .join('\n')}
 `;
 
   const timeRatioChart = `
@@ -658,8 +608,17 @@ xychart-beta
 - First line (green): DB/OpenFGA Time Ratio
 - Second line (red): Break-even (1.0)
 
-### Scenario Names for Chart Reference
-${results.map((r, i) => `${i}. ${cleanScenarioName(r.scenario)}`).join('\n')}
+### Scenario Details
+${results
+  .map((r, i) => {
+    const scenarioId = r.scenario
+      .replace(/-\d+$/, '')
+      .replace(/ \(avg of \d+ iterations\)/, '');
+    const scenarioInfo = getScenarioById(scenarioId);
+    const description = scenarioInfo?.description || '';
+    return `${i}. **${cleanScenarioName(r.scenario)}**: ${description}`;
+  })
+  .join('\n')}
 `;
 
   const dataTable = createMarkdownTable(results);
@@ -722,84 +681,206 @@ async function generateCSVReport(
   console.log(`CSV report written to ${filePath}`);
 }
 
+async function* getAllTraces(): AsyncGenerator<{
+  openfgaTraces: Trace[];
+  dbTraces: Trace[];
+  scenario: (typeof BENCHMARK_SCENARIOS)[number]['id'];
+  iteration: number;
+}> {
+  for (const scenario of BENCHMARK_SCENARIOS) {
+    let count = 0;
+    while (count < ITERATIONS) {
+      count++;
+      const iteration = count;
+      const openfgaTraces = await fetchTraces(
+        'purrfect-sitter-openfga',
+        scenario.id,
+        iteration
+      );
+      const dbTraces = await fetchTraces(
+        'purrfect-sitter-db',
+        scenario.id,
+        iteration
+      );
+      yield { openfgaTraces, dbTraces, scenario: scenario.id, iteration };
+    }
+  }
+}
+
 async function main() {
   console.log('Starting trace analysis...');
-
-  const { dbTraces, openfgaTraces } = await getAuthorizationTraces();
-  console.log(
-    `Found ${dbTraces.length} DB traces and ${openfgaTraces.length} OpenFGA traces`
-  );
-
-  if (dbTraces.length === 0 && openfgaTraces.length === 0) {
+  console.log('Using benchmark scenarios:');
+  BENCHMARK_SCENARIOS.forEach((scenario) => {
     console.log(
-      'No traces found for analysis. Please run the benchmark first.'
+      `  - ${scenario.id}: ${scenario.name} (Expected: ${
+        scenario.expectedStatus || 'any'
+      })`
     );
-    return;
+  });
+
+  const preResults: Partial<
+    Record<
+      (typeof BENCHMARK_SCENARIOS)[number]['id'],
+      Record<
+        number,
+        {
+          totalDbTime: number;
+          totalOpenfgaTime: number;
+          timeRatio: number;
+          operationCountRatio: number;
+          statusCodes: Record<string, number[]>;
+        }
+      >
+    >
+  > = {};
+  for await (const {
+    openfgaTraces,
+    dbTraces,
+    scenario,
+    iteration,
+  } of getAllTraces()) {
+    await setTimeout(100);
+    // console.log(
+    //   `Fetched ${openfgaTraces.length} OpenFGA traces and ${dbTraces.length} DB traces for scenario ${scenario}, iteration ${iteration}`
+    // );
+
+    // Calculate trace metrics including spans
+    const dbTraceMetrics = calculateTraceMetrics(dbTraces);
+    const openfgaTraceMetrics = calculateTraceMetrics(openfgaTraces);
+    const totalDbTime =
+      dbTraceMetrics.reduce((sum, trace) => sum + trace.duration, 0) / 1000;
+    const totalOpenfgaTime =
+      openfgaTraceMetrics.reduce((sum, trace) => sum + trace.duration, 0) /
+      1000;
+
+    // Count total spans rather than just unique trace IDs
+    const dbOperationCount = dbTraceMetrics.reduce(
+      (sum, trace) => sum + trace.spanCount,
+      0
+    );
+    const openfgaOperationCount = openfgaTraceMetrics.reduce(
+      (sum, trace) => sum + trace.spanCount,
+      0
+    );
+    const timeRatio = totalOpenfgaTime > 0 ? totalDbTime / totalOpenfgaTime : 0;
+    const operationCountRatio =
+      openfgaOperationCount > 0 ? dbOperationCount / openfgaOperationCount : 0;
+
+    const statusCodes: Record<string, number[]> = {};
+    const allTraces = [...dbTraces, ...openfgaTraces];
+
+    for (const trace of allTraces) {
+      const expectedStatus = getExpectedStatusCode(trace);
+      const actualStatus = getActualStatusCode(trace);
+      if (expectedStatus && actualStatus) {
+        const key = `${expectedStatus}`;
+        statusCodes[key] ??= [];
+        statusCodes[key].push(actualStatus);
+      }
+    }
+
+    preResults[scenario] ??= {
+      [iteration]: {
+        totalDbTime,
+        totalOpenfgaTime,
+        timeRatio,
+        operationCountRatio,
+        runId: RUN_ID,
+        statusCodes:
+          Object.keys(statusCodes).length > 0 ? statusCodes : undefined,
+      },
+    };
   }
 
-  const availableRunIds = findRunIds([...dbTraces, ...openfgaTraces]);
-  console.log(
-    `Found ${availableRunIds.length} unique benchmark runs:`,
-    availableRunIds
-  );
+  console.log(inspect(preResults, { colors: true, depth: 10 }));
 
-  const runIdToAnalyze = RUN_ID || availableRunIds[availableRunIds.length - 1];
-  console.log(`Analyzing run ID: ${runIdToAnalyze}`);
+  // console.table(
+  //   Object.entries(scenarioTraces).map(([scenario, iterations]) => {
+  //     const iterationResults = Object.entries(iterations).map(
+  //       ([
+  //         iteration,
+  //         { totalDbTime, totalOpenfgaTime, timeRatio, operationCountRatio },
+  //       ]) => ({
+  //         scenario,
+  //         iteration: Number(iteration),
+  //         totalDbTime,
+  //         totalOpenfgaTime,
+  //         timeRatio,
+  //         operationCountRatio,
+  //       })
+  //     );
+  //     return {
+  //       scenario,
+  //       iterations: iterationResults,
+  //       avgDbTime:
+  //         iterationResults.reduce((sum, it) => sum + it.totalDbTime, 0) /
+  //         iterationResults.length,
+  //       avgOpenfgaTime:
+  //         iterationResults.reduce((sum, it) => sum + it.totalOpenfgaTime, 0) /
+  //         iterationResults.length,
+  //       avgTimeRatio:
+  //         iterationResults.reduce((sum, it) => sum + it.timeRatio, 0) /
+  //         iterationResults.length,
+  //       avgOperationCountRatio:
+  //         iterationResults.reduce(
+  //           (sum, it) => sum + it.operationCountRatio,
+  //           0
+  //         ) / iterationResults.length,
+  //     };
+  //   })
+  // );
 
-  const filteredDbTraces = runIdToAnalyze
-    ? filterTracesByRunId(dbTraces, runIdToAnalyze)
-    : dbTraces;
-  const filteredOpenfgaTraces = runIdToAnalyze
-    ? filterTracesByRunId(openfgaTraces, runIdToAnalyze)
-    : openfgaTraces;
+  // const { dbTraces, openfgaTraces } = await getAuthorizationTraces();
+  // console.log(
+  //   `Found ${dbTraces.length} DB traces and ${openfgaTraces.length} OpenFGA traces`
+  // );
+  // if (dbTraces.length === 0 && openfgaTraces.length === 0) {
+  //   console.log(
+  //     'No traces found for analysis. Please run the benchmark first.'
+  //   );
+  //   return;
+  // }
 
-  console.log(
-    `Using ${filteredDbTraces.length} DB traces and ${filteredOpenfgaTraces.length} OpenFGA traces for run ${runIdToAnalyze}`
-  );
+  // const dbScenarios = groupTracesByScenarioAndIteration(dbTraces);
+  // const openfgaScenarios = groupTracesByScenarioAndIteration(openfgaTraces);
 
-  const dbScenarios = groupTracesByScenarioAndIteration(filteredDbTraces);
-  const openfgaScenarios = groupTracesByScenarioAndIteration(
-    filteredOpenfgaTraces
-  );
+  // const iterationResults = calculateIterationMetrics(
+  //   dbScenarios,
+  //   openfgaScenarios
+  // );
+  // const aggregatedResults = aggregateScenarioIterations(iterationResults);
+  // console.log('\nAggregated Results:');
+  // console.table(aggregatedResults);
 
-  const iterationResults = calculateIterationMetrics(
-    dbScenarios,
-    openfgaScenarios
-  );
-  const aggregatedResults = aggregateScenarioIterations(iterationResults);
+  // const allIterationResults = Object.values(iterationResults).flat();
 
-  console.log('\nAggregated Results:');
-  console.table(aggregatedResults);
+  // console.log('\nDetailed Results by Iteration:');
+  // console.table(allIterationResults);
 
-  const allIterationResults = Object.values(iterationResults).flat();
+  // const timestamp = new Date().toISOString().replace(/:/g, '-');
 
-  console.log('\nDetailed Results by Iteration:');
-  console.table(allIterationResults);
-
-  const timestamp = new Date().toISOString().replace(/:/g, '-');
-
-  await Promise.all([
-    generateCSVReport(
-      aggregatedResults,
-      `${OUTPUT_DIR}/auth-comparison-${timestamp}.csv`
-    ),
-    generateJsonReport(
-      aggregatedResults,
-      `${OUTPUT_DIR}/auth-comparison-${timestamp}.json`
-    ),
-    generateCSVReport(
-      allIterationResults,
-      `${OUTPUT_DIR}/auth-comparison-detailed-${timestamp}.csv`
-    ),
-    generateJsonReport(
-      allIterationResults,
-      `${OUTPUT_DIR}/auth-comparison-detailed-${timestamp}.json`
-    ),
-    generateMermaidCharts(
-      aggregatedResults,
-      `${OUTPUT_DIR}/auth-comparison-charts-${timestamp}.md`
-    ),
-  ]);
+  // await Promise.all([
+  //   generateCSVReport(
+  //     aggregatedResults,
+  //     `${OUTPUT_DIR}/auth-comparison-${timestamp}.csv`
+  //   ),
+  //   generateJsonReport(
+  //     aggregatedResults,
+  //     `${OUTPUT_DIR}/auth-comparison-${timestamp}.json`
+  //   ),
+  //   generateCSVReport(
+  //     allIterationResults,
+  //     `${OUTPUT_DIR}/auth-comparison-detailed-${timestamp}.csv`
+  //   ),
+  //   generateJsonReport(
+  //     allIterationResults,
+  //     `${OUTPUT_DIR}/auth-comparison-detailed-${timestamp}.json`
+  //   ),
+  //   generateMermaidCharts(
+  //     aggregatedResults,
+  //     `${OUTPUT_DIR}/auth-comparison-charts-${timestamp}.md`
+  //   ),
+  // ]);
 
   console.log('Analysis complete!');
 }

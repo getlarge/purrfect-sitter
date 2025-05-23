@@ -3,12 +3,14 @@ import dotenv from 'dotenv';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
 import { OpenFgaApi } from '@openfga/sdk';
-import { randomBytes } from 'node:crypto';
-import { setTimeout } from 'node:timers/promises';
 import { Configuration, FrontendApi, IdentityApi } from '@ory/kratos-client';
+import { randomBytes } from 'node:crypto';
+import path from 'node:path';
+import { setTimeout } from 'node:timers/promises';
 import { users } from '@purrfect-sitter/database';
 import type { CatDto, CatSittingDto, ReviewDto } from '@purrfect-sitter/models';
-import path from 'node:path';
+
+import { BENCHMARK_SCENARIOS, getScenarioById } from './benchmark-scenarios.ts';
 
 type UserRole = 'cat_owner' | 'cat_sitter' | 'admin';
 
@@ -291,27 +293,36 @@ async function scenarioViewCat(
   iteration: number
 ) {
   try {
+    const ownerScenario = getScenarioById('1-view-cat-owner');
+    const sitterScenario = getScenarioById('1-view-cat-sitter');
+
+    if (!ownerScenario || !sitterScenario) {
+      throw new Error('Scenario definitions not found');
+    }
+
     // Owner views cat
     const ownerResponse = await ownerClient.get(`/cats/${catId}`, {
       headers: {
-        'X-Benchmark-Scenario': `1-view-cat-owner`,
+        'X-Benchmark-Scenario': ownerScenario.id,
         'X-Benchmark-Iteration': `${iteration}`,
         'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
-        'X-Benchmark-Expected-Status': '200',
+        'X-Benchmark-Expected-Status':
+          ownerScenario.expectedStatus?.toString() || '200',
       },
     });
-    console.log(`\tOwner view cat: ${ownerResponse.status}`);
+    console.log(`\t${ownerScenario.name}: ${ownerResponse.status}`);
 
     // Sitter views cat
     const sitterResponse = await sitterClient.get(`/cats/${catId}`, {
       headers: {
-        'X-Benchmark-Scenario': `1-view-cat-sitter`,
+        'X-Benchmark-Scenario': sitterScenario.id,
         'X-Benchmark-Iteration': `${iteration}`,
         'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
-        'X-Benchmark-Expected-Status': '200',
+        'X-Benchmark-Expected-Status':
+          sitterScenario.expectedStatus?.toString() || '200',
       },
     });
-    console.log(`\tSitter view cat: ${sitterResponse.status}`);
+    console.log(`\t${sitterScenario.name}: ${sitterResponse.status}`);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : error;
     console.error('Error in scenarioViewCat:', errorMessage);
@@ -327,6 +338,24 @@ async function scenarioCatSittingManagement(
   sitterId: string,
   iteration: number
 ): Promise<CatSittingDto> {
+  const createCatSittingScenario = getScenarioById('2-create-sitting');
+  const viewSittingScenario = getScenarioById('2-view-sitting-sitter');
+  const updateSittingScenario = getScenarioById('2-update-sitting');
+  const activateSittingScenario = getScenarioById('2-activate-sitting');
+  const updateActiveSittingScenario = getScenarioById(
+    '2-update-active-sitting'
+  );
+  const completeSittingScenario = getScenarioById('2-complete-sitting');
+  if (
+    !createCatSittingScenario ||
+    !viewSittingScenario ||
+    !updateSittingScenario ||
+    !activateSittingScenario ||
+    !updateActiveSittingScenario ||
+    !completeSittingScenario
+  ) {
+    throw new Error('Scenario definitions not found');
+  }
   try {
     // Owner creates cat sitting starting now
     const createResponse = await ownerClient.post(
@@ -340,10 +369,11 @@ async function scenarioCatSittingManagement(
       },
       {
         headers: {
-          'X-Benchmark-Scenario': `2-create-sitting`,
-          'X-Benchmark-Iteration': `${iteration}`,
+          'X-Benchmark-Scenario': createCatSittingScenario.id,
+          'X-Benchmark-Iteration': iteration,
           'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
-          'X-Benchmark-Expected-Status': '201',
+          'X-Benchmark-Expected-Status':
+            createCatSittingScenario.expectedStatus,
         },
       }
     );
@@ -356,10 +386,10 @@ async function scenarioCatSittingManagement(
       `/cat-sittings/${catSitting.id}`,
       {
         headers: {
-          'X-Benchmark-Scenario': `2-view-sitting-sitter`,
-          'X-Benchmark-Iteration': `${iteration}`,
+          'X-Benchmark-Scenario': viewSittingScenario.id,
+          'X-Benchmark-Iteration': iteration,
           'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
-          'X-Benchmark-Expected-Status': '200',
+          'X-Benchmark-Expected-Status': viewSittingScenario.expectedStatus,
         },
       }
     );
@@ -374,10 +404,10 @@ async function scenarioCatSittingManagement(
       },
       {
         headers: {
-          'X-Benchmark-Scenario': `2-update-sitting`,
-          'X-Benchmark-Iteration': `${iteration}`,
+          'X-Benchmark-Scenario': updateSittingScenario.id,
+          'X-Benchmark-Iteration': iteration,
           'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
-          'X-Benchmark-Expected-Status': '200',
+          'X-Benchmark-Expected-Status': updateSittingScenario.expectedStatus,
         },
       }
     );
@@ -406,10 +436,10 @@ async function scenarioCatSittingManagement(
       },
       {
         headers: {
-          'X-Benchmark-Scenario': `2-activate-sitting`,
-          'X-Benchmark-Iteration': `${iteration}`,
+          'X-Benchmark-Scenario': activateSittingScenario.id,
+          'X-Benchmark-Iteration': iteration,
           'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
-          'X-Benchmark-Expected-Status': '200',
+          'X-Benchmark-Expected-Status': activateSittingScenario.expectedStatus,
         },
       }
     );
@@ -425,10 +455,11 @@ async function scenarioCatSittingManagement(
         },
         {
           headers: {
-            'X-Benchmark-Scenario': `2-update-active-sitting`,
-            'X-Benchmark-Iteration': `${iteration}`,
+            'X-Benchmark-Scenario': updateActiveSittingScenario.id,
+            'X-Benchmark-Iteration': iteration,
             'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
-            'X-Benchmark-Expected-Status': '403',
+            'X-Benchmark-Expected-Status':
+              updateActiveSittingScenario.expectedStatus,
           },
         }
       );
@@ -449,10 +480,10 @@ async function scenarioCatSittingManagement(
       },
       {
         headers: {
-          'X-Benchmark-Scenario': `2-complete-sitting`,
-          'X-Benchmark-Iteration': `${iteration}`,
+          'X-Benchmark-Scenario': completeSittingScenario.id,
+          'X-Benchmark-Iteration': iteration,
           'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
-          'X-Benchmark-Expected-Status': '200',
+          'X-Benchmark-Expected-Status': completeSittingScenario.expectedStatus,
         },
       }
     );
@@ -473,6 +504,19 @@ async function scenarioReviewManagement(
   catSittingId: string,
   iteration: number
 ) {
+  const createReviewScenario = getScenarioById('3-create-review');
+  const editReviewSitterScenario = getScenarioById('3-edit-review-sitter');
+  const editReviewOwnerScenario = getScenarioById('3-edit-review-owner');
+  const editReviewAdminScenario = getScenarioById('3-edit-review-admin');
+  if (
+    !createReviewScenario ||
+    !editReviewSitterScenario ||
+    !editReviewOwnerScenario ||
+    !editReviewAdminScenario
+  ) {
+    throw new Error('Scenario definitions not found');
+  }
+
   try {
     // Owner creates review
     const createResponse = await ownerClient.post(
@@ -484,10 +528,10 @@ async function scenarioReviewManagement(
       },
       {
         headers: {
-          'X-Benchmark-Scenario': `3-create-review`,
-          'X-Benchmark-Iteration': `${iteration}`,
+          'X-Benchmark-Scenario': createReviewScenario.id,
+          'X-Benchmark-Iteration': iteration,
           'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
-          'X-Benchmark-Expected-Status': '201',
+          'X-Benchmark-Expected-Status': createReviewScenario.expectedStatus,
         },
       }
     );
@@ -505,19 +549,20 @@ async function scenarioReviewManagement(
         },
         {
           headers: {
-            'X-Benchmark-Scenario': `3-edit-review-sitter`,
-            'X-Benchmark-Iteration': `${iteration}`,
+            'X-Benchmark-Scenario': editReviewSitterScenario.id,
+            'X-Benchmark-Iteration': iteration,
             'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
-            'X-Benchmark-Expected-Status': '403',
+            'X-Benchmark-Expected-Status':
+              editReviewSitterScenario.expectedStatus,
           },
         }
       );
       console.log(
-        `\tSitter edit review: ${editResponse.status} (expected 403)`
+        `\tSitter edit review: ${editResponse.status} (expected ${editReviewSitterScenario.expectedStatus})`
       );
     } catch (error) {
       console.log(
-        `\tSitter edit review: ${error.response?.status} (expected 403)`
+        `\tSitter edit review: ${error.response?.status} (expected ${editReviewSitterScenario.expectedStatus})`
       );
     }
 
@@ -530,10 +575,10 @@ async function scenarioReviewManagement(
       },
       {
         headers: {
-          'X-Benchmark-Scenario': `3-edit-review-owner`,
-          'X-Benchmark-Iteration': `${iteration}`,
+          'X-Benchmark-Scenario': editReviewOwnerScenario.id,
+          'X-Benchmark-Iteration': iteration,
           'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
-          'X-Benchmark-Expected-Status': '200',
+          'X-Benchmark-Expected-Status': editReviewOwnerScenario.expectedStatus,
         },
       }
     );
@@ -548,10 +593,10 @@ async function scenarioReviewManagement(
       },
       {
         headers: {
-          'X-Benchmark-Scenario': `3-edit-review-admin`,
-          'X-Benchmark-Iteration': `${iteration}`,
+          'X-Benchmark-Scenario': editReviewAdminScenario.id,
+          'X-Benchmark-Iteration': iteration,
           'X-Benchmark-Run-ID': BENCHMARK_RUN_ID,
-          'X-Benchmark-Expected-Status': '200',
+          'X-Benchmark-Expected-Status': editReviewAdminScenario.expectedStatus,
         },
       }
     );
@@ -646,6 +691,16 @@ async function main() {
   console.log(`Current auth strategy: ${healthResponse.data.authStrategy}`);
   console.log(`Current benchmark run ID: ${BENCHMARK_RUN_ID}`);
   console.log(`Iterations: ${ITERATIONS}`);
+
+  // Display available benchmark scenarios
+  console.log('\nBenchmark scenarios that will be executed:');
+  BENCHMARK_SCENARIOS.forEach((scenario) => {
+    console.log(
+      `  - ${scenario.id}: ${scenario.name} (Expected status: ${
+        scenario.expectedStatus || 'any'
+      })`
+    );
+  });
 
   const authStrategy = healthResponse.data.authStrategy;
   await runAuthBenchmark(authStrategy);
