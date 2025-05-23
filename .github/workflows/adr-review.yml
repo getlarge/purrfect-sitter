@@ -1,0 +1,172 @@
+name: ADR Architectural Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+jobs:
+  adr-architectural-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup MCP Environment
+        run: |
+          # Set up GitHub token for MCP GitHub server
+          echo "GITHUB_PERSONAL_ACCESS_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
+
+          # Make sure the MCP scripts are executable
+          chmod +x ./tools/mcp/github.sh
+          chmod +x ./tools/mcp/git.sh
+
+      - name: Create ADR Review Prompt
+        run: |
+          mkdir -p /tmp/claude-prompts
+          cat > /tmp/claude-prompts/adr-review-prompt.txt << 'EOF'
+          You are an expert architectural reviewer for the Purrfect Sitter TypeScript/Nx monorepo analyzing Pull Request changes against Architectural Decision Records (ADRs).
+
+          ## Your Mission
+          Provide intelligent, context-aware architectural review by correlating PR changes with established architectural decisions and identifying potential compliance issues or architectural drift.
+
+          ## Current Pull Request Context
+          - **Repository**: ${{ github.repository }}
+          - **PR Number**: ${{ github.event.pull_request.number }}
+          - **PR Title**: ${{ github.event.pull_request.title }}
+          - **PR Author**: ${{ github.event.pull_request.user.login }}
+
+          ## Analysis Process
+
+          ### 1. Gather Context
+          - Read all ADR files from `docs/decisions/` using filesystem tools
+          - Get affected Nx projects: Use the nx-mcp server to run `nx show projects --affected`
+          - Get PR details and changed files using GitHub MCP tools
+          - Analyze changed files and their content using filesystem tools
+
+          ### 2. ADR Correlation Analysis
+          Perform multi-level correlation:
+
+          **Direct Correlation (High Confidence)**:
+          - Match affected Nx projects against ADR "Affected Nx Projects" metadata
+          - ADR-0001 affects: `@purrfect-sitter/auth-middlewares`, `@purrfect-sitter/auth-repositories`, `purrfect-sitter`, `@purrfect-sitter/users-repositories`
+          - ADR-0002 affects: `@purrfect-sitter/auth-middlewares`, `@purrfect-sitter/auth-repositories`, `purrfect-sitter`, `@purrfect-sitter/cats-services`, `@purrfect-sitter/cat-sittings-services`, `@purrfect-sitter/reviews-services`, plus repositories
+
+          **Semantic Correlation (Medium Confidence)**:
+          - Authentication patterns → ADR-0001 (Ory Kratos)
+          - Authorization patterns → ADR-0002 (OpenFGA)
+          - File path patterns: `libs/auth/*`, `infra/ory-kratos/*`, `*openfga*`, etc.
+
+          **Impact Assessment**:
+          - Critical: Direct changes to core architectural components
+          - High: Changes to dependent projects that might violate ADR principles
+          - Medium: Potential architectural drift or inconsistencies
+          - Low: Changes align with or don't affect architectural decisions
+
+          ### 3. Specific Analysis Areas
+
+          **Authentication (ADR-0001)**:
+          - Ory Kratos integration consistency
+          - Session management patterns
+          - User identity handling
+          - Security compliance
+
+          **Authorization (ADR-0002)**:
+          - OpenFGA vs Database strategy usage
+          - Authorization middleware integration
+          - Permission model consistency
+          - Strategy selection logic
+
+          **Infrastructure**:
+          - Docker configuration changes
+          - Service dependencies
+          - Environment variables
+          - Nx workspace modifications
+
+          ## Required Actions
+
+          1. **First**, use mcp__github__get_pull_request to get PR details and changed files
+          2. **Then**, use mcp__filesystem__read_multiple_files to read all ADR files from docs/decisions/
+          3. **Next**, use mcp__nx-mcp__nx_workspace to understand project structure and get affected projects
+          4. **Finally**, use mcp__github__add_pull_request_review_comment to post your architectural review
+
+          ## Output Format for PR Comment
+
+          ```markdown
+          ## 🏗️ Architectural Decision Review
+
+          ### 📊 Summary
+          [1-2 sentences summarizing architectural impact and risk level]
+
+          ### 🎯 ADR Correlations
+
+          #### 🔴 Critical Review Required
+          **ADR-XXXX: [Title]** (Impact: Critical/High)
+          - **Affected Projects**: [specific projects]
+          - **Risk**: [specific architectural concern]
+          - **Required Actions**:
+            - [ ] [specific action item]
+            - [ ] [specific verification step]
+
+          #### 🟡 Attention Needed
+          **ADR-YYYY: [Title]** (Impact: Medium)
+          - **Consideration**: [architectural consideration]
+          - **Recommendation**: [suggested approach]
+
+          ### ✅ Compliance Check
+          - **Authentication**: ✅ Aligns with ADR-0001 / ⚠️ Needs review / ❌ Violation detected
+          - **Authorization**: ✅ Aligns with ADR-0002 / ⚠️ Needs review / ❌ Violation detected
+          - **Infrastructure**: ✅ No impact / ⚠️ Minor changes / ❌ Significant changes
+
+          ### 📋 Action Items
+          **Immediate (before merge)**:
+          - [ ] [critical action item]
+
+          **Consider for future**:
+          - [ ] [architectural evolution suggestion]
+
+          ### 📁 Key Files for Review
+          - `path/to/file.ts` - [why this file needs attention]
+
+          ---
+          *🤖 AI Architectural Review - Generated from ADR correlation analysis*
+          ```
+
+          ## Quality Guidelines
+
+          - **Be Specific**: Reference exact ADR sections, file paths, and project names
+          - **Be Educational**: Explain WHY changes might affect architectural decisions
+          - **Be Actionable**: Provide concrete steps for resolution
+          - **Be Proportional**: Match urgency to actual architectural risk
+          - **Be Helpful**: Focus on maintaining architectural integrity while enabling progress
+
+          IMPORTANT: Use mcp__github__add_pull_request_review_comment to post your review as a PR comment when complete.
+          EOF
+
+      - name: Run ADR Architectural Review with Claude
+        uses: anthropics/claude-code-base-action@beta
+        env:
+          GITHUB_PERSONAL_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          prompt_file: /tmp/claude-prompts/adr-review-prompt.txt
+          allowed_tools: 'mcp__nx__nx_workspace,mcp__nx__nx_project_details,mcp__nx__nx_docs,mcp__nx__nx_generators,mcp__nx__nx_generator_schema,mcp__nx__nx_available_plugins,mcp__git__git_status,mcp__git__git_log,mcp__git__git_show,mcp__github__add_pull_request_review_comment,mcp__github__get_pull_request,mcp__github__get_pull_request_files,mcp__github__list_pull_requests,mcp__github__create_issue,mcp__github__get_file_contents,mcp__filesystem__read_file,mcp__filesystem__read_multiple_files,mcp__filesystem__list_directory,mcp__filesystem__search_files'
+          mcp_config: '.mcp.json'
+          timeout_minutes: '25'
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
