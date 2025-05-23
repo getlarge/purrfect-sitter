@@ -1,10 +1,8 @@
 {
   "mcpServers": {
     "filesystem": {
-      "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
-      "env": {}
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "./"]
     },
     "node-runner": {
       "type": "stdio",
@@ -12,11 +10,17 @@
       "args": ["-y", "mcp-node"],
       "env": {}
     },
-    "nx-purrfect-sitter": {
+    "nx": {
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "nx-mcp", "./"],
       "env": {}
+    },
+    "github": {
+      "command": "./tools/mcp/github.sh"
+    },
+    "git": {
+      "command": "./tools/mcp/git.sh"
     }
   }
 }
