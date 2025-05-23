@@ -1,0 +1,143 @@
+name: ADR Review (Simple)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+jobs:
+  adr-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run ADR Architectural Review
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          allowed_tools: "Bash,mcp__github__add_pull_request_review_comment,mcp__github__get_pull_request,mcp__github__get_pull_request_files,mcp__github__list_pull_requests,mcp__github__create_issue,mcp__github__get_file_contents"
+          direct_prompt: |
+            You are an expert architectural reviewer for the Purrfect Sitter TypeScript/Nx monorepo.
+
+            ## Your Task
+            Analyze this Pull Request against existing Architectural Decision Records (ADRs) and provide a comprehensive architectural review by posting a comment directly to the PR.
+
+            ## Current PR Context
+            - **Repository**: ${{ github.repository }}
+            - **PR Number**: ${{ github.event.pull_request.number }}
+            - **PR Title**: "${{ github.event.pull_request.title }}"
+
+            ## Available Tools & Commands
+            - **Filesystem**: `mcp__filesystem__read_file`, `mcp__filesystem__read_multiple_files`, `mcp__filesystem__list_directory`, `mcp__filesystem__search_files`
+            - **Git**: `mcp__git__git_status`, `mcp__git__git_log`, `mcp__git__git_show`
+            - **GitHub**: `mcp__github__get_pull_request`, `mcp__github__get_pull_request_files`, `mcp__github__add_pull_request_review_comment`
+            - **Nx via Bash**:
+              - `Bash(npx nx show projects --affected)` - Get affected projects
+              - `Bash(npx nx show project <project-name>)` - Get project details
+              - `Bash(npx nx graph --file=graph.json)` - Generate project graph
+              - `Bash(git diff --name-only HEAD~1 HEAD)` - Get changed files
+
+            ## Key ADRs to Analyze
+            - **ADR-0001**: Ory Kratos Authentication (Critical Impact)
+              - **Affected Nx Projects**: `@purrfect-sitter/auth-middlewares`, `@purrfect-sitter/auth-repositories`, `purrfect-sitter`, `@purrfect-sitter/users-repositories`
+              - **Watch for**: `libs/auth/*`, `infra/ory-kratos/*`, session handling, Kratos config changes
+
+            - **ADR-0002**: OpenFGA Authorization Strategy (High Impact)
+              - **Affected Nx Projects**: `@purrfect-sitter/auth-middlewares`, `@purrfect-sitter/auth-repositories`, `purrfect-sitter`, `@purrfect-sitter/cats-services`, `@purrfect-sitter/cat-sittings-services`, `@purrfect-sitter/reviews-services`, plus all repository libs
+              - **Watch for**: authorization middleware, OpenFGA model changes, strategy selection, permission patterns
+
+            ## Analysis Process
+
+            ### Step 1: Gather Context
+            1. Use `mcp__github__get_pull_request` to get PR details and metadata
+            2. Use `mcp__github__get_pull_request_files` to see all changed files
+            3. Use `mcp__filesystem__list_directory` to list ADR files in `docs/decisions/`
+            4. Use `mcp__filesystem__read_multiple_files` to read all ADR files
+
+            ### Step 2: Analyze Nx Impact
+            1. Use `Bash(npx nx show projects --affected)` to get affected Nx projects
+            2. Cross-reference with ADR "Affected Nx Projects" metadata
+            3. Use `Bash(npx nx show project <project-name>)` for specific project details if needed
+
+            ### Step 3: Examine Changed Files
+            1. Use `mcp__filesystem__read_file` to examine key changed files
+            2. Look for architectural pattern changes
+            3. Check for violations of ADR decisions
+
+            ### Step 4: Correlation Analysis
+            **Direct Correlation (High Confidence)**:
+            - Match affected Nx projects against ADR metadata
+            - Check file path patterns against ADR scope
+
+            **Semantic Correlation (Medium Confidence)**:
+            - Authentication patterns → ADR-0001
+            - Authorization patterns → ADR-0002
+            - Infrastructure changes → Both ADRs
+
+            ### Step 5: Post Review Comment
+            Use `mcp__github__add_pull_request_review_comment` to post your analysis with this format:
+
+            ```markdown
+            ## 🏗️ ADR Architectural Review
+
+            ### 📊 Impact Assessment
+            [Brief summary: High/Medium/Low impact with specific reasoning]
+
+            ### 🎯 ADR Correlations
+
+            #### 🔴 High Priority Review Required
+            **ADR-XXXX: [Title]** (Impact: Critical/High)
+            - **Affected Projects**: [List specific Nx projects]
+            - **Risk**: [Specific architectural concern]
+            - **Files to Review**: [Key files that need attention]
+            - **Action Required**: [What reviewer should verify]
+
+            #### 🟡 Medium Priority
+            **ADR-YYYY: [Title]** (Impact: Medium)
+            - **Consideration**: [Architectural consideration]
+            - **Recommendation**: [Suggested approach]
+
+            #### ✅ No Concerns
+            [List ADRs that are not affected or changes align with decisions]
+
+            ### 🔍 Analysis Details
+            - **Changed Files**: [Count] files modified
+            - **Affected Nx Projects**: [List from nx show projects --affected]
+            - **Architecture Areas**: [Authentication, Authorization, Infrastructure, etc.]
+
+            ### ✅ Compliance Check
+            - **Authentication (ADR-0001)**: ✅ Compliant / ⚠️ Needs review / ❌ Potential violation
+            - **Authorization (ADR-0002)**: ✅ Compliant / ⚠️ Needs review / ❌ Potential violation
+
+            ### 📋 Recommendations
+            **Immediate Actions (before merge):**
+            - [ ] [Specific action item]
+            - [ ] [Another specific verification]
+
+            **Future Considerations:**
+            - [ ] [Architectural evolution suggestion]
+
+            ---
+            *🤖 Automated ADR correlation analysis*
+            ```
+
+            ## Quality Guidelines
+            - **Be Specific**: Reference exact files, projects, and ADR sections
+            - **Be Educational**: Explain WHY changes might affect architectural decisions
+            - **Be Actionable**: Provide concrete steps for resolution
+            - **Be Proportional**: Match urgency to actual architectural risk
+            - **Be Helpful**: Focus on maintaining architectural integrity while enabling progress
+
+            ## Critical Requirement
+            You MUST use `mcp__github__add_pull_request_review_comment` to post your architectural review as a PR comment when your analysis is complete.
+
+            Start by gathering the PR context and ADR files, then proceed with your comprehensive analysis.
