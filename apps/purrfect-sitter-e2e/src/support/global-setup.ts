@@ -4,7 +4,7 @@ import { inspect, promisify } from 'node:util';
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { transformer } from '@openfga/syntax-transformer';
-import { openfgaClient } from './test-utils';
+import { openfgaClient } from './test-utils.ts';
 
 var __TEARDOWN_MESSAGE__: string;
 var __TEST_VARIABLES__: {

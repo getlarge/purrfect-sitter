@@ -31,7 +31,7 @@ jobs:
           node-version: 22
           cache: 'npm'
 
-      - run: npm install --force
+      - run: npm ci
 
       - run: npx nx report --verbose
 

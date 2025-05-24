@@ -10,19 +10,6 @@
     "types": ["node"]
   },
   "include": ["src/**/*.ts"],
-  "references": [
-    {
-      "path": "../repositories/tsconfig.lib.json"
-    },
-    {
-      "path": "../../auth/repositories/tsconfig.lib.json"
-    },
-    {
-      "path": "../../models/tsconfig.lib.json"
-    },
-    {
-      "path": "../../cat-sittings/repositories/tsconfig.lib.json"
-    }
-  ],
+  "references": [],
   "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]
 }

@@ -38,10 +38,6 @@
   },
   "dependencies": {
     "@swc/helpers": "~0.5.11",
-    "@purrfect-sitter/cat-sittings-repositories": "0.0.1",
-    "@purrfect-sitter/models": "0.0.1",
-    "@openfga/sdk": "^0.8.0",
-    "@purrfect-sitter/auth-repositories": "0.0.1",
-    "@purrfect-sitter/reviews-repositories": "0.0.1"
+    "@openfga/sdk": "^0.8.0"
   }
 }

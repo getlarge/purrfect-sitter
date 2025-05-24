@@ -20,7 +20,7 @@ import {
   createAuthenticatedClient,
   TestUser,
   createAdmin,
-} from '../../support/test-utils';
+} from '../../support/test-utils.js';
 import { AxiosInstance } from 'axios';
 import { randomBytes } from 'node:crypto';
 
