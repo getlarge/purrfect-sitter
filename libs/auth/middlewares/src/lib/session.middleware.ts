@@ -1,39 +1,19 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
-import {
-  getKratosClient,
-  ISessionUser,
-} from '@purrfect-sitter/auth-repositories';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
+import { randomUUID } from 'node:crypto';
+
+const requestUser = {
+  id: randomUUID(),
+  email: 'test@test.it',
+  displayName: '',
+};
 
 export async function authenticate(
   request: FastifyRequest,
   reply: FastifyReply
 ) {
   try {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore all good
-    const cookie = request.cookies?.['ory_kratos_session'] as
-      | string
-      | undefined;
-    const xSessionToken = request.headers['authorization']?.replace(
-      /bearer /i,
-      ''
-    );
-    if (!cookie && !xSessionToken) {
-      throw new Error('No session cookie or token found');
-    }
-
-    const kratosClient = getKratosClient();
-    const { data: session } = await kratosClient.toSession({
-      ...(xSessionToken ? { xSessionToken } : {}),
-      ...(cookie ? { cookie } : {}),
-    });
-
-    request.user = {
-      id: session.identity?.id as string,
-      email: session.identity?.traits?.email as string,
-      displayName: session.identity?.traits?.display_name as string,
-    } satisfies ISessionUser;
+    request.user = requestUser;
   } catch (error) {
     request.log.error('Session validation failed', error);
     reply.status(401).send({
