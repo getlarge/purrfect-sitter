@@ -37,6 +37,7 @@
     ]
   },
   "dependencies": {
-    "@swc/helpers": "~0.5.11"
+    "@swc/helpers": "~0.5.11",
+    "drizzle-orm": "^0.41.0"
   }
 }
