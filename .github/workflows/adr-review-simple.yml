@@ -1,0 +1,68 @@
+name: ADR Review (Simple)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+jobs:
+  adr-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run ADR Architectural Review
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          allowed_tools: "Bash,mcp__github__add_pull_request_review_comment,mcp__github__get_pull_request,mcp__github__get_pull_request_files,mcp__github__list_pull_requests,mcp__github__create_issue,mcp__github__get_file_contents"
+          direct_prompt: |
+            You are an expert architectural reviewer for the Purrfect Sitter TypeScript/Nx monorepo.
+
+            ## Your Task
+            Analyze this Pull Request against existing Architectural Decision Records (ADRs) and provide a comprehensive architectural review by posting a comment directly to the PR.
+
+            ## Methodology
+            FIRST, read the comprehensive methodology from `docs/decisions/claude-adr-review-prompt.md` which contains the complete analysis process, correlation techniques, and output format guidelines. Follow that methodology exactly.
+
+            ## Current PR Context
+            - **Repository**: ${{ github.repository }}
+            - **PR Number**: ${{ github.event.pull_request.number }}
+            - **PR Title**: "${{ github.event.pull_request.title }}"
+
+            ## Available Tools & Commands
+            - **Filesystem**: `mcp__filesystem__read_file`, `mcp__filesystem__read_multiple_files`, `mcp__filesystem__list_directory`, `mcp__filesystem__search_files`
+            - **Git**: `mcp__git__git_status`, `mcp__git__git_log`, `mcp__git__git_show`
+            - **GitHub**: `mcp__github__get_pull_request`, `mcp__github__get_pull_request_files`, `mcp__github__add_pull_request_review_comment`
+            - **Nx via Bash**:
+              - `Bash(npx nx show projects --affected)` - Get affected projects
+              - `Bash(npx nx show project <project-name>)` - Get project details
+              - `Bash(npx nx graph --file=graph.json)` - Generate project graph
+              - `Bash(git diff --name-only HEAD~1 HEAD)` - Get changed files
+
+            ## Quick Reference - Key Tools
+            - `mcp__github__get_pull_request` - Get PR details and metadata
+            - `mcp__github__get_pull_request_files` - See all changed files  
+            - `mcp__filesystem__read_file` - Read the methodology file and examine changed files
+            - `mcp__filesystem__list_directory` - List ADR files in `docs/decisions/`
+            - `mcp__filesystem__read_multiple_files` - Read all ADR files
+            - `Bash(npx nx show projects --affected)` - Get affected Nx projects
+            - `mcp__github__add_pull_request_review_comment` - Post review comment
+
+            ## Execution Steps
+            1. **Read Methodology**: Start by reading `docs/decisions/claude-adr-review-prompt.md` for the complete analysis framework
+            2. **Gather Context**: Get PR details, changed files, and all ADR files  
+            3. **Follow Dynamic Process**: Use the correlation analysis from the methodology file
+            4. **Post Review**: Use `mcp__github__add_pull_request_review_comment` to post your architectural review
+
+            ## Critical Requirement
+            You MUST follow the methodology in `docs/decisions/claude-adr-review-prompt.md` and post your review as a PR comment.
