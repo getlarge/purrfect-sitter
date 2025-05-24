@@ -2,6 +2,7 @@
   "name": "@purrfect-sitter/purrfect-sitter-e2e",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "nx": {
     "name": "purrfect-sitter-e2e",
     "implicitDependencies": [
@@ -20,6 +21,11 @@
           "jestConfig": "apps/purrfect-sitter-e2e/jest.config.ts",
           "passWithNoTests": true
         },
+        "dependsOn": [
+          "purrfect-sitter:build"
+        ]
+      },
+      "typecheck": {
         "dependsOn": [
           "purrfect-sitter:build"
         ]
