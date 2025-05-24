@@ -4,18 +4,6 @@
   "include": [],
   "references": [
     {
-      "path": "../repositories"
-    },
-    {
-      "path": "../../auth/repositories"
-    },
-    {
-      "path": "../../models"
-    },
-    {
-      "path": "../../cat-sittings/repositories"
-    },
-    {
       "path": "./tsconfig.lib.json"
     },
     {
