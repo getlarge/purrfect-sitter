@@ -19,12 +19,21 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Run ADR Architectural Review
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          allowed_tools: "Bash,mcp__github__add_pull_request_review_comment,mcp__github__get_pull_request,mcp__github__get_pull_request_files,mcp__github__list_pull_requests,mcp__github__create_issue,mcp__github__get_file_contents"
+          allowed_tools: 'Bash,mcp__github__add_pull_request_review_comment,mcp__github__get_pull_request,mcp__github__get_pull_request_files,mcp__github__list_pull_requests,mcp__github__create_issue,mcp__github__get_file_contents'
           direct_prompt: |
             You are an expert architectural reviewer for the Purrfect Sitter TypeScript/Nx monorepo.
 
@@ -51,7 +60,7 @@ jobs:
 
             ## Quick Reference - Key Tools
             - `mcp__github__get_pull_request` - Get PR details and metadata
-            - `mcp__github__get_pull_request_files` - See all changed files  
+            - `mcp__github__get_pull_request_files` - See all changed files
             - `mcp__filesystem__read_file` - Read the methodology file and examine changed files
             - `mcp__filesystem__list_directory` - List ADR files in `docs/decisions/`
             - `mcp__filesystem__read_multiple_files` - Read all ADR files
@@ -60,7 +69,7 @@ jobs:
 
             ## Execution Steps
             1. **Read Methodology**: Start by reading `docs/decisions/claude-adr-review-prompt.md` for the complete analysis framework
-            2. **Gather Context**: Get PR details, changed files, and all ADR files  
+            2. **Gather Context**: Get PR details, changed files, and all ADR files
             3. **Follow Dynamic Process**: Use the correlation analysis from the methodology file
             4. **Post Review**: Use `mcp__github__add_pull_request_review_comment` to post your architectural review
 
