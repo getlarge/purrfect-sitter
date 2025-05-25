@@ -3,20 +3,22 @@ title: Taming Authorization with OpenFGA
 published: false
 description: Learn how to implement complex authorization patterns using OpenFGA and Relation-Based Access Control (ReBAC) through a practical example of a cat sitting app.
 tags: tutorial, openfga, authorization, security
-cover_image: https://dev-to-uploads.s3.amazonaws.com/uploads/articles/2ri39p5t1hohct51ct4w.jpeg
+cover_image: https://dev-to-uploads.s3.amazonaws.com/uploads/articles/3gnprublltayvl6t6zh5.jpeg
 ---
 
-![Cool cover](Image.jpeg)
+A client asked me recently:
 
-## The Authorization Problem That Started with "Just Add Admin Roles"
+> Can we add temporary permissions for our support team during incidents?
 
-A client asked me recently: "Can we add temporary permissions for our support team during incidents?" Simple enough—until I examined their authorization code and found a 500-line function checking user roles, time windows, resource ownership, and various business rules.
+Simple enough—until I examined their authorization code and found a 500-line function checking user roles, time windows, resource ownership, and various business rules.
 
 I did not imagine that this seemingly innocent request would lead me so **deep** into exploring **Relation-Based Access Control (ReBAC)** and **OpenFGA**.
 
-Unlike authentication, where we have OAuth2, JWT, and other established patterns, authorization often forces us into custom implementations. Each new requirement adds another conditional branch, another database join, another edge case that breaks during the next feature request.
+Unlike authentication, where we have OAuth2, JWT, and other established standards and patterns, authorization often forces us into custom implementations. Each new requirement adds another **conditional branch**, another **database join**, another **edge case that breaks** during the next feature request.
 
-![this is fine](./this-is-fine.png)
+<!-- Cognitive complexity counter  -->
+
+![this is fine](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/09cwef7zad5jqr7grjz7.png)
 
 Traditional approaches quickly hit walls:
 
@@ -24,7 +26,7 @@ Traditional approaches quickly hit walls:
 - **ABAC** offers flexibility but becomes a rule engine nightmare
 - **Database queries** slow to a crawl as your permission matrix grows
 
-My exploration started with **Ory Keto** while [integrating Ory in a NestJS application](https://dev.to/getlarge/integrate-ory-in-a-nestjs-application-4llo), which introduced me to Google's Zanzibar paper and the concept of **Relation-Based Access Control (ReBAC)**. Further research led me to **OpenFGA**—a more focused implementation that models permissions as relationships between entities rather than complex boolean logic.
+My exploration started with **Ory Keto** while [integrating Ory in a NestJS application](https://dev.to/getlarge/integrate-ory-in-a-nestjs-application-4llo), which introduced me to [Google's Zanzibar paper](https://research.google/pubs/zanzibar-googles-consistent-global-authorization-system/) and the concept of **Relation-Based Access Control (ReBAC)**. Further research led me to **OpenFGA**—a more focused implementation that models permissions as relationships between entities rather than complex boolean logic.
 
 ## ReBAC in Action: Building PurrfectSitter
 
@@ -94,8 +96,6 @@ OpenFGA computes relationships in several ways:
 
 Here's PurrfectSitter's authorization model in OpenFGA's simple syntax (Domain-Specific Language for the purists):
 
-![OpenFGA Playground generated from PurrfectSitter model](./purrfect-sitter-authorization-model.png)
-
 ```yaml
 model
   schema 1.1
@@ -115,19 +115,25 @@ type cat
 
 type cat_sitting
   relations
+    define admin: admin from system
     define active_sitter: [cat_sitting#sitter with is_active_timeslot]
+    define pending_sitter: [cat_sitting#sitter with is_pending_timeslot]
     define can_post_updates: owner or active_sitter
+    define can_delete: admin or owner or pending_sitter
+    define can_view: admin or owner or sitter
+    define can_update: admin or owner or pending_sitter
     define can_review: [cat#owner with is_cat_sitting_completed]
     define cat: [cat]
     define owner: owner from cat
     define sitter: [user]
+    define system: [system]
 
 type review
   relations
     define admin: admin from system
     define author: owner from cat_sitting
-    define can_delete: admin
-    define can_edit: author
+    define can_delete: admin or author
+    define can_edit: admin or author
     define can_view: [user, user:*]
     define cat: cat from cat_sitting
     define cat_sitting: [cat_sitting]
@@ -138,12 +144,22 @@ condition is_active_timeslot(current_time: timestamp, end_time: timestamp, start
   current_time >= start_time && current_time <= end_time
 }
 
+condition is_pending_timeslot(current_time: timestamp, start_time: timestamp) {
+  current_time < start_time
+}
+
 condition is_cat_sitting_completed(cat_sitting_attributes: map<string>, completed_statuses: list<string>) {
   cat_sitting_attributes["status"] in completed_statuses
 }
 ```
 
-Notice how readable this is — no complex SQL joins or nested conditions. The model captures business logic naturally.
+Notice how readable, yet compact, this is — no complex SQL joins or nested conditions. The model captures business logic naturally.
+
+![Niiice](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmxxeTI3NXg0MmI4a2xlZDEzYXo3MzhxanF3Ym9oajlxdXR0cmU0byZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/kQdtQ8JIYFRuoywakC/giphy.gif)
+
+You can visualize the relations graph in [OpenFGA's Playground](https://openfga.dev/docs/getting-started/setup-openfga/playground):
+
+![OpenFGA Playground generated from PurrfectSitter model](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/oh2yxuh779j5yesvpbkd.png)
 
 ### Operators That Make Sense
 
@@ -173,7 +189,9 @@ Grant permissions only when conditions are met—like during scheduled hours.
 
 ## See It Working
 
-Let's test our model with real scenarios:
+Let's test our model with real scenarios. We'll use the OpenFGA CLI to create a store, write the model, and run queries.
+
+![But first, coffee](https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExZnZmZml2N25uZWI2bHAzaXdrdGprZzRpeTdtZnd3ZXRveDQ5MmR5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/2uIlaxs2XT8d1eR0Hw/giphy.gif)
 
 ### 1. Setting Up OpenFGA
 
@@ -195,6 +213,8 @@ fga model get
 
 Now establish some relationships:
 
+<!-- TODO: make long bash code block easier to read -->
+
 ```bash
 # Bob owns Romeo (the cat)
 fga tuple write user:bob owner cat:romeo
@@ -213,6 +233,8 @@ fga query check user:anne can_manage cat:romeo
 ```
 
 Bob owns Romeo, Anne sits for him. Simple.
+
+> Note: For the sake of this example, we will assume that cats are owned by humans. We all know that cats own us, not the other way around.
 
 ### 3. Admin Powers
 
@@ -234,7 +256,8 @@ Jenny becomes a system admin who can manage any cat—traditional RBAC within Re
 
 ```bash
 # Make Anne active only during a specific time window
-fga tuple write cat_sitting:1#sitter active_sitter cat_sitting:1 --condition-name is_active_timeslot --condition-context '{"start_time":"2023-01-01T00:00:00Z","end_time":"2023-01-02T00:00:00Z"}'
+fga tuple write cat_sitting:1#sitter active_sitter cat_sitting:1 --condition-name is_active_timeslot \
+--condition-context '{"start_time":"2023-01-01T00:00:00Z","end_time":"2023-01-02T00:00:00Z"}'
 
 # Is Anne the sitter?
 fga query check user:anne sitter cat_sitting:1
@@ -267,7 +290,8 @@ Anne's permissions activate and deactivate automatically based on time. No cron 
 
 ```bash
 # Set up review permission based on status
-fga tuple write cat:romeo#owner can_review cat_sitting:1 --condition-name is_cat_sitting_completed --condition-context '{"completed_statuses":["completed"]}'
+fga tuple write cat:romeo#owner can_review cat_sitting:1 --condition-name is_cat_sitting_completed \
+--condition-context '{"completed_statuses":["completed"]}'
 
 # Can Bob review while sitting is pending?
 fga query check user:bob can_review cat_sitting:1 --context='{"cat_sitting_attributes":{"status": "pending"}}'
@@ -324,6 +348,8 @@ fga query check user:edouard can_view review:1
 # Yes (true)
 ```
 
+<!-- TODO: mention SDK for multiple languages and show examples in the app with Node.js SDK? -->
+
 ## Testing with OpenFGA CLI
 
 One of OpenFGA's strengths is its built-in testing capabilities. The CLI provides a declarative way to test authorization models without writing application code.
@@ -336,12 +362,9 @@ Define tests in YAML and run with a single command:
 fga model test --tests store.fga.yml
 ```
 
-Key advantages:
+...and forget about all the commands above. The `store.fga.yml` file contains everything you need to create the model and tuples, and run the tests before writing application code!
 
-- Test authorization before writing application code
-- Verify changes without deployment
-- Test complex scenarios with simple syntax
-- Document your permission model
+![Thank goodness](https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExbHFwcjE1b3NvNGtqYWcwMGRoNHhmbnFmNzRncHo4ZXdyOWdmcmE5cyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Xir88f7Y54j08KBWUQ/giphy.gif)
 
 ### Testing the PurrfectSitter Model
 
@@ -499,6 +522,8 @@ tests:
               - user:*
 ```
 
+> You can find `store.fga.yml` in the [demo repository](https://github.com/getlarge/purrfect-sitter/blob/main/store.fga.yml).
+
 ### Test Types
 
 The example demonstrates several test types:
@@ -576,6 +601,8 @@ Traditional systems answer "Can Alice do X?" OpenFGA also answers "What can Alic
 
 Google's Zanzibar (which inspired OpenFGA) handles billions of authorization checks daily. Your cat sitting app probably won't hit those numbers, but it's nice to know you won't hit a wall.
 
+<!-- TODO: mention benchmark script to compare DB lookups vs OpenFGA -->
+
 ## Adoption Challenges and Strategies
 
 Adopting OpenFGA in existing systems presents challenges. Here's how to address them:
@@ -648,13 +675,12 @@ For large organizations:
 
 Authorization doesn't have to be the part of your codebase that makes you cry. ReBAC and OpenFGA offer a cleaner path—one that grows with your app instead of strangling it.
 
-Start with PurrfectSitter's model, adapt it to your domain, and watch complex permission logic become simple relationship definitions.
-
-The complete code lives at [github.com/getlarge/purrfect-sitter](https://github.com/getlarge/purrfect-sitter). OpenFGA's documentation is at [openfga.dev](https://openfga.dev/).
+Start with PurrfectSitter's model, draw inspiration from the application in [github.com/getlarge/purrfect-sitter](https://github.com/getlarge/purrfect-sitter), adapt it to your domain, and watch complex permission logic become simple relationship definitions.
 
 Your future self will thank you for choosing relationships over nested IF statements.
 
----
+## ![I don't know what to say](https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExZjZ1NjVvc2R1c211YW9zZ3htM24zMW9wbXBieWVrdmtrbnU1eHRzdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l2ZDPwr4ZSJl9QlJS/giphy.gif)
 
-Zanzibar Academy https://zanzibar.academy
-Google's Zanzibar Paper (2019) https://research.google/pubs/zanzibar-googles-consistent-global-authorization-system/
+<!-- References -->
+<!-- Zanzibar Academy https://zanzibar.academy -->
+<!-- [openfga.dev](https://openfga.dev/). -->
