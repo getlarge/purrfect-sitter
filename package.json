@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test:fga": "fga model test --tests store.fga.yml",
-    "fix:imports": "node tools/scripts/fix-imports.js"
+    "clean:build": "rm -r **/dist **/out-tsc"
   },
   "private": true,
   "dependencies": {

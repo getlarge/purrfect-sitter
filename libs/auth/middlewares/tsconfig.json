@@ -4,6 +4,21 @@
   "include": [],
   "references": [
     {
+      "path": "../../users/repositories"
+    },
+    {
+      "path": "../../reviews/repositories"
+    },
+    {
+      "path": "../../cat-sittings/repositories"
+    },
+    {
+      "path": "../../cats/repositories"
+    },
+    {
+      "path": "../repositories"
+    },
+    {
       "path": "./tsconfig.lib.json"
     },
     {
