@@ -4,6 +4,9 @@
   "include": [],
   "references": [
     {
+      "path": "../../users/repositories"
+    },
+    {
       "path": "../../reviews/repositories"
     },
     {
@@ -14,9 +17,6 @@
     },
     {
       "path": "../repositories"
-    },
-    {
-      "path": "../../users/repositories"
     },
     {
       "path": "./tsconfig.lib.json"

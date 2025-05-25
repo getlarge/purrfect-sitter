@@ -1,0 +1,29 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": [
+      "node",
+      "jest",
+    ],
+    "outDir": "./out-tsc/purrfect-sitter-e2e",
+    "esModuleInterop": true,
+    "noUnusedLocals": false,
+    "noImplicitAny": false,
+    "allowImportingTsExtensions": true
+  },
+  "ts-node": {
+    "swc": true
+  },
+  "include": ["jest.config.ts", "src/**/*.ts", "src/**/*.spec.ts"],
+  "references": [
+    {
+      "path": "../../libs/database/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/models/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/users/repositories/tsconfig.lib.json"
+    },
+  ]
+}

@@ -21,7 +21,8 @@
       "options": {
         "typecheck": {
           "targetName": "typecheck"
-        }
+        },
+        "build": false
       }
     },
     {
