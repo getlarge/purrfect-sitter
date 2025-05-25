@@ -2,8 +2,18 @@ name: ADR Review (Simple)
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, reopened]
     branches: [main]
+    paths:
+      - 'libs/**'
+      - 'apps/**'
+      - '**.ts'
+      - 'docs/decisions/**'
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: true
 
 jobs:
   adr-review:

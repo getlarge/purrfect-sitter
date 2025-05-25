@@ -4,6 +4,9 @@ export * from './lib/session.middleware.js';
 import 'fastify';
 import type { IAuthorizationParams } from './lib/authorize.middleware.js';
 import type { ISessionUser } from '@purrfect-sitter/auth-repositories';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore relax TS
+import type { FastifyReply } from 'fastify';
 
 declare module 'fastify' {
   interface FastifyRequest {
