@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@swc/helpers": "~0.5.11",
-    "drizzle-orm": "^0.41.0"
+    "drizzle-orm": "^0.43.0",
+    "@purrfect-sitter/database": "0.0.1"
   }
 }
