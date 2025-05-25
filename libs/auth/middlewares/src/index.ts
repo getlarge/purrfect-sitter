@@ -4,6 +4,7 @@ export * from './lib/session.middleware.js';
 import 'fastify';
 import type { IAuthorizationParams } from './lib/authorize.middleware.js';
 import type { ISessionUser } from '@purrfect-sitter/auth-repositories';
+import type { FastifyReply } from 'fastify';
 
 declare module 'fastify' {
   interface FastifyRequest {
