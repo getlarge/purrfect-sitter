@@ -8,31 +8,33 @@ cover_image: https://dev-to-uploads.s3.amazonaws.com/uploads/articles/2ri39p5t1h
 
 ![Cool cover](Image.jpeg)
 
-## The Authorization Problem
+## The Authorization Problem That Started with "Just Add Admin Roles"
 
-<!-- TODO: start with my own experience of building authorization and then, unlinke authentication ...-->
+A client asked me recently: "Can we add temporary permissions for our support team during incidents?" Simple enough—until I examined their authorization code and found a 500-line function checking user roles, time windows, resource ownership, and various business rules.
 
-Unlike authentication, where developers can reach for well-known patterns like OAuth2/OIDC, JWT, or session-based authorization, authorization has been more of a "figure it out yourself" territory. This leads to everyone reinventing the wheel, often with increasingly complex database queries as the permissions grow.
+I did not imagine that this seemingly innocent request would lead me so **deep** into exploring **Relation-Based Access Control (ReBAC)** and **OpenFGA**.
 
-Drowning in database queries while implementing authorization logic? You're not alone. Complex permissions quickly expose the limitations of traditional approaches.
-
-RBAC works for simple cases but fails with nuanced permissions. ABAC offers flexibility but creates complex rule engines. Database permission checks grow unwieldy and slow as applications scale.
+Unlike authentication, where we have OAuth2, JWT, and other established patterns, authorization often forces us into custom implementations. Each new requirement adds another conditional branch, another database join, another edge case that breaks during the next feature request.
 
 ![this is fine](./this-is-fine.png)
 
-Enter **Relation-Based Access Control (ReBAC)** and **OpenFGA** - a powerful approach based on Google's Zanzibar paper that models permissions as relationships between entities. This makes it natural to express complex access patterns while maintaining performance at scale.
+Traditional approaches quickly hit walls:
 
-## Exploring ReBAC Through PurrfectSitter
+- **RBAC** works until you need "sometimes" permissions
+- **ABAC** offers flexibility but becomes a rule engine nightmare
+- **Database queries** slow to a crawl as your permission matrix grows
 
-Let's explore ReBAC through PurrfectSitter, a cat sitting app where owners find sitters. This shows how OpenFGA handles real-world authorization.
+My exploration started with **Ory Keto** while [integrating Ory in a NestJS application](https://dev.to/getlarge/integrate-ory-in-a-nestjs-application-4llo), which introduced me to Google's Zanzibar paper and the concept of **Relation-Based Access Control (ReBAC)**. Further research led me to **OpenFGA**—a more focused implementation that models permissions as relationships between entities rather than complex boolean logic.
 
-### Core Concepts of Relation-Based Access Control
+## ReBAC in Action: Building PurrfectSitter
 
-ReBAC revolves around three fundamental elements:
+I'll walk you through ReBAC using PurrfectSitter, a cat sitting app where owners find sitters. Real problems, real solutions.
 
-#### Types: Objects Needing Access Control
+### Three Building Blocks
 
-Types are objects needing access control:
+ReBAC builds authorization from three simple pieces:
+
+#### Types: The Things You Protect
 
 ```
 type user
@@ -42,17 +44,15 @@ type cat_sitting
 type review
 ```
 
-Each type maps to an application entity:
+These map to your app's core entities:
 
-- `user`: Person interacting with the system (owners, sitters, admins)
-- `system`: Configuration defining administrative privileges
-- `cat`: Profile managed by an owner
-- `cat_sitting`: Arrangement between owner and sitter
-- `review`: Feedback after a sitting arrangement
+- `user`: People using your app
+- `system`: Admin access controls
+- `cat`: Furry clients needing care
+- `cat_sitting`: A sitting arrangement
+- `review`: Post-sitting feedback
 
-#### Relations: Connections Between Entities
-
-Relations connect entities in specific ways:
+#### Relations: How Things Connect
 
 ```yaml
 type cat
@@ -63,16 +63,14 @@ type cat
     define system: [system]
 ```
 
-Relations for the `cat` type:
+Break this down:
 
-- `owner`: User who owns the cat
-- `admin`: Inherited from system's admin relation
-- `can_manage`: Permission combining owner OR admin
-- `system`: Link to system entity
+- `owner`: Direct relationship—Bob owns Romeo
+- `admin`: Inherited—system admins can manage any cat
+- `can_manage`: Computed—owners OR admins can manage
+- `system`: Links cat to the admin system
 
-#### Authorization Rules: How Relationships Work
-
-Authorization rules define how relationships can be computed:
+#### Rules: The Logic That Decides
 
 ```yaml
 type cat_sitting
@@ -85,16 +83,16 @@ type cat_sitting
     define sitter: [user]
 ```
 
-This shows several computation methods:
+OpenFGA computes relationships in several ways:
 
-- Direct assignment: `sitter: [user]` directly assigns a user as sitter
-- Inheritance: `owner: owner from cat` inherits the owner relation
-- Conditional relations: `active_sitter: [cat_sitting#sitter with is_active_timeslot]` uses time conditions
-- Permission composition: `can_post_updates: owner or active_sitter` combines relations with OR
+- **Direct**: `sitter: [user]`—Anne is Romeo's sitter
+- **Inherited**: `owner: owner from cat`—inherit from the cat's owner
+- **Conditional**: `active_sitter: [cat_sitting#sitter with is_active_timeslot]`—only during scheduled time
+- **Combined**: `can_post_updates: owner or active_sitter`—either can post updates
 
-### OpenFGA Configuration Language
+### The Complete Model
 
-OpenFGA provides an intuitive Domain-Specific Language (DSL) for authorization rules. Here's our complete PurrfectSitter model:
+Here's PurrfectSitter's authorization model in OpenFGA's simple syntax (Domain-Specific Language for the purists):
 
 ![OpenFGA Playground generated from PurrfectSitter model](./purrfect-sitter-authorization-model.png)
 
@@ -145,16 +143,9 @@ condition is_cat_sitting_completed(cat_sitting_attributes: map<string>, complete
 }
 ```
 
-This model demonstrates key OpenFGA features:
+Notice how readable this is — no complex SQL joins or nested conditions. The model captures business logic naturally.
 
-- Type definitions
-- Relation definitions
-- Conditional relationships
-- Relationship chains
-
-### Relationship Operators
-
-OpenFGA supports several operators for complex authorization rules:
+### Operators That Make Sense
 
 #### Union (OR)
 
@@ -162,7 +153,7 @@ OpenFGA supports several operators for complex authorization rules:
 define can_manage: owner or admin
 ```
 
-This grants `can_manage` permission to anyone with either `owner` or `admin` relation.
+Either owners OR admins can manage cats.
 
 #### Inheritance (FROM)
 
@@ -170,7 +161,7 @@ This grants `can_manage` permission to anyone with either `owner` or `admin` rel
 define owner: owner from cat
 ```
 
-This inherits the `owner` relation from the related `cat` object.
+Pull the owner relationship from the linked cat.
 
 #### Conditions (WITH)
 
@@ -178,11 +169,11 @@ This inherits the `owner` relation from the related `cat` object.
 define active_sitter: [cat_sitting#sitter with is_active_timeslot]
 ```
 
-This grants `active_sitter` relation only when `is_active_timeslot` condition is satisfied.
+Grant permissions only when conditions are met—like during scheduled hours.
 
-## PurrfectSitter in Action
+## See It Working
 
-Let's walk through a complete demo of our authorization model:
+Let's test our model with real scenarios:
 
 ### 1. Setting Up OpenFGA
 
@@ -221,11 +212,9 @@ fga query check user:anne can_manage cat:romeo
 # No (false)
 ```
 
-We've created a cat sitting arrangement where Anne cares for Bob's cat, Romeo.
+Bob owns Romeo, Anne sits for him. Simple.
 
-### 3. Role-Based Permission with Admin Role
-
-Add an admin role:
+### 3. Admin Powers
 
 ```bash
 # Make Jenny a system admin
@@ -239,11 +228,9 @@ fga query check user:jenny can_manage cat:romeo
 # Yes (true)
 ```
 
-This shows how ReBAC incorporates role-based access patterns. Jenny, as system admin, can manage all cats.
+Jenny becomes a system admin who can manage any cat—traditional RBAC within ReBAC.
 
-### 4. Time-Based Permission with Active Sitter
-
-Conditional relationships showcase OpenFGA's true power:
+### 4. Time Magic
 
 ```bash
 # Make Anne active only during a specific time window
@@ -274,11 +261,9 @@ fga query list-objects user:bob owner cat_sitting
 # ["cat_sitting:1"]
 ```
 
-This showcases ReBAC's power. Anne becomes an "active sitter" only during her scheduled window. Her update privileges expire automatically when her sitting time ends—no code needed to revoke permissions.
+Anne's permissions activate and deactivate automatically based on time. No cron jobs, no cleanup code—the authorization system handles it.
 
-### 5. Status-Based Permissions for Reviews
-
-Another real-world scenario involves status transitions:
+### 5. Status-Driven Access
 
 ```bash
 # Set up review permission based on status
@@ -293,7 +278,7 @@ fga query check user:bob can_review cat_sitting:1 --context='{"cat_sitting_attri
 # Yes (true)
 ```
 
-Cat owners should only review sitters after sitting is completed. OpenFGA's conditions model this business rule using a status attribute.
+Reviews only make sense after sitting ends. OpenFGA enforces this business rule automatically.
 
 ### 6. Creating and Checking Review Permissions
 
@@ -569,29 +554,27 @@ Implement time-based and status-based rules with conditions instead of complex a
 
 Model everything as relationships instead of boolean flags. This makes authorization intuitive and maintainable.
 
-## Benefits of ReBAC and OpenFGA
+## Why This Approach Wins
 
-ReBAC and OpenFGA offer these advantages:
+### It Matches How You Think
 
-### Models Mirror Reality
+Cat owners own cats. Sitters sit cats. Admins administrate. The authorization model mirrors reality instead of forcing you into artificial role hierarchies.
 
-Authorization models mirror real-world relationships: owners have cats, cats have sitters, sitters receive reviews. This makes rules intuitive and maintainable.
+### Time Works Automatically
 
-### Automatic Time Constraints
+No more "grant permission at 9 AM, revoke at 5 PM" cron jobs. Time-based access happens naturally through conditions.
 
-Time-based permissions are handled declaratively through conditions, eliminating complex grant/revoke logic.
+### Status Drives Decisions
 
-### Status-Based Access
+Your app's workflow already has statuses—pending, active, completed. OpenFGA uses these directly for permissions instead of requiring separate access control flags.
 
-Business workflows often depend on status. OpenFGA restricts actions like reviews based on status without hardcoding rules in your application.
+### Queries, Not Just Checks
 
-### Relationship Queries
+Traditional systems answer "Can Alice do X?" OpenFGA also answers "What can Alice do?" and "Who can do X?" This unlocks features like smart dashboards and permission audits.
 
-Beyond yes/no checks, OpenFGA lets you query relationships. Find all reviews a user wrote or received—beyond what traditional systems offer.
+### Scale Like Google
 
-### Scale and Performance
-
-Permission checks don't rely on complex database queries, so they scale efficiently as data grows. Google's Zanzibar system, which inspired OpenFGA, handles billions of checks daily.
+Google's Zanzibar (which inspired OpenFGA) handles billions of authorization checks daily. Your cat sitting app probably won't hit those numbers, but it's nice to know you won't hit a wall.
 
 ## Adoption Challenges and Strategies
 
@@ -661,13 +644,15 @@ For large organizations:
 - Use modular models for independent team control
 - Leverage access control for team-specific credentials
 
-## Conclusion
+## Your Next Move
 
-PurrfectSitter shows how OpenFGA and ReBAC elegantly solve complex authorization problems. Modeling permissions as relationships creates systems that are intuitive, maintainable, and performant.
+Authorization doesn't have to be the part of your codebase that makes you cry. ReBAC and OpenFGA offer a cleaner path—one that grows with your app instead of strangling it.
 
-Building a cat sitting app or enterprise platform? ReBAC and OpenFGA tame your authorization challenges.
+Start with PurrfectSitter's model, adapt it to your domain, and watch complex permission logic become simple relationship definitions.
 
-For more information, visit the [OpenFGA documentation](https://openfga.dev/) or check out the complete code at github.com/getlarge/purrfect-sitter.
+The complete code lives at [github.com/getlarge/purrfect-sitter](https://github.com/getlarge/purrfect-sitter). OpenFGA's documentation is at [openfga.dev](https://openfga.dev/).
+
+Your future self will thank you for choosing relationships over nested IF statements.
 
 ---
 
