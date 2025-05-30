@@ -1,22 +1,20 @@
 ---
-title: Taming Authorization with OpenFGA
+title: How to Protect Your API with OpenFGA: From ReBAC Concepts to Practical Usage
 published: false
 description: Learn how to implement complex authorization patterns using OpenFGA and Relation-Based Access Control (ReBAC) through a practical example of a cat sitting app.
 tags: tutorial, openfga, authorization, security
-cover_image: https://dev-to-uploads.s3.amazonaws.com/uploads/articles/3gnprublltayvl6t6zh5.jpeg
+cover_image: https://dev-to-uploads.s3.amazonaws.com/uploads/articles/faoyboj4ihjrn3msync4.png
 ---
 
-A client asked me recently:
+<!-- cover_image: https://dev-to-uploads.s3.amazonaws.com/uploads/articles/3gnprublltayvl6t6zh5.jpeg -->
 
-> Can we add temporary permissions for our support team during incidents?
+Another client story, another article. A client asked me recently:
 
-Simple enough—until I examined their authorization code and found a 500-line function checking user roles, time windows, resource ownership, and various business rules.
+> **Can we add temporary permissions for a group of users assigned to a maintenance task while it's ongoing?**
 
-I did not imagine that this seemingly innocent request would lead me so **deep** into exploring **Relation-Based Access Control (ReBAC)** and **OpenFGA**.
+Simple enough — until I examined the authorization code and found a 500-line function checking user roles and groups, time windows, resource ownership, and various business rules.
 
-Unlike authentication, where we have OAuth2, JWT, and other established standards and patterns, authorization often forces us into custom implementations. Each new requirement adds another **conditional branch**, another **database join**, another **edge case that breaks** during the next feature request.
-
-<!-- Cognitive complexity counter  -->
+Unlike authentication, where we have OAuth2, JWT, and other established standards and patterns, authorization often forces us into custom implementations. Each new policy adds another **conditional branch**, another **database join**, another **custom role**, another **edge case that breaks** during the next feature request. The code becomes a maze and even experienced developers hesitate before touching it.
 
 ![this is fine](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/09cwef7zad5jqr7grjz7.png)
 
@@ -26,7 +24,9 @@ Traditional approaches quickly hit walls:
 - **ABAC** offers flexibility but becomes a rule engine nightmare
 - **Database queries** slow to a crawl as your permission matrix grows
 
-My exploration started with **Ory Keto** while [integrating Ory in a NestJS application](https://dev.to/getlarge/integrate-ory-in-a-nestjs-application-4llo), which introduced me to [Google's Zanzibar paper](https://research.google/pubs/zanzibar-googles-consistent-global-authorization-system/) and the concept of **Relation-Based Access Control (ReBAC)**. Further research led me to **OpenFGA**—a more focused implementation that models permissions as relationships between entities rather than complex boolean logic.
+My exploration for a better paradigm started with **Ory Keto** while [integrating Ory in a NestJS application](https://dev.to/getlarge/integrate-ory-in-a-nestjs-application-4llo). It introduced me to [Google's Zanzibar paper](https://research.google/pubs/zanzibar-googles-consistent-global-authorization-system/) and the concept of **Relation-Based Access Control (ReBAC)**.
+
+That "simple" feature request led me to **OpenFGA** — a richer implementation of Zanzibar's principles that extends ReBAC with powerful features like contextual-based conditions, attribute-based access, and a simple query language.
 
 ## ReBAC in Action: Building PurrfectSitter
 
@@ -38,7 +38,7 @@ ReBAC builds authorization from three simple pieces:
 
 #### Types: The Things You Protect
 
-```
+```yaml
 type user
 type system
 type cat
@@ -545,40 +545,6 @@ These testing capabilities help when adopting OpenFGA:
 
 Including tests in your workflow reduces authorization errors and builds confidence in your implementation.
 
-## Best Practices for Authorization Models
-
-Our PurrfectSitter example demonstrates key best practices:
-
-### 1. Start Simple
-
-Begin with core entities and relationships. We started with users, cats, and ownership.
-
-### 2. Model Natural Hierarchies
-
-Our relationships reflect the domain's natural structure:
-
-- Cats belong to owners
-- Cat sittings involve cats and sitters
-- Reviews connect to cat sitting arrangements
-
-### 3. Leverage Inheritance
-
-Use inheritance to reduce duplication:
-
-```yaml
-define owner: owner from cat
-```
-
-This keeps the model maintainable.
-
-### 4. Use Conditions for Dynamic Rules
-
-Implement time-based and status-based rules with conditions instead of complex application logic.
-
-### 5. Think in Relationships
-
-Model everything as relationships instead of boolean flags. This makes authorization intuitive and maintainable.
-
 ## Why This Approach Wins
 
 ### It Matches How You Think
@@ -605,7 +571,7 @@ Google's Zanzibar (which inspired OpenFGA) handles billions of authorization che
 
 ## Adoption Challenges and Strategies
 
-Adopting OpenFGA in existing systems presents challenges. Here's how to address them:
+Of course, adopting OpenFGA in existing systems presents challenges. Here's how to address them:
 
 ### Mental Model Shift
 
@@ -616,7 +582,7 @@ ReBAC requires a paradigm shift for developers:
 
 ### Data Synchronization
 
-Maintaining data consistency presents challenges:
+This is probably the most challenging aspect of adopting OpenFGA, especially if you have an existing database with complex permissions.
 
 - **Dual writes**: Applications must write to both their database and OpenFGA.
 - **Synchronization strategies**:
@@ -625,7 +591,7 @@ Maintaining data consistency presents challenges:
   - Transactional outbox pattern for consistency
   - Background jobs for existing data
 
-> Note: Read this excellent article about handling dual writes with OpenFGA [here](https://auth0.com/blog/handling-the-dual-write-problem-in-distributed-systems/). It provides practical strategies for synchronizing data between your application and OpenFGA.
+> Note: Read this excellent article about dual writes in distributed systems [here](https://auth0.com/blog/handling-the-dual-write-problem-in-distributed-systems/). It will surely help you understand strategies for synchronizing data between your application(s) and OpenFGA.
 
 ### Progressive Adoption
 
@@ -655,13 +621,7 @@ Reduce synchronization burden:
 - Gradually move to persistent relationship tuples
 - Use contextual tuples for frequently changing data
 
-#### 4. Domain-Specific Authorization Services
-
-Wrap OpenFGA with domain-specific services:
-
-- Create organization-specific API endpoints
-- Provide familiar interfaces to developers
-- Centralize contextual data retrieval
+> Read more about this technique in the [OpenFGA documentation](https://openfga.dev/docs/best-practices/adoption-patterns#provide-request-level-data).
 
 ### Managing Organizational Adoption
 
