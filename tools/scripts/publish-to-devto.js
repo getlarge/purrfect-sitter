@@ -4,7 +4,6 @@
 import axios from 'axios';
 import fm from 'front-matter';
 import fs from 'node:fs';
-import { inspect } from 'node:util';
 
 const apiKey = process.env.DEVTO_API_KEY;
 const articlePath =
@@ -151,7 +150,6 @@ async function publishArticle(articleContent, articleId, organizationId) {
 
 const articleContent = fs.readFileSync(articlePath, 'utf8');
 const { attributes } = fm(articleContent);
-console.log('Article attributes:', inspect(attributes, { depth: null }));
 
 const articles = await getMyArticles();
 const foundArticle = articles.find((a) => a.title === attributes.title);
@@ -160,8 +158,9 @@ console.log(
   `Article ${attributes.title} found: ${!!foundArticle}, ID: ${articleId}`
 );
 // ? maybe go deeper and check tags, etc. to find the right article ?
-const organization = await getOrganization();
-console.log(inspect(organization));
-
-const organizationId = organization ? organization.id : null;
+let organizationId = null;
+if (!articleId) {
+  const organization = await getOrganization();
+  organizationId = organization?.id;
+}
 await publishArticle(articleContent, articleId, organizationId);

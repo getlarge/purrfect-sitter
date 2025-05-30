@@ -1,5 +1,5 @@
 ---
-title: How to Protect Your API with OpenFGA: From ReBAC Concepts to Practical Usage
+title: How to Protect Access To Your API with OpenFGA: From ReBAC Concepts to Practical Usage
 published: false
 description: Learn how to implement complex authorization patterns using OpenFGA and Relation-Based Access Control (ReBAC) through a practical example of a cat sitting app.
 tags: tutorial, openfga, authorization, security
