@@ -3,15 +3,13 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
-  
-  // Features to add to the dev container
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "installZsh": "true",
       "configureZshAsDefaultShell": "true",
+      "installOhMyZsh": "true",
+      "installOhMyZshConfig": "true",
       "username": "vscode",
-      "userUid": "1000",
-      "userGid": "1000",
       "upgradePackages": "true"
     },
     "ghcr.io/devcontainers/features/node:1": {
@@ -27,7 +25,6 @@
       "ppa": true
     }
   },
-
   // VS Code extensions to install
   "customizations": {
     "vscode": {
@@ -70,27 +67,23 @@
       }
     }
   },
-
   // Use 'forwardPorts' to make a list of ports inside the container available locally
   "forwardPorts": [
-    3333,    // API server
-    4433,    // Kratos Public
-    4434,    // Kratos Admin
-    4455,    // Kratos UI
-    5432,    // PostgreSQL
-    8080,    // OpenFGA HTTP
-    8081,    // OpenFGA gRPC
-    8082,    // OpenFGA Playground
-    9411,    // Zipkin
-    9090     // Prometheus
+    3333, // API server
+    4433, // Kratos Public
+    4434, // Kratos Admin
+    4455, // Kratos UI
+    5432, // PostgreSQL
+    8080, // OpenFGA HTTP
+    8081, // OpenFGA gRPC
+    8082, // OpenFGA Playground
+    9411, // Zipkin
+    9090 // Prometheus
   ],
-
   // Use 'postCreateCommand' to run commands after the container is created
   "postCreateCommand": ".devcontainer/post-create.sh",
-
   // Use 'postStartCommand' to run commands after the container starts
   "postStartCommand": ".devcontainer/post-start.sh",
-
   // Environment variables
   "containerEnv": {
     "DATABASE_URL": "postgresql://dbuser:secret@postgres:5432/purrfect-sitter",
@@ -98,7 +91,6 @@
     "KRATOS_PUBLIC_URL": "http://kratos:4433",
     "KRATOS_ADMIN_URL": "http://kratos:4434"
   },
-
   // Uncomment to connect as root instead
   // "remoteUser": "root"
   "remoteUser": "vscode"

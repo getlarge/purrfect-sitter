@@ -3,6 +3,8 @@ set -e
 
 echo "🚀 Setting up PurrfectSitter development environment..."
 
+cd /workspace
+
 # Wait for services to be ready
 echo "⏳ Waiting for services to be ready..."
 timeout=60
@@ -33,24 +35,19 @@ while ! curl -s http://openfga:8080/healthz > /dev/null 2>&1; do
 done
 echo "✅ OpenFGA is ready"
 
-# Install dependencies
 echo "📦 Installing dependencies..."
 npm install
 
-# Run database migrations
 echo "🗄️ Running database migrations..."
 npm run db:migrate
 
-# Set up OpenFGA store and model
 echo "🔐 Setting up OpenFGA store and model..."
 
-# Create store
 STORE_RESPONSE=$(fga store create --name=purrfect-sitter-dev --api-url http://openfga:8080)
 export FGA_STORE_ID=$(echo $STORE_RESPONSE | jq -r '.store.id')
-echo "export FGA_STORE_ID=$FGA_STORE_ID" >> ~/.bashrc
 echo "export FGA_STORE_ID=$FGA_STORE_ID" >> ~/.zshrc
+echo "export FGA_STORE_ID=$FGA_STORE_ID" >> ~/.bashrc
 
-# Write model
 if [ -f "purrfect-sitter-model.fga" ]; then
   fga model write --file=purrfect-sitter-model.fga --api-url http://openfga:8080 --store-id=$FGA_STORE_ID
   echo "✅ OpenFGA model written"
