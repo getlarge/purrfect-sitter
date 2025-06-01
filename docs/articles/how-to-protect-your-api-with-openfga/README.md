@@ -55,7 +55,7 @@ As trivial as it sounds, this example shows:
 
 ReBAC builds authorization from three simple pieces:
 
-#### Types: The Things You Protect
+#### Types: Entities in Your App
 
 ```yaml
 type user
@@ -73,33 +73,53 @@ These map to your app's core entities:
 - `cat_sitting`: 🏠 A sitting arrangement
 - `review`: 📝 Post-sitting feedback
 
-<!-- TODO: type definitions in openfga contain relations and rules -->
+Each **type** will declare relationships with other types - in the **type definition**.
 
-<!-- TODO: add object definition An object represents an entity in the system. Users' relationships to it are defined by relationship tuples and the authorization model. -->
+> **Note**: In Ory Keto, these are called **namespaces**.
+
+#### Objects: Instances of Types
+
+In OpenFGA, an **object** is an instance of a type. For example:
+
+- `user:bob`: A specific user named Bob
+- `cat:romeo`: A specific cat named Romeo
+- `system:development`: The development environment
+- `cat_sitting:1`: The first cat sitting arrangement
+- `review:1`: The first review
+
+Objects are the concrete entities your users interact with.
+
+#### Users: The Actors
+
+A **user** is an entity that is related to objects in your system. In our app, users can be:
+
+- People (like Bob)
+- Systems (like the PurrfectSitter development environment)
+- Cats (like Romeo)
+
+> **Note**: In Ory Keto, these are called **subjects**. I believe subject is less ambiguous than user, but OpenFGA uses user, so we will too.
 
 #### Relations: How Things Connect
 
+A **relation** defines how users interact with objects. For example:
+
+- `user:bob owner cat:romeo`: Bob is the owner of Romeo
+- `user:anne sitter cat_sitting:1`: Anne is the sitter for the first cat sitting arrangement
+
+Each **relation** evaluation logic is defined in the **relation definition**.
+
 ```yaml
+type system
+  relations
+    define admin: [user]
+
 type cat
   relations
     define owner: [user]
     define admin: admin from system
     define can_manage: owner or admin
     define system: [system]
-```
 
-Break this down:
-
-- `owner`: Direct relationship—Bob owns Romeo
-- `admin`: Inherited—system admins can manage any cat
-- `can_manage`: Computed—owners OR admins can manage
-- `system`: Links cat to the admin system
-
-> Important!: For the sake of this example, we will assume that cats are owned by humans. We all know that, in reality, cats own us, not the other way around.
-
-#### Rules: The Logic That Decides
-
-```yaml
 type cat_sitting
   relations
     define active_sitter: [cat_sitting#sitter with is_active_timeslot]
@@ -110,18 +130,33 @@ type cat_sitting
     define sitter: [user]
 ```
 
+> **Important**: For the sake of this example, we will assume that cats are owned by humans. We all know that, in reality, cats own us, not the other way around.
+
 OpenFGA computes relationships in several ways:
 
-- **Direct**: `sitter: [user]` — Anne is Romeo's sitter
-- **Inherited**: `owner: owne from cat` — inherit **from** the cat's owner
-- **Conditional**: `active_sitter: [cat_sitting#sitter **with** is_active_timeslot]`—only during scheduled time
-- **Combined**: `can_post_updates: owner **or** active_sitter` — either can post updates
+- **Direct**:
+  - `system.admin` — A _user_ can be an **admin** of the _system_
+  - `cat.owner` — A _user_ can be a _cat_ **owner**
+  - `cat.system` — A _system_ can be assigned to a _cat_
+  - `cat_sitting.sitter` — A _user_ can be a **sitter** for a _cat_sitting_
+- **Implied**:
+  - `cat.admin: admin from system` — An
+  - `cat_sitting.owner: owner from cat` — inherit **from** the cat's owner
+- **Union**:
+  - `cat.can_manage` — either the _cat_ **owner** or an _admin_ from the _system_ can manage the _cat_
+  - `cat_sitting.can_post_updates` — either the _cat_sitting_ **owner** or an _active_sitter_ can post updates
+- **Conditional**:
+  - `cat_sitting.active_sitter` — Conditional relation between _user_ and _cat_sitting_ based on the outcome of the `is_active_timeslot` condition
+  - `cat_sitting.can_review` — Conditional relation between _user_ and _cat_sitting_ based on the outcome of the `is_cat_sitting_completed` condition
+
+There are even more ways to express relationships, such as **exclusion**, **intersection** and **nesting**, you can find the complete **configuration language** reference in the [OpenFGA documentation](https://openfga.dev/docs/configuration-language).
 
 <!-- TODO: all concepts in details -> https://openfga.dev/docs/concepts -->
 
-### The Complete Model
+### The Complete Authorization Model
 
-Here's PurrfectSitter's authorization model in OpenFGA's syntax (Domain-Specific Language for the purists):
+The ensemble of types and relations definitions forms the **authorization model**.
+Here, the PurrfectSitter's authorization model in OpenFGA's syntax (Domain-Specific Language for the purists), defines how users interact with cats, cat sittings, and reviews.
 
 ```yaml
 model
@@ -186,7 +221,7 @@ Notice how readable, yet compact, this is — no complex SQL joins or nested con
 
 ![Nice one Johnny](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmxxeTI3NXg0MmI4a2xlZDEzYXo3MzhxanF3Ym9oajlxdXR0cmU0byZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/kQdtQ8JIYFRuoywakC/giphy.gif)
 
-> Hint: You can visualize the relations graph in [OpenFGA's Playground](https://openfga.dev/docs/getting-started/setup-openfga/playground):
+> Hint: You can visualize the relations graph and run queries in the [OpenFGA's Playground](https://openfga.dev/docs/getting-started/setup-openfga/playground):
 
 ![OpenFGA Playground generated from PurrfectSitter model](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/oh2yxuh779j5yesvpbkd.png)
 
@@ -198,6 +233,10 @@ Notice how readable, yet compact, this is — no complex SQL joins or nested con
 
 Cat owners own cats. Sitters sit cats. Admins administrate. The authorization model mirrors reality instead of forcing you into artificial role hierarchies.
 
+![Cat owner relationship diagram](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/t4g6q9mu4ag4crg09qcr.png)
+
+![Cat sitting scenario diagram](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/g7m1b1h5wlxuwaitssi7.png)
+
 #### Time Works Automatically
 
 No more "grant permission at 9 AM, revoke at 5 PM" cron jobs. Time-based access happens naturally through conditions.
@@ -205,17 +244,13 @@ Grant permissions only when conditions are met—like during scheduled hours.
 
 > _Yes! My client is going to love this._
 
+![Time-based conditions](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/xcsdz1o5zg2po3zwpddq.png)
+
 #### Status Drives Decisions
 
 Your app's workflow already has statuses—pending, active, completed. OpenFGA uses these directly for permissions instead of requiring separate access control flags.
 
-##### Basic Cat Owner Relationship
-
-![Cat owner relationship diagram](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/t4g6q9mu4ag4crg09qcr.png)
-
-##### Cat Sitting Scenario
-
-![Cat sitting scenario diagram](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/g7m1b1h5wlxuwaitssi7.png)
+![Status-based conditions](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/y45ufry7ecg7lva4rnqm.png)
 
 ##### Who Can Do What - Permission Example
 
@@ -224,6 +259,10 @@ Your app's workflow already has statuses—pending, active, completed. OpenFGA u
 ### Queries, Not Just Checks
 
 Traditional systems answer "Can Alice do X?" OpenFGA also answers "What can Alice do?" and "Who can do X?" This unlocks features like smart dashboards and permission audits.
+
+![Is user Jenny related to system development as an admin?](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/3gljlmtefso79v0rdas9.png)
+
+![Is user Bob related to system development as an admin?](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/xtofky2w1j14uxygu40a.png)
 
 ### Scale Like Google
 
