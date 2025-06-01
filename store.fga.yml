@@ -21,11 +21,10 @@ model: |
       define admin: admin from system
       define active_sitter: [cat_sitting#sitter with is_active_timeslot]
       define pending_sitter: [cat_sitting#sitter with is_pending_timeslot]
-    define can_post_updates: owner or active_sitter
-    define can_delete: admin or owner or pending_sitter
-    define can_view: admin or owner or sitter
-    define can_update: admin or owner or pending_sitter
-    define can_review:
+      define can_post_updates: owner or active_sitter
+      define can_delete: admin or owner or pending_sitter
+      define can_view: admin or owner or sitter
+      define can_update: admin or owner or pending_sitter
       define can_review: [cat#owner with is_cat_sitting_completed]
       define cat: [cat]
       define owner: owner from cat
@@ -34,15 +33,15 @@ model: |
 
   type review
     relations
-    define admin: admin from system
-    define author: owner from cat_sitting
-    define can_delete: admin or author
-    define can_edit: admin or author
-    define can_view: [user, user:*]
-    define cat: cat from cat_sitting
-    define cat_sitting: [cat_sitting]
-    define subject: sitter from cat_sitting
-    define system: [system]
+      define admin: admin from system
+      define author: owner from cat_sitting
+      define can_delete: admin or author
+      define can_edit: admin or author
+      define can_view: [user, user:*]
+      define cat: cat from cat_sitting
+      define cat_sitting: [cat_sitting]
+      define subject: sitter from cat_sitting
+      define system: [system]
 
   condition is_active_timeslot(current_time: timestamp, end_time: timestamp, start_time: timestamp) {
     current_time >= start_time && current_time <= end_time
