@@ -16,6 +16,8 @@ Unlike authentication, where we have OIDC, JWT, and other established standards 
 
 > You might argue that OAuth 2.0 cover authorization, but they focus on third-party access, not complex and dynamic authorization patterns.
 
+<!-- TODO: Distinction between authentication and authorization -->
+
 Each new policy adds another **conditional branch**, another **database join**, another **custom role**, another **edge case that breaks** during the next feature request. The code becomes a maze and even experienced developers hesitate before touching it.
 
 ![this is fine](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/09cwef7zad5jqr7grjz7.png)
@@ -156,7 +158,7 @@ There are even more ways to express relationships, such as **exclusion**, **inte
 ### The Complete Authorization Model
 
 The ensemble of types and relations definitions forms the **authorization model**.
-Here, the PurrfectSitter's authorization model in OpenFGA's syntax (Domain-Specific Language for the purists), defines how users interact with cats, cat sittings, and reviews.
+Here, the PurrfectSitter's authorization model in OpenFGA's configuration language (Domain-Specific Language for the purists), defines how users interact with cats, cat sittings, and reviews.
 
 ```yaml
 model
@@ -252,10 +254,6 @@ Your app's workflow already has statuses—pending, active, completed. OpenFGA u
 
 ![Status-based conditions](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/y45ufry7ecg7lva4rnqm.png)
 
-##### Who Can Do What - Permission Example
-
-![Diagram showing user permissions](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/1zvl0uoy2tdp4fs6p7sw.png)
-
 ### Queries, Not Just Checks
 
 Traditional systems answer "Can Alice do X?" OpenFGA also answers "What can Alice do?" and "Who can do X?" This unlocks features like smart dashboards and permission audits.
@@ -339,13 +337,13 @@ Does it need a lot of explanation? The OpenFGA version is objectively cleaner, m
 
 Before moving on, make sure you can answer:
 
-1. What's the difference between a user and a subject?
+1. What's the difference between a user and an object?
 2. How do relations differ from roles?
 3. When would you use indirect relationships?
 
 {% collapsible **Answers** %}
 
-1. **User vs Subject**: A user is an entity (like a person), while a subject is the context in which permissions are checked (like "can this user manage this cat?").
+1. **User vs Object**: A user is an entity (like a person), while an object is an instance of a type (like a specific cat or cat sitting arrangement). Users interact with objects through relations.
 2. **Relations vs Roles**: Relations define how entities connect (like "owner of cat"), while roles are broader categories (like "admin" or "sitter") that can have multiple relations.
 3. **Indirect Relationships**: Use these when you want to derive permissions from other relationships, like "can a sitter post updates if they are also the owner?" This allows for more flexible and dynamic permission checks.
 
@@ -516,6 +514,10 @@ fga query check user:edouard can_view review:1
 
 One of OpenFGA's strengths is its built-in testing capabilities. The CLI provides a declarative way to test authorization models without writing application code.
 
+<!-- ##### Who Can Do What - Permission Example
+
+![Diagram showing user permissions](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/1zvl0uoy2tdp4fs6p7sw.png) -->
+
 ### Declarative Testing with YAML
 
 Define tests in YAML and run with a single command:
@@ -550,13 +552,15 @@ model: |
   # Our full model definition goes here...
 ```
 
-> The [model](#the-complete-model) section is the same as the one we defined earlier, but in YAML format for the OpenFGA CLI.
+> The [model](#the-complete-authorization-model) section is the same as the one we defined earlier, but in YAML format for the OpenFGA CLI.
 
 #### The tuples
 
 This section defines the relationships (tuples) in our model. Each tuple represents a relationship between a user and an object, along with the relation type.
 
 ```yaml
+model:
+  # ...
 tuples:
   - user: user:jenny
     relation: admin
@@ -612,7 +616,19 @@ tuples:
 
 This section defines the tests that will be run against the model and tuples. Each test checks specific permissions or relationships.
 
+The example demonstrates several test types:
+
+1. **Basic permission checks**: Simple assertions about relationships
+2. **Contextual checks**: Testing time-based permissions
+3. **Attribute-based checks**: Testing permissions depending on object attributes
+4. **List objects**: Finding objects a user has relationships with
+5. **List users**: Finding users with relationships to an object
+
 ```yaml
+model:
+  # ...
+tuples:
+  # ...
 tests:
   - name: Test basic relations
     check:
@@ -720,20 +736,6 @@ ListObjects 3/3 passing
 ListUsers 1/1 passing
 ```
 
-### Test Types
-
-The example demonstrates several test types:
-
-1. **Basic permission checks**: Simple assertions about relationships
-2. **Contextual checks**: Testing time-based permissions
-3. **Attribute-based checks**: Testing permissions depending on object attributes
-4. **List objects**: Finding objects a user has relationships with
-5. **List users**: Finding users with relationships to an object
-
-<!--
-TODO: emphasize the importance of being able to query permissions and relationships
--->
-
 ### Testing During Adoption
 
 These testing capabilities help when adopting OpenFGA:
@@ -807,9 +809,9 @@ For large organizations:
 - Use modular models for independent team control
 - Leverage access control for team-specific credentials
 
-<!-- TODO: monitoring, mention support for OpenTelemetry - https://openfga.dev/docs/getting-started/configure-telemetry -->
-
 <!-- Other production advice https://openfga.dev/docs/best-practices/running-in-production -->
+
+<!-- TODO: For senior architects: Deep-dive into performance characteristics,monitoring, mention support for OpenTelemetry - https://openfga.dev/docs/getting-started/configure-telemetry, horizontal scaling strategies, and production deployment patterns. Include ROI calculations and architectural trade-offs. -->
 
 ## <a id="your-next-move"></a> Your Next Move [▓▓▓▓▓▓▓]
 
@@ -817,12 +819,21 @@ Authorization doesn't have to be the part of your codebase that makes you cry. R
 
 Start with PurrfectSitter's model, draw inspiration from the application in [github.com/getlarge/purrfect-sitter](https://github.com/getlarge/purrfect-sitter), adapt it to your domain, and watch complex permission logic become simple relationship definitions.
 
+### Try It Yourself
+
+Want to experiment with OpenFGA without any setup? The PurrfectSitter repository includes a complete development environment:
+
+[![Open in CodeSandbox](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/p/github/getlarge/purrfect-sitter)
+
+Or use VS Code Dev Containers / GitHub Codespaces for a full development experience with all the examples from this article ready to run.
+
 Your future self will thank you for choosing relationships over nested IF statements.
 
-<!-- TODO: if you don't know how to thank me, start my github projects -->
+<!-- TODO: if you don't know how to thank me, star my github projects -->
+
+<!-- TODO: "What authorization model fits you?" interactive quiz -->
 
 ## ![I don't know what to say](https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExZjZ1NjVvc2R1c211YW9zZ3htM24zMW9wbXBieWVrdmtrbnU1eHRzdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l2ZDPwr4ZSJl9QlJS/giphy.gif)
 
 <!-- References -->
 <!-- Zanzibar Academy https://zanzibar.academy -->
-<!-- [openfga.dev](https://openfga.dev/). -->
