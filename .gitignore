@@ -50,7 +50,11 @@ apps/**/package-lock.json
 
 # devcontainer
 .cache
+.claude
 .config
+.devcontainer/.onCreateCommandMarker
+.devcontainer/.postCreateCommandMarker
+.devcontainer/.updateContentCommandMarker
 .docker
 .dotnet
 .gnupg
@@ -58,6 +62,5 @@ apps/**/package-lock.json
 .ssh
 .vscode-server
 .zcompdump
-.devcontainer/.onCreateCommandMarker
-.devcontainer/.postCreateCommandMarker
-.devcontainer/.updateContentCommandMarker
+.zshrc
+.zsh_history

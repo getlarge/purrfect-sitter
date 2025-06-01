@@ -6,26 +6,15 @@ volumes:
   nx_cache:
 
 services:
-  app:
-    build:
-      context: ..
-      dockerfile: .devcontainer/Dockerfile
-    user: node
+  devcontainer:
+    image: mcr.microsoft.com/devcontainers/base:ubuntu
     volumes:
-      - ..:/home/node:cached
-      # - node_modules:/home/node/node_modules
-      - nx_cache:/home/node/.nx
+      - ../..:/workspaces:cached
       - /var/run/docker.sock:/var/run/docker.sock
-
-    # Overrides default command so things don't shut down after the process ends
-    command: sleep infinity
-
-    # Network mode host is required for Docker in Docker to work properly
     network_mode: service:postgres
-
-    # Use init to handle signals properly
+    # user: vscode
     init: true
-
+    command: sleep infinity
     depends_on:
       - postgres
       - openfga

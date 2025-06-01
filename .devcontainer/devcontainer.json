@@ -1,8 +1,8 @@
 {
   "name": "PurrfectSitter Dev Environment",
   "dockerComposeFile": "docker-compose.yml",
-  "service": "app",
-  "workspaceFolder": "/home/node",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "installZsh": "true",
@@ -12,8 +12,12 @@
       "username": "node",
       "upgradePackages": "true"
     },
+    "ghcr.io/devcontainers-extra/features/zsh-plugins:0": {
+      "plugins": "zsh-autosuggestions zsh-syntax-highlighting",
+      "omzPlugins": "https://github.com/zsh-users/zsh-autosuggestions.git https://github.com/zsh-users/zsh-syntax-highlighting.git"
+    },
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "lts",
+      "version": "22.14.0",
       "nodeGypDependencies": true
     },
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
@@ -23,6 +27,9 @@
     "ghcr.io/devcontainers/features/git:1": {
       "version": "latest",
       "ppa": true
+    },
+    "./openfga-feature": {
+      "version": "0.6.6"
     }
   },
   "customizations": {
@@ -88,7 +95,7 @@
     "OPENFGA_API_URL": "http://openfga:8080",
     "KRATOS_PUBLIC_URL": "http://kratos:4433",
     "KRATOS_ADMIN_URL": "http://kratos:4434"
-  },
-  "containerUser": "node",
-  "remoteUser": "node"
+  }
+  // "containerUser": "vscode",
+  // "remoteUser": "vscode"
 }
