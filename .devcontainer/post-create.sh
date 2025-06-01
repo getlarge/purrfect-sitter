@@ -1,16 +1,16 @@
-#!/bin/bash
+#!/bin/zsh
 set -e
 
 echo "🚀 Setting up PurrfectSitter development environment..."
 
-echo "🛠️ Configuring ZSH..."
+# echo "🛠️ Configuring ZSH..."
 
-git clone https://github.com/powerline/fonts.git
-cd fonts
-./install.sh
-cd .. && rm -rf fonts
+# git clone https://github.com/powerline/fonts.git
+# cd fonts
+# ./install.sh
+# cd .. && rm -rf fonts
 
-zsh -c 'git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/powerlevel10k'
+# zsh -c 'git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/powerlevel10k'
 
 # TODO: add dotfiles for zsh
 # cp .devcontainer/dotfiles/.zshrc ~
@@ -55,7 +55,6 @@ echo "🔐 Setting up OpenFGA store and model..."
 STORE_RESPONSE=$(fga store create --name=purrfect-sitter-dev --api-url http://openfga:8080)
 export FGA_STORE_ID=$(echo $STORE_RESPONSE | jq -r '.store.id')
 echo "export FGA_STORE_ID=$FGA_STORE_ID" >> ~/.zshrc
-echo "export FGA_STORE_ID=$FGA_STORE_ID" >> ~/.bashrc
 source ~/.zshrc
 
 if [ -f "purrfect-sitter-model.fga" ]; then
@@ -68,7 +67,6 @@ if [ -f "store.fga.yml" ]; then
   echo "📊 Loading test data..."
   fga model test --tests store.fga.yml --api-url http://openfga:8080 --store-id=$FGA_STORE_ID || true
 fi
-
 
 echo "✨ Development environment setup complete!"
 echo ""

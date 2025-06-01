@@ -1,10 +1,10 @@
-#!/bin/bash
+#!/bin/zsh
 set -e
 
 echo "🔄 Starting PurrfectSitter development environment..."
 
-if [ -f ~/.bashrc ]; then
-  source ~/.bashrc
+if [ -f ~/.zshrc ]; then
+  source ~/.zshrc
 fi
 
 if [ -n "$FGA_STORE_ID" ]; then
