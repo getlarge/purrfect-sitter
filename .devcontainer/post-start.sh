@@ -3,9 +3,9 @@ set -e
 
 echo "🔄 Starting PurrfectSitter development environment..."
 
-if [ -f ~/.zshrc ]; then
-  source ~/.zshrc
-fi
+# if [ -f ~/.zshrc ]; then
+#   source ~/.zshrc
+# fi
 
 if [ -n "$FGA_STORE_ID" ]; then
   echo "📌 OpenFGA Store ID: $FGA_STORE_ID"

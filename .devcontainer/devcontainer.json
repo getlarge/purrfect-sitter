@@ -44,7 +44,6 @@
         "ms-vscode.makefile-tools"
       ],
       "settings": {
-        "terminal.integrated.defaultProfile.linux": "zsh",
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "[typescript]": {
@@ -65,6 +64,14 @@
           "**/.hg/store/**": true,
           "**/.npm/**": true,
           "**/.vscode-server/**": true
+        },
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.fontLigatures.enabled": true,
+        "terminal.integrated.profiles.linux": {
+          "zsh": {
+            "path": "/bin/zsh",
+            "icon": "terminal-ubuntu"
+          }
         },
         "typescript.updateImportsOnFileMove.enabled": "always",
         "typescript.suggest.autoImports": true,
@@ -94,7 +101,8 @@
     "DATABASE_URL": "postgresql://dbuser:secret@postgres:5432/purrfect-sitter",
     "OPENFGA_API_URL": "http://openfga:8080",
     "KRATOS_PUBLIC_URL": "http://kratos:4433",
-    "KRATOS_ADMIN_URL": "http://kratos:4434"
+    "KRATOS_ADMIN_URL": "http://kratos:4434",
+    "SSH_AUTH_SOCK": "/tmp/ssh_agent.sock"
   }
   // "containerUser": "vscode",
   // "remoteUser": "vscode"
