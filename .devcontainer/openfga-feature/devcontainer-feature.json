@@ -1,0 +1,18 @@
+{
+  "id": "openfga-setup",
+  "version": "0.0.1",
+  "name": "OpenFGA CLI",
+  "options": {
+    "version": {
+      "type": "string",
+      "description": "OpenFGA CLI version",
+      "proposals": [
+        "0.6.6"
+      ],
+      "default": "0.6.6"
+    }
+  },
+  "installsAfter": [
+    "ghcr.io/devcontainers/features/common-utils"
+  ]
+}
