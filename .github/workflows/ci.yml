@@ -35,7 +35,7 @@ jobs:
       - name: Test OpenFGA Model
         run: |
           docker pull openfga/cli
-          docker run -it openfga/cli model test --tests store.fga.yml
+          docker run -t openfga/cli model test --tests store.fga.yml
 
       - uses: nrwl/nx-set-shas@v4
       - run: npx nx affected -t lint test typecheck build
