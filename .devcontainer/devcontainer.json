@@ -1,0 +1,105 @@
+{
+  "name": "PurrfectSitter Dev Environment",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  
+  // Features to add to the dev container
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": "true",
+      "configureZshAsDefaultShell": "true",
+      "username": "vscode",
+      "userUid": "1000",
+      "userGid": "1000",
+      "upgradePackages": "true"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts",
+      "nodeGypDependencies": true
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "dockerDashComposeVersion": "v2"
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest",
+      "ppa": true
+    }
+  },
+
+  // VS Code extensions to install
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker",
+        "nrwl.angular-console",
+        "firsttris.vscode-jest-runner",
+        "ZixuanChen.vitest-explorer",
+        "ms-vscode.vscode-typescript-next",
+        "bradlc.vscode-tailwindcss",
+        "yoavbls.pretty-ts-errors",
+        "redhat.vscode-yaml",
+        "ms-vscode.makefile-tools"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "[typescript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[javascript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "eslint.validate": [
+          "javascript",
+          "javascriptreact",
+          "typescript",
+          "typescriptreact"
+        ],
+        "typescript.updateImportsOnFileMove.enabled": "always",
+        "typescript.suggest.autoImports": true,
+        "search.exclude": {
+          "**/node_modules": true,
+          "**/dist": true,
+          "**/.nx": true
+        }
+      }
+    }
+  },
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally
+  "forwardPorts": [
+    3333,    // API server
+    4433,    // Kratos Public
+    4434,    // Kratos Admin
+    4455,    // Kratos UI
+    5432,    // PostgreSQL
+    8080,    // OpenFGA HTTP
+    8081,    // OpenFGA gRPC
+    8082,    // OpenFGA Playground
+    9411,    // Zipkin
+    9090     // Prometheus
+  ],
+
+  // Use 'postCreateCommand' to run commands after the container is created
+  "postCreateCommand": ".devcontainer/post-create.sh",
+
+  // Use 'postStartCommand' to run commands after the container starts
+  "postStartCommand": ".devcontainer/post-start.sh",
+
+  // Environment variables
+  "containerEnv": {
+    "DATABASE_URL": "postgresql://dbuser:secret@postgres:5432/purrfect-sitter",
+    "OPENFGA_API_URL": "http://openfga:8080",
+    "KRATOS_PUBLIC_URL": "http://kratos:4433",
+    "KRATOS_ADMIN_URL": "http://kratos:4434"
+  },
+
+  // Uncomment to connect as root instead
+  // "remoteUser": "root"
+  "remoteUser": "vscode"
+}

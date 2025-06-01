@@ -1,0 +1,30 @@
+{
+  "tasks": {
+    "setup-services": {
+      "name": "Setup Services",
+      "command": "docker compose --profile dev up -d && sleep 10",
+      "runAtStart": true
+    },
+    "setup-openfga": {
+      "name": "Setup OpenFGA",
+      "command": ".devcontainer/post-create.sh",
+      "runAtStart": true,
+      "preview": {
+        "port": 8082
+      }
+    },
+    "start-api": {
+      "name": "Start API Server",
+      "command": "nx serve purrfect-sitter",
+      "runAtStart": false,
+      "preview": {
+        "port": 3333
+      }
+    },
+    "test-fga": {
+      "name": "Test OpenFGA Model",
+      "command": "yarn test:fga",
+      "runAtStart": false
+    }
+  }
+}
