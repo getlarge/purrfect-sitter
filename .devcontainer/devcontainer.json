@@ -2,14 +2,14 @@
   "name": "PurrfectSitter Dev Environment",
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
-  "workspaceFolder": "/workspace",
+  "workspaceFolder": "/home/node",
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "installZsh": "true",
       "configureZshAsDefaultShell": "true",
       "installOhMyZsh": "true",
       "installOhMyZshConfig": "true",
-      "username": "vscode",
+      "username": "node",
       "upgradePackages": "true"
     },
     "ghcr.io/devcontainers/features/node:1": {
@@ -25,7 +25,6 @@
       "ppa": true
     }
   },
-  // VS Code extensions to install
   "customizations": {
     "vscode": {
       "extensions": [
@@ -33,10 +32,6 @@
         "esbenp.prettier-vscode",
         "ms-azuretools.vscode-docker",
         "nrwl.angular-console",
-        "firsttris.vscode-jest-runner",
-        "ZixuanChen.vitest-explorer",
-        "ms-vscode.vscode-typescript-next",
-        "bradlc.vscode-tailwindcss",
         "yoavbls.pretty-ts-errors",
         "redhat.vscode-yaml",
         "ms-vscode.makefile-tools"
@@ -57,6 +52,13 @@
           "typescript",
           "typescriptreact"
         ],
+        "files.watcherExclude": {
+          "**/.git/objects/**": true,
+          "**/.git/subtree-cache/**": true,
+          "**/.hg/store/**": true,
+          "**/.npm/**": true,
+          "**/.vscode-server/**": true
+        },
         "typescript.updateImportsOnFileMove.enabled": "always",
         "typescript.suggest.autoImports": true,
         "search.exclude": {
@@ -67,7 +69,6 @@
       }
     }
   },
-  // Use 'forwardPorts' to make a list of ports inside the container available locally
   "forwardPorts": [
     3333, // API server
     4433, // Kratos Public
@@ -80,18 +81,14 @@
     9411, // Zipkin
     9090 // Prometheus
   ],
-  // Use 'postCreateCommand' to run commands after the container is created
   "postCreateCommand": ".devcontainer/post-create.sh",
-  // Use 'postStartCommand' to run commands after the container starts
   "postStartCommand": ".devcontainer/post-start.sh",
-  // Environment variables
   "containerEnv": {
     "DATABASE_URL": "postgresql://dbuser:secret@postgres:5432/purrfect-sitter",
     "OPENFGA_API_URL": "http://openfga:8080",
     "KRATOS_PUBLIC_URL": "http://kratos:4433",
     "KRATOS_ADMIN_URL": "http://kratos:4434"
   },
-  // Uncomment to connect as root instead
-  // "remoteUser": "root"
-  "remoteUser": "vscode"
+  "containerUser": "node",
+  "remoteUser": "node"
 }

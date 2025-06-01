@@ -3,14 +3,11 @@ set -e
 
 echo "🚀 Setting up PurrfectSitter development environment..."
 
-cd /workspace
-
 # Wait for services to be ready
 echo "⏳ Waiting for services to be ready..."
 timeout=60
 elapsed=0
 
-# Check PostgreSQL
 while ! pg_isready -h postgres -U dbuser > /dev/null 2>&1; do
   if [ $elapsed -gt $timeout ]; then
     echo "❌ Timeout waiting for PostgreSQL"
@@ -22,7 +19,6 @@ while ! pg_isready -h postgres -U dbuser > /dev/null 2>&1; do
 done
 echo "✅ PostgreSQL is ready"
 
-# Check OpenFGA
 elapsed=0
 while ! curl -s http://openfga:8080/healthz > /dev/null 2>&1; do
   if [ $elapsed -gt $timeout ]; then
@@ -36,10 +32,11 @@ done
 echo "✅ OpenFGA is ready"
 
 echo "📦 Installing dependencies..."
+npm install -g @anthropic-ai/claude-code
 npm install
 
 echo "🗄️ Running database migrations..."
-npm run db:migrate
+npx nx run database:migrate
 
 echo "🔐 Setting up OpenFGA store and model..."
 

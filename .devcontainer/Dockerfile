@@ -15,10 +15,6 @@ RUN ARCH=$(uname -m) && OS=$(uname -s) \
     && mv fga /usr/local/bin/fga \
     && chmod +x /usr/local/bin/fga
 
-RUN mkdir -p /workspace
+USER node
 
-USER vscode
-
-WORKDIR /workspace
-
-RUN npm install -g @anthropic-ai/claude-code
+WORKDIR /home/node

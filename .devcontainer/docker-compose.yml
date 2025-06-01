@@ -1,5 +1,3 @@
-version: '3.8'
-
 volumes:
   postgres:
   openfga_postgres:
@@ -12,21 +10,22 @@ services:
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
+    user: node
     volumes:
-      - ..:/workspace:cached
-      - node_modules:/workspace/node_modules
-      - nx_cache:/workspace/.nx
+      - ..:/home/node:cached
+      # - node_modules:/home/node/node_modules
+      - nx_cache:/home/node/.nx
       - /var/run/docker.sock:/var/run/docker.sock
-    
+
     # Overrides default command so things don't shut down after the process ends
     command: sleep infinity
-    
+
     # Network mode host is required for Docker in Docker to work properly
     network_mode: service:postgres
-    
+
     # Use init to handle signals properly
     init: true
-    
+
     depends_on:
       - postgres
       - openfga

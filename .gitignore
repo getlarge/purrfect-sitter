@@ -47,3 +47,17 @@ apps/**/package-lock.json
 
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+# devcontainer
+.cache
+.config
+.docker
+.dotnet
+.gnupg
+.npm
+.ssh
+.vscode-server
+.zcompdump
+.devcontainer/.onCreateCommandMarker
+.devcontainer/.postCreateCommandMarker
+.devcontainer/.updateContentCommandMarker

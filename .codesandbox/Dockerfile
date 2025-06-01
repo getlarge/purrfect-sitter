@@ -19,7 +19,7 @@ RUN ARCH=$(uname -m) && OS=$(uname -s) \
     && mv fga /usr/local/bin/fga \
     && chmod +x /usr/local/bin/fga
 
-WORKDIR /workspace
+WORKDIR /home/node
 
 RUN npm install -g @anthropic-ai/claude-code
 
