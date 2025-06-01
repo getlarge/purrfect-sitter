@@ -8,7 +8,7 @@ import fs from 'node:fs';
 const apiKey = process.env.DEVTO_API_KEY;
 const articlePath =
   process.argv[2] ||
-  './docs/articles/taming-authorization-with-openfga/README.md';
+  './docs/articles/how-to-protect-your-api-with-openfga/README.md';
 
 const axiosInstance = axios.create({
   baseURL: 'https://dev.to/api',
