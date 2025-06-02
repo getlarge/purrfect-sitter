@@ -67,6 +67,7 @@
         },
         "terminal.integrated.defaultProfile.linux": "zsh",
         "terminal.integrated.fontLigatures.enabled": true,
+        "terminal.integrated.inheritEnv": true,
         "terminal.integrated.profiles.linux": {
           "zsh": {
             "path": "/bin/zsh",
