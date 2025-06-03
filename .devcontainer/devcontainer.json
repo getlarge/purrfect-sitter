@@ -1,0 +1,115 @@
+{
+  "name": "PurrfectSitter Dev Environment",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspaces/purrfect-sitter",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": "true",
+      "configureZshAsDefaultShell": "true",
+      "installOhMyZsh": "true",
+      "installOhMyZshConfig": "true",
+      "username": "node",
+      "upgradePackages": "true"
+    },
+    "ghcr.io/devcontainers-extra/features/zsh-plugins:0": {
+      "plugins": "zsh-autosuggestions zsh-syntax-highlighting",
+      "omzPlugins": "https://github.com/zsh-users/zsh-autosuggestions.git https://github.com/zsh-users/zsh-syntax-highlighting.git"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22.14.0",
+      "nodeGypDependencies": true
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "dockerDashComposeVersion": "v2"
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest",
+      "ppa": true
+    },
+    "./openfga-feature": {
+      "version": "0.6.6"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker",
+        "nrwl.angular-console",
+        "yoavbls.pretty-ts-errors",
+        "redhat.vscode-yaml",
+        "ms-vscode.makefile-tools"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "[typescript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[javascript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "eslint.validate": [
+          "javascript",
+          "javascriptreact",
+          "typescript",
+          "typescriptreact"
+        ],
+        "files.watcherExclude": {
+          "**/.git/objects/**": true,
+          "**/.git/subtree-cache/**": true,
+          "**/.hg/store/**": true,
+          "**/.npm/**": true,
+          "**/.vscode-server/**": true
+        },
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.fontLigatures.enabled": true,
+        "terminal.integrated.inheritEnv": true,
+        "terminal.integrated.profiles.linux": {
+          "zsh": {
+            "path": "/bin/zsh",
+            "icon": "terminal-ubuntu"
+          }
+        },
+        "typescript.updateImportsOnFileMove.enabled": "always",
+        "typescript.suggest.autoImports": true,
+        "search.exclude": {
+          "**/node_modules": true,
+          "**/dist": true,
+          "**/.nx": true
+        }
+      }
+    }
+  },
+  "forwardPorts": [
+    3333, // API server
+    4433, // Kratos Public
+    4434, // Kratos Admin
+    4455, // Kratos UI
+    5432, // PostgreSQL
+    8080, // OpenFGA HTTP
+    8081, // OpenFGA gRPC
+    8082, // OpenFGA Playground
+    9411, // Zipkin
+    9090 // Prometheus
+  ],
+  "postCreateCommand": ".devcontainer/post-create.sh",
+  "postStartCommand": ".devcontainer/post-start.sh",
+  "containerEnv": {
+    "DATABASE_URL": "postgresql://dbuser:secret@postgres:5432/purrfect-sitter",
+    "OPENFGA_API_URL": "http://openfga:8080",
+    "KRATOS_PUBLIC_URL": "http://kratos:4433",
+    "KRATOS_ADMIN_URL": "http://kratos:4434",
+    "SSH_AUTH_SOCK": "/tmp/ssh_agent.sock"
+  },
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "16gb",
+    "storage": "32gb"
+  }
+  // "containerUser": "vscode",
+  // "remoteUser": "vscode"
+}
