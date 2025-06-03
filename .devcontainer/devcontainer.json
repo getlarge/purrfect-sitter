@@ -104,6 +104,11 @@
     "KRATOS_PUBLIC_URL": "http://kratos:4433",
     "KRATOS_ADMIN_URL": "http://kratos:4434",
     "SSH_AUTH_SOCK": "/tmp/ssh_agent.sock"
+  },
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "16gb",
+    "storage": "32gb"
   }
   // "containerUser": "vscode",
   // "remoteUser": "vscode"
