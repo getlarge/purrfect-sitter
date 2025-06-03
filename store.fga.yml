@@ -25,7 +25,6 @@ model: |
       define can_delete: admin or owner or pending_sitter
       define can_view: admin or owner or sitter
       define can_update: admin or owner or pending_sitter
-      define can_review:
       define can_review: [cat#owner with is_cat_sitting_completed]
       define cat: [cat]
       define owner: owner from cat

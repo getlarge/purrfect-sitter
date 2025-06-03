@@ -55,10 +55,16 @@ echo "🔐 Setting up OpenFGA store and model..."
 STORE_RESPONSE=$(fga store create --name=purrfect-sitter-dev --api-url http://openfga:8080)
 export FGA_STORE_ID=$(echo $STORE_RESPONSE | jq -r '.store.id')
 echo "export FGA_STORE_ID=$FGA_STORE_ID" >> ~/.zshrc
-source ~/.zshrc
+# source ~/.zshrc
 
 if [ -f "purrfect-sitter-model.fga" ]; then
-  fga model write --file=purrfect-sitter-model.fga --api-url http://openfga:8080 --store-id=$FGA_STORE_ID
+  MODEL_RESPONSE=$(fga model write --file=purrfect-sitter-model.fga --api-url http://openfga:8080 --store-id=$FGA_STORE_ID)
+  if [ $? -ne 0 ]; then
+    echo "❌ Failed to write OpenFGA model"
+    exit 1
+  fi
+  export FGA_MODEL_ID=$(echo $MODEL_RESPONSE | jq -r '.authorization_model_id')
+  echo "export FGA_MODEL_ID=$FGA_MODEL_ID" >> ~/.zshrc
   echo "✅ OpenFGA model written"
 fi
 
@@ -71,9 +77,9 @@ fi
 echo "✨ Development environment setup complete!"
 echo ""
 echo "🎯 Quick start commands:"
-echo "  - Start API server: nx serve purrfect-sitter"
-echo "  - Run tests: nx test purrfect-sitter"
-echo "  - Run E2E tests: nx e2e purrfect-sitter-e2e"
+echo "  - Start API server: yarn nx serve purrfect-sitter"
+echo "  - Run tests: yarn nx test purrfect-sitter"
+echo "  - Run E2E tests: yarn nx e2e purrfect-sitter-e2e"
 echo "  - Test OpenFGA model: yarn test:fga"
 echo ""
 echo "🔗 Service URLs:"
