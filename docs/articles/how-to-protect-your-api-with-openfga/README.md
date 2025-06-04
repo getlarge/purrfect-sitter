@@ -28,7 +28,11 @@ Traditional approaches quickly hit walls:
 
 > _What if there was a better way? A way that lets you express complex relationships without tangled code or performance hits?_
 
-My exploration for a better paradigm started with [**Ory Keto**](https://www.ory.sh/keto), when [integrating Ory in a NestJS application](https://dev.to/getlarge/integrate-ory-in-a-nestjs-application-4llo). It introduced me to [Google's Zanzibar paper](https://storage.googleapis.com/gweb-research2023-media/pubtools/5068.pdf) and the concept of **Relation-Based Access Control (ReBAC)**.
+My exploration for a better paradigm started with [**Ory Keto**](https://www.ory.sh/keto), when [integrating Ory in a NestJS application](https://dev.to/getlarge/integrate-ory-in-a-nestjs-application-4llo).
+
+{% link https://dev.to/getlarge/integrate-ory-in-a-nestjs-application-4llo %}
+
+It introduced me to [Google's Zanzibar paper](https://storage.googleapis.com/gweb-research2023-media/pubtools/5068.pdf) and the concept of **Relation-Based Access Control (ReBAC)**.
 
 That "simple" feature request led me to [**OpenFGA**](https://openfga.dev) — a richer implementation of Zanzibar's principles that extends ReBAC with powerful features like contextual-based conditions, attribute-based access, and a simple query language.
 
@@ -224,6 +228,8 @@ Notice how readable, yet compact, this is — no complex SQL joins or nested con
 > Hint: You can visualize the relations graph and run queries in the [OpenFGA's Playground](https://openfga.dev/docs/getting-started/setup-openfga/playground):
 
 ![OpenFGA Playground generated from PurrfectSitter model](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/oh2yxuh779j5yesvpbkd.png)
+
+{% codesandbox 23948skjfksjdf %}
 
 ## <a id="why-openfga"></a> Why OpenFGA [▓▓▓░░░░]
 
@@ -817,9 +823,14 @@ Authorization doesn't have to be the part of your codebase that makes you cry. R
 
 Start with PurrfectSitter's model, draw inspiration from the application in [github.com/getlarge/purrfect-sitter](https://github.com/getlarge/purrfect-sitter), adapt it to your domain, and watch complex permission logic become simple relationship definitions.
 
+{% github getlarge/purrfect-sitter %}
+
 Your future self will thank you for choosing relationships over nested IF statements.
 
-<!-- TODO: if you don't know how to thank me, start my github projects -->
+If you want to show your appreciation, <a class="github-button" href="https://github.com/getlarge/purrfect-sitter" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Star getlarge/purrfect-sitter on GitHub">star</a> the PurrfectSitter repository on GitHub, or <!-- Place this tag where you want the button to render. -->
+<a class="github-button" href="https://github.com/getlarge/purrfect-sitter" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Star getlarge/purrfect-sitter on GitHub">fork</a> it to make your own contributions.
+
+{% user getlarge %}
 
 ## ![I don't know what to say](https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExZjZ1NjVvc2R1c211YW9zZ3htM24zMW9wbXBieWVrdmtrbnU1eHRzdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l2ZDPwr4ZSJl9QlJS/giphy.gif)
 
