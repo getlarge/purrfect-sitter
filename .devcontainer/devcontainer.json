@@ -107,8 +107,7 @@
     "DATABASE_URL": "postgresql://dbuser:secret@postgres:5432/purrfect-sitter",
     "OPENFGA_API_URL": "http://openfga:8080",
     "KRATOS_PUBLIC_URL": "http://kratos:4433",
-    "KRATOS_ADMIN_URL": "http://kratos:4434",
-    "SSH_AUTH_SOCK": "/tmp/ssh_agent.sock"
+    "KRATOS_ADMIN_URL": "http://kratos:4434"
   },
   "hostRequirements": {
     "cpus": 4,
