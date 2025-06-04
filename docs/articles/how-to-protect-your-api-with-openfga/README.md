@@ -6,8 +6,6 @@ tags: tutorial, openfga, authorization, security
 cover_image: https://dev-to-uploads.s3.amazonaws.com/uploads/articles/faoyboj4ihjrn3msync4.png
 ---
 
-<script async defer src="https://buttons.github.io/buttons.js"></script>
-
 Another client story, another article. A client asked me recently:
 
 > _Can we add temporary permissions for a group of users assigned to a maintenance task while it's ongoing?_
@@ -233,8 +231,6 @@ Notice how readable, yet compact, this is — no complex SQL joins or nested con
 
 ![OpenFGA Playground generated from PurrfectSitter model](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/oh2yxuh779j5yesvpbkd.png)
 
-{% codesandbox 23948skjfksjdf %}
-
 ## <a id="why-openfga"></a> Why OpenFGA [▓▓▓░░░░]
 
 ### It Matches How You Think
@@ -363,9 +359,23 @@ Let's test our model with real scenarios. We'll use the OpenFGA CLI to create a 
 
 ![But first, coffee](https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExZnZmZml2N25uZWI2bHAzaXdrdGprZzRpeTdtZnd3ZXRveDQ5MmR5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/2uIlaxs2XT8d1eR0Hw/giphy.gif)
 
+---
+
+{% cta https://github.com/codespaces/new?template_repository=getlarge/purrfect-sitter %}
+Create a GitHub Codespace to run all the examples in this article.
+{% endcta %}
+
+It will give you a ready-to-use environment with all dependencies installed.
+
+---
+
 ### 1. Setting Up OpenFGA
 
 First, create a store and write the authorization model:
+
+<!-- TODO: wait for https://github.com/forem/forem/issues/21977 -->
+<!-- {% asciinema ByKCMvsficSP0sAVb8WJOjssx %} -->
+<!-- {% asciinema CspKCVlTdNnFd0riBFvrSIwaZ %} -->
 
 ```bash
 # Create store
@@ -532,10 +542,6 @@ Define tests in YAML and run with a single command:
 
 ```bash
 fga model test --tests store.fga.yml
-
-# Or with Docker:
-docker pull openfga/cli
-docker run -it openfga/cli model test --tests store.fga.yml
 ```
 
 ...and forget about all the commands above. The `store.fga.yml` file contains everything you need to create the model and tuples, and run the tests before writing application code!
