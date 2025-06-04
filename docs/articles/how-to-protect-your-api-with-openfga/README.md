@@ -6,6 +6,8 @@ tags: tutorial, openfga, authorization, security
 cover_image: https://dev-to-uploads.s3.amazonaws.com/uploads/articles/faoyboj4ihjrn3msync4.png
 ---
 
+<script async defer src="https://buttons.github.io/buttons.js"></script>
+
 Another client story, another article. A client asked me recently:
 
 > _Can we add temporary permissions for a group of users assigned to a maintenance task while it's ongoing?_
@@ -827,7 +829,7 @@ Start with PurrfectSitter's model, draw inspiration from the application in [git
 
 Your future self will thank you for choosing relationships over nested IF statements.
 
-If you want to show your appreciation, <a class="github-button" href="https://github.com/getlarge/purrfect-sitter" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Star getlarge/purrfect-sitter on GitHub">star</a> the PurrfectSitter repository on GitHub, or <!-- Place this tag where you want the button to render. -->
+If you want to show your appreciation, <a class="github-button" href="https://github.com/getlarge/purrfect-sitter" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Star getlarge/purrfect-sitter on GitHub">star</a> the PurrfectSitter repository on GitHub, or
 <a class="github-button" href="https://github.com/getlarge/purrfect-sitter" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Star getlarge/purrfect-sitter on GitHub">fork</a> it to make your own contributions.
 
 {% user getlarge %}
