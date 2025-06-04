@@ -6,6 +6,8 @@ tags: tutorial, openfga, authorization, security
 cover_image: https://dev-to-uploads.s3.amazonaws.com/uploads/articles/faoyboj4ihjrn3msync4.png
 ---
 
+<script async defer src="https://buttons.github.io/buttons.js"></script>
+
 Another client story, another article. A client asked me recently:
 
 > _Can we add temporary permissions for a group of users assigned to a maintenance task while it's ongoing?_
