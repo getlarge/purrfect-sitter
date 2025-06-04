@@ -823,16 +823,13 @@ Authorization doesn't have to be the part of your codebase that makes you cry. R
 
 Start with PurrfectSitter's model, draw inspiration from the application in [github.com/getlarge/purrfect-sitter](https://github.com/getlarge/purrfect-sitter), adapt it to your domain, and watch complex permission logic become simple relationship definitions.
 
+> _If you want to show your appreciation, give it a_ ⭐️
+
 {% github getlarge/purrfect-sitter %}
 
 Your future self will thank you for choosing relationships over nested IF statements.
 
-If you want to show your appreciation, <a class="github-button" href="https://github.com/getlarge/purrfect-sitter" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Star getlarge/purrfect-sitter on GitHub">star</a> the PurrfectSitter repository on GitHub, or <!-- Place this tag where you want the button to render. -->
-<a class="github-button" href="https://github.com/getlarge/purrfect-sitter" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Star getlarge/purrfect-sitter on GitHub">fork</a> it to make your own contributions.
-
 {% user getlarge %}
-
-## ![I don't know what to say](https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExZjZ1NjVvc2R1c211YW9zZ3htM24zMW9wbXBieWVrdmtrbnU1eHRzdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l2ZDPwr4ZSJl9QlJS/giphy.gif)
 
 <!-- References -->
 <!-- Zanzibar Academy https://zanzibar.academy -->
