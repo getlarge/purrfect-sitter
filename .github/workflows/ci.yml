@@ -33,9 +33,15 @@ jobs:
       - run: npx nx report --verbose
 
       - name: Test OpenFGA Model
+        env:
+          VERSION: 0.6.6
+          OS: linux
+          ARCH: amd64
         run: |
-          docker pull openfga/cli
-          docker run -t openfga/cli model test --tests store.fga.yml
+          curl -L "https://github.com/openfga/cli/releases/download/v${VERSION}/fga_${VERSION}_${OS}_${ARCH}.tar.gz" | tar -xz
+          mv fga /usr/local/bin/fga
+          chmod +x /usr/local/bin/fga
+          fga model test --tests ./store.fga.yml
 
       - uses: nrwl/nx-set-shas@v4
       - run: npx nx affected -t lint test typecheck build
