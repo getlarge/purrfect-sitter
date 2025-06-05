@@ -49,7 +49,7 @@ And since you might be familiar with this story, I'll share with you my **learni
 
 ## <a id="rebac-and-openfga-concepts"></a> ReBAC and OpenFGA concepts [▓░░░░░░░]
 
-I'll walk you through ReBAC using PurrfectSitter, a cat sitting app where owners find sitters. Real problems, real solutions.
+I'll walk you through ReBAC using PurrfectSitter ©, a cat sitting app where owners find sitters. Real problems, real solutions.
 As trivial as it sounds, this example shows:
 
 - Role-based access control (RBAC) for admins
@@ -373,27 +373,13 @@ First, create a store:
 
 <!-- {% asciinema ByKCMvsficSP0sAVb8WJOjssx %} -->
 
-{% embed https://asciinema.org/a/ByKCMvsficSP0sAVb8WJOjssx %}
+[![asciicast](https://asciinema.org/a/ByKCMvsficSP0sAVb8WJOjssx.png)](https://asciinema.org/a/ByKCMvsficSP0sAVb8WJOjssx)
 
-<!-- [![asciicast](https://asciinema.org/a/ByKCMvsficSP0sAVb8WJOjssx.svg)](https://asciinema.org/a/ByKCMvsficSP0sAVb8WJOjssx) -->
-
-write the authorization model:
+Then create the authorization model in the new store:
 
 <!-- {% asciinema CspKCVlTdNnFd0riBFvrSIwaZ %} -->
 
-[![asciicast](https://asciinema.org/a/CspKCVlTdNnFd0riBFvrSIwaZ.svg)](https://asciinema.org/a/CspKCVlTdNnFd0riBFvrSIwaZ)
-
-```bash
-# Create store
-fga store create --name=purrfect-sitter
-fga store get --store-id=01JMSR2BKF0F1PPGBTFEY5PGAZ
-export FGA_STORE_ID=01JMSR2BKF0F1PPGBTFEY5PGAZ
-
-# Create model
-fga model write --file=purrfect-sitter-model.fga
-export FGA_MODEL_ID=01JMSR3QA0WAFVS7PXDTW31JVZ
-fga model get
-```
+[![asciicast](https://asciinema.org/a/CspKCVlTdNnFd0riBFvrSIwaZ.png)](https://asciinema.org/a/CspKCVlTdNnFd0riBFvrSIwaZ)
 
 ### 2. Creating Basic Relationships
 
@@ -564,7 +550,7 @@ model: |
   # Our full model definition goes here...
 ```
 
-> The [model](#the-complete-authorization-model) section is the same as the one we defined earlier, but in YAML format for the OpenFGA CLI.
+> ℹ️ _The [model](#the-complete-authorization-model) section is the same as the one we defined earlier, but in YAML format for the OpenFGA CLI._
 
 #### The tuples
 
@@ -738,17 +724,9 @@ tests:
 
 > You can find `store.fga.yml` in the [demo repository](https://github.com/getlarge/purrfect-sitter/blob/main/store.fga.yml).
 
-<!-- TODO: add asciinema link  -->
+[![asciicast](https://asciinema.org/a/KGCyNgYcrGWnKlW7bpLbVvv7z.png)](https://asciinema.org/a/KGCyNgYcrGWnKlW7bpLbVvv7z)
 
-#### Expected Output
-
-```sh
-# Test Summary #
-Tests 7/7 passing
-Checks 14/14 passing
-ListObjects 3/3 passing
-ListUsers 1/1 passing
-```
+<!-- {% asciinema KGCyNgYcrGWnKlW7bpLbVvv7z %} -->
 
 ### Testing During Adoption
 
@@ -830,6 +808,8 @@ For large organizations:
 <!-- TODO: For senior architects: Deep-dive into performance characteristics,monitoring, mention support for OpenTelemetry - https://openfga.dev/docs/getting-started/configure-telemetry, horizontal scaling strategies, and production deployment patterns. Include ROI calculations and architectural trade-offs. -->
 
 ## <a id="your-next-move"></a> Your Next Move [▓▓▓▓▓▓▓]
+
+<!-- TODO: refine, this sentence stinks -->
 
 Authorization doesn't have to be the part of your codebase that makes you cry. ReBAC and OpenFGA offer a cleaner path—one that grows with your app instead of strangling it.
 
