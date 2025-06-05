@@ -64,3 +64,6 @@ apps/**/package-lock.json
 .zcompdump
 .zshrc
 .zsh_history
+
+# environment files
+.env
