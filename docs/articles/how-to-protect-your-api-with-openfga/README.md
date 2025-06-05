@@ -6,17 +6,15 @@ tags: tutorial, openfga, authorization, security
 cover_image: https://dev-to-uploads.s3.amazonaws.com/uploads/articles/faoyboj4ihjrn3msync4.png
 ---
 
-Another client story, another article. A client asked me recently:
+Another story, another article. A client asked me recently:
 
 > _Can we add temporary permissions for a group of users assigned to a maintenance task while it's ongoing?_
 
 Simple enough — until I examined the authorization code and found a **500-line** function checking user roles and groups, time windows, resource ownership, and various business rules.
 
-Unlike authentication, where we have OIDC, JWT, and other established standards (that no one reads) and patterns, authorization often forces us into custom implementations.
+Unlike **authentication** (who is accessing the system), where we have OIDC, JWT, and other established standards and patterns, **authorization** (what they can do) often forces us into custom implementations.
 
-> You might argue that OAuth 2.0 cover authorization, but they focus on third-party access, not complex and dynamic authorization patterns.
-
-<!-- TODO: Distinction between authentication and authorization -->
+> _You might argue that OAuth 2.0 cover authorization, but they focus on third-party access, not complex and dynamic authorization patterns._
 
 Each new policy adds another **conditional branch**, another **database join**, another **custom role**, another **edge case that breaks** during the next feature request. The code becomes a maze and even experienced developers hesitate before touching it.
 
@@ -36,9 +34,11 @@ My exploration for a better paradigm started with [**Ory Keto**](https://www.ory
 
 It introduced me to [Google's Zanzibar paper](https://storage.googleapis.com/gweb-research2023-media/pubtools/5068.pdf) and the concept of **Relation-Based Access Control (ReBAC)**.
 
-That "simple" feature request led me to [**OpenFGA**](https://openfga.dev) — a richer implementation of Zanzibar's principles that extends ReBAC with powerful features like contextual-based conditions, attribute-based access, and a simple query language.
+{% embed  https://zanzibar.academy/ %}
 
-And since you might be familiar with this story, in this article, I'll share my **learning journey:**
+This time, I needed more flexibility to introduce **contextual relationships**. That "simple" feature request led me to [**OpenFGA**](https://openfga.dev) — a richer implementation of Zanzibar's principles that extends ReBAC with powerful features like contextual-based conditions, attribute-based access, and a simple query language.
+
+And since you might be familiar with this story, I'll share with you my **learning journey:**
 
 1. ✅ The Authorization Problem
 2. 📍 **ReBAC and OpenFGA concepts** ← You are here
@@ -81,7 +81,7 @@ These map to your app's core entities:
 
 Each **type** will declare relationships with other types - in the **type definition**.
 
-> **Note**: In Ory Keto, these are called **namespaces**.
+> **Note**: _In Ory Keto, these are called **namespaces**._
 
 #### Objects: Instances of Types
 
@@ -103,7 +103,7 @@ A **user** is an entity that is related to objects in your system. In our app, u
 - Systems (like the PurrfectSitter development environment)
 - Cats (like Romeo)
 
-> **Note**: In Ory Keto, these are called **subjects**. I believe subject is less ambiguous than user, but OpenFGA uses user, so we will too.
+> **Note**: _In Ory Keto, these are called **subjects**. I believe subject is less ambiguous than user, but OpenFGA uses user, so we will too._
 
 #### Relations: How Things Connect
 
@@ -112,7 +112,7 @@ A **relation** defines how users interact with objects. For example:
 - `user:bob owner cat:romeo`: Bob is the owner of Romeo
 - `user:anne sitter cat_sitting:1`: Anne is the sitter for the first cat sitting arrangement
 
-Each **relation** evaluation logic is defined in the **relation definition**.
+Each **relation** (e.g., `admin`) evaluation logic is defined in the **relation definition** (e.g., `[user]`).
 
 ```yaml
 type system
@@ -136,7 +136,7 @@ type cat_sitting
     define sitter: [user]
 ```
 
-> **Important**: For the sake of this example, we will assume that cats are owned by humans. We all know that, in reality, cats own us, not the other way around.
+> ‼️: _For the sake of this example, we will assume that cats are owned by humans. We all know that, in reality, cats own us, not the other way around._
 
 OpenFGA computes relationships in several ways:
 
@@ -146,8 +146,8 @@ OpenFGA computes relationships in several ways:
   - `cat.system` — A _system_ can be assigned to a _cat_
   - `cat_sitting.sitter` — A _user_ can be a **sitter** for a _cat_sitting_
 - **Implied**:
-  - `cat.admin: admin from system` — An
-  - `cat_sitting.owner: owner from cat` — inherit **from** the cat's owner
+  - `cat.admin: admin from system` — An **admin** is a _user_ from the _system_
+  - `cat_sitting.owner: owner from cat` — The _cat_sitting_ **owner** is the _cat_ **owner**
 - **Union**:
   - `cat.can_manage` — either the _cat_ **owner** or an _admin_ from the _system_ can manage the _cat_
   - `cat_sitting.can_post_updates` — either the _cat_sitting_ **owner** or an _active_sitter_ can post updates
@@ -157,12 +157,10 @@ OpenFGA computes relationships in several ways:
 
 There are even more ways to express relationships, such as **exclusion**, **intersection** and **nesting**, you can find the complete **configuration language** reference in the [OpenFGA documentation](https://openfga.dev/docs/configuration-language).
 
-<!-- TODO: all concepts in details -> https://openfga.dev/docs/concepts -->
-
 ### The Complete Authorization Model
 
 The ensemble of types and relations definitions forms the **authorization model**.
-Here, the PurrfectSitter's authorization model in OpenFGA's configuration language (Domain-Specific Language for the purists), defines how users interact with cats, cat sittings, and reviews.
+Here, the PurrfectSitter's authorization model in OpenFGA's configuration language (Domain-Specific Language for the purists), defines how **users** interact with **cats**, **cat sittings**, and **reviews**.
 
 ```yaml
 model
@@ -227,9 +225,7 @@ Notice how readable, yet compact, this is — no complex SQL joins or nested con
 
 ![Nice one Johnny](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmxxeTI3NXg0MmI4a2xlZDEzYXo3MzhxanF3Ym9oajlxdXR0cmU0byZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/kQdtQ8JIYFRuoywakC/giphy.gif)
 
-> Hint: You can visualize the relations graph and run queries in the [OpenFGA's Playground](https://openfga.dev/docs/getting-started/setup-openfga/playground):
-
-![OpenFGA Playground generated from PurrfectSitter model](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/oh2yxuh779j5yesvpbkd.png)
+> 💡: _You can visualize the relations graph and run queries in the [OpenFGA's Playground](https://openfga.dev/docs/getting-started/setup-openfga/playground)_ > ![OpenFGA Playground generated from PurrfectSitter model](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/oh2yxuh779j5yesvpbkd.png)
 
 ## <a id="why-openfga"></a> Why OpenFGA [▓▓▓░░░░]
 
@@ -274,9 +270,9 @@ Google's [Zanzibar](https://research.google/pubs/zanzibar-googles-consistent-glo
 
 ### Simpler To Maintain
 
-Let's implement a function with Typescript to check if a user can update a cat sitting arrangement. We'll compare two approaches: a plain database lookup and an OpenFGA check method.
+Let's implement a function with Typescript to check if a user can update a cat sitting arrangement. We'll compare two approaches: a plain **database lookup** and an **OpenFGA check**.
 
-#### Database Lookup Approach
+#### Database Lookup
 
 ```ts
 async function isSystemAdmin(userId: string): Promise<boolean> {
@@ -305,7 +301,7 @@ async function checkCatSittingUpdatePermission(
 }
 ```
 
-#### OpenFGA Approach
+#### OpenFGA Check
 
 ```ts
 async function checkCatSittingUpdatePermission(
@@ -357,25 +353,35 @@ Before moving on, make sure you can answer:
 
 Let's test our model with real scenarios. We'll use the OpenFGA CLI to create a store, write the model, and run queries.
 
-![But first, coffee](https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExZnZmZml2N25uZWI2bHAzaXdrdGprZzRpeTdtZnd3ZXRveDQ5MmR5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/2uIlaxs2XT8d1eR0Hw/giphy.gif)
-
 ---
 
 {% cta https://github.com/codespaces/new?template_repository=getlarge/purrfect-sitter %}
-Create a GitHub Codespace to run all the examples in this article.
+Create a GitHub Codespace
 {% endcta %}
 
-It will give you a ready-to-use environment with all dependencies installed.
+It will provide you a ready-to-use environment with all dependencies installed and external services running, so you can focus on running the examples in this article.
 
 ---
 
+![But first, coffee](https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExZnZmZml2N25uZWI2bHAzaXdrdGprZzRpeTdtZnd3ZXRveDQ5MmR5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/2uIlaxs2XT8d1eR0Hw/giphy.gif)
+
 ### 1. Setting Up OpenFGA
 
-First, create a store and write the authorization model:
+First, create a store:
 
-<!-- TODO: wait for https://github.com/forem/forem/issues/21977 -->
+<!-- TODO: wait for https://github.com/forem/forem/issues/21977 to use asciinema tag -->
+
 <!-- {% asciinema ByKCMvsficSP0sAVb8WJOjssx %} -->
+
+{% embed https://asciinema.org/a/ByKCMvsficSP0sAVb8WJOjssx %}
+
+<!-- [![asciicast](https://asciinema.org/a/ByKCMvsficSP0sAVb8WJOjssx.svg)](https://asciinema.org/a/ByKCMvsficSP0sAVb8WJOjssx) -->
+
+write the authorization model:
+
 <!-- {% asciinema CspKCVlTdNnFd0riBFvrSIwaZ %} -->
+
+[![asciicast](https://asciinema.org/a/CspKCVlTdNnFd0riBFvrSIwaZ.svg)](https://asciinema.org/a/CspKCVlTdNnFd0riBFvrSIwaZ)
 
 ```bash
 # Create store
@@ -392,8 +398,6 @@ fga model get
 ### 2. Creating Basic Relationships
 
 Now establish some relationships:
-
-<!-- TODO: make long bash code block easier to read -->
 
 ```bash
 # Bob owns Romeo (the cat)
@@ -526,11 +530,9 @@ fga query check user:edouard can_view review:1
 # Yes (true)
 ```
 
-<!-- TODO: mention SDK for multiple languages and show examples in the app with Node.js SDK? -->
-
 ## <a id="testing-permissions-with-openfga-cli"></a> Testing permissions with OpenFGA CLI [▓▓▓▓░░░]
 
-One of OpenFGA's strengths is its built-in testing capabilities. The CLI provides a declarative way to test authorization models without writing application code.
+Another one of OpenFGA's strengths is its built-in testing capabilities. The CLI provides a declarative way to test authorization models without writing application code.
 
 <!-- ##### Who Can Do What - Permission Example
 
@@ -547,10 +549,6 @@ fga model test --tests store.fga.yml
 ...and forget about all the commands above. The `store.fga.yml` file contains everything you need to create the model and tuples, and run the tests before writing application code!
 
 ![Thank goodness](https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExbHFwcjE1b3NvNGtqYWcwMGRoNHhmbnFmNzRncHo4ZXdyOWdmcmE5cyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Xir88f7Y54j08KBWUQ/giphy.gif)
-
-### Testing the PurrfectSitter Model
-
-The OpenFGA CLI also comes with a testing feature. By defining tests in a YAML file, you can validate your model against expected behaviors.
 
 Let's look at the `store.fga.yml` file that tests our PurrfectSitter model:
 
@@ -740,6 +738,8 @@ tests:
 
 > You can find `store.fga.yml` in the [demo repository](https://github.com/getlarge/purrfect-sitter/blob/main/store.fga.yml).
 
+<!-- TODO: add asciinema link  -->
+
 #### Expected Output
 
 ```sh
@@ -783,7 +783,9 @@ This is probably the most challenging aspect of adopting OpenFGA, especially if 
   - Transactional outbox pattern for consistency
   - Background jobs for existing data
 
-> Note: Read this excellent article about dual writes in distributed systems [here](https://auth0.com/blog/handling-the-dual-write-problem-in-distributed-systems/). It will surely help you understand strategies for synchronizing data between your application(s) and OpenFGA.
+Read this excellent article about dual writes in distributed systems. It will surely help you understand strategies for synchronizing data between your application(s) and OpenFGA.
+
+{% embed https://auth0.com/blog/handling-the-dual-write-problem-in-distributed-systems/ %}
 
 ### Progressive Adoption
 
@@ -831,9 +833,11 @@ For large organizations:
 
 Authorization doesn't have to be the part of your codebase that makes you cry. ReBAC and OpenFGA offer a cleaner path—one that grows with your app instead of strangling it.
 
-Start with PurrfectSitter's model, draw inspiration from the application in [github.com/getlarge/purrfect-sitter](https://github.com/getlarge/purrfect-sitter), adapt it to your domain, and watch complex permission logic become simple relationship definitions.
-
-> _If you want to show your appreciation, give it a_ ⭐️
+1. Read in details the PurrfectSitter's authorization model
+2. Draw inspiration from the Fastify application in [github.com/getlarge/purrfect-sitter](https://github.com/getlarge/purrfect-sitter)
+3. Adapt it to your domain
+4. Watch complex permission logic become simple relationship definitions.
+5. If you want to show your appreciation, give it a ⭐️ on GitHub.
 
 {% github getlarge/purrfect-sitter %}
 
@@ -843,3 +847,4 @@ Your future self will thank you for choosing relationships over nested IF statem
 
 <!-- References -->
 <!-- Zanzibar Academy https://zanzibar.academy -->
+<!-- All OpenFGA concepts in details https://openfga.dev/docs/concepts -->
