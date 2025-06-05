@@ -383,9 +383,11 @@ Then create the authorization model in the new store:
 
 ### 2. Creating Basic Relationships
 
-Now establish some relationships:
+Bob owns Romeo, Anne sits for him. Simple.
 
-```bash
+[![asciicast](https://asciinema.org/a/F7trou8DSvBNC45vwVVigUrB7.png)](https://asciinema.org/a/F7trou8DSvBNC45vwVVigUrB7)
+
+<!-- ```bash
 # Bob owns Romeo (the cat)
 fga tuple write user:bob owner cat:romeo
 
@@ -400,13 +402,15 @@ fga query check user:bob can_manage cat:romeo
 # Can Anne manage someone else's cat?
 fga query check user:anne can_manage cat:romeo
 # No (false)
-```
-
-Bob owns Romeo, Anne sits for him. Simple.
+``` -->
 
 ### 3. Admin Powers
 
-```bash
+Jenny becomes a system admin who can manage any cat—traditional RBAC within ReBAC.
+
+[![asciicast](https://asciinema.org/a/xVwZc6WBr3jXmpaiBQrIRCiH9.png)](https://asciinema.org/a/xVwZc6WBr3jXmpaiBQrIRCiH9)
+
+<!-- ```bash
 # Make Jenny a system admin
 fga tuple write user:jenny admin system:development
 
@@ -416,13 +420,15 @@ fga tuple write system:development system cat:romeo
 # Can Jenny manage Romeo's profile?
 fga query check user:jenny can_manage cat:romeo
 # Yes (true)
-```
-
-Jenny becomes a system admin who can manage any cat—traditional RBAC within ReBAC.
+``` -->
 
 ### 4. Time Magic
 
-```bash
+Anne's permissions activate and deactivate automatically based on time. No cron jobs, no cleanup code — the authorization system handles it.
+
+[![asciicast](https://asciinema.org/a/zxSG2ngKoQxSDvttpvixNvruf.png)](https://asciinema.org/a/zxSG2ngKoQxSDvttpvixNvruf)
+
+<!-- ```bash
 # Make Anne active only during a specific time window
 fga tuple write cat_sitting:1#sitter active_sitter cat_sitting:1 --condition-name is_active_timeslot \
 --condition-context '{"start_time":"2023-01-01T00:00:00Z","end_time":"2023-01-02T00:00:00Z"}'
@@ -450,13 +456,15 @@ fga query list-objects user:anne active_sitter cat_sitting --context='{"current_
 # Find all arrangements where Bob is owner
 fga query list-objects user:bob owner cat_sitting
 # ["cat_sitting:1"]
-```
-
-Anne's permissions activate and deactivate automatically based on time. No cron jobs, no cleanup code—the authorization system handles it.
+``` -->
 
 ### 5. Status-Driven Access
 
-```bash
+Reviews only make sense after sitting ends. OpenFGA enforces this business rule automatically, ABAC style.
+
+[![asciicast](https://asciinema.org/a/jXehIzoBX8v90ovQEB1Bg9yUJ.png)](https://asciinema.org/a/jXehIzoBX8v90ovQEB1Bg9yUJ)
+
+<!-- ```bash
 # Set up review permission based on status
 fga tuple write cat:romeo#owner can_review cat_sitting:1 --condition-name is_cat_sitting_completed \
 --condition-context '{"completed_statuses":["completed"]}'
@@ -468,20 +476,17 @@ fga query check user:bob can_review cat_sitting:1 --context='{"cat_sitting_attri
 # Can Bob review when sitting is completed?
 fga query check user:bob can_review cat_sitting:1 --context='{"cat_sitting_attributes":{"status": "completed"}}'
 # Yes (true)
-```
-
-Reviews only make sense after sitting ends. OpenFGA enforces this business rule automatically.
+``` -->
 
 ### 6. Creating and Checking Review Permissions
 
 Create a review and check permissions:
 
-```bash
+[![asciicast](https://asciinema.org/a/VC0yN2HVatIKN4Ks4SDSUFbBg.png)](https://asciinema.org/a/VC0yN2HVatIKN4Ks4SDSUFbBg)
+
+<!-- ```bash
 # Create review
 fga tuple write cat_sitting:1 cat_sitting review:1
-
-# Make review public
-fga tuple write user:* can_view review:1
 
 # Add review to system
 fga tuple write system:development system review:1
@@ -501,20 +506,22 @@ fga query check user:anne can_delete review:1
 # List all reviews Bob authored
 fga query list-objects user:bob author review
 # ["review:1"]
-```
+``` -->
 
 ### 7. Making the Review Public
 
 Control visibility:
 
-```bash
+[![asciicast](https://asciinema.org/a/rZYmSxGtBq3zj1UhmAQtOqy3b.png)](https://asciinema.org/a/rZYmSxGtBq3zj1UhmAQtOqy3b)
+
+<!-- ```bash
 # Make review public
-fga tuple write user:* can_view review:1
+fga tuple write 'user:*' can_view review:1
 
 # Is the review visible to Edouard?
 fga query check user:edouard can_view review:1
 # Yes (true)
-```
+``` -->
 
 ## <a id="testing-permissions-with-openfga-cli"></a> Testing permissions with OpenFGA CLI [▓▓▓▓░░░]
 
