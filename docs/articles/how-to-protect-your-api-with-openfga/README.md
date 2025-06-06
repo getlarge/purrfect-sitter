@@ -8,13 +8,13 @@ cover_image: https://dev-to-uploads.s3.amazonaws.com/uploads/articles/faoyboj4ih
 
 Another story, another article. A client asked me recently:
 
-> _Can we add temporary permissions for a group of users assigned to a maintenance task while it's ongoing?_
+> 🗣️ _Can we add temporary permissions for a group of users assigned to a maintenance task, while it's ongoing?_
 
-Simple enough — until I examined the authorization code and found a **500-line** function checking user roles and groups, time windows, resource ownership, and various business rules.
+It should be simple enough, right? Yes, until I examined the authorization code and found a **500-line** function checking user roles and groups, time windows, resource ownership, and various business rules. 😶‍🌫️
 
 Unlike **authentication** (who is accessing the system), where we have OIDC, JWT, and other established standards and patterns, **authorization** (what they can do) often forces us into custom implementations.
 
-> _You might argue that OAuth 2.0 cover authorization, but they focus on third-party access, not complex and dynamic authorization patterns._
+> 🫷_You might argue that OAuth 2.0 cover authorization, but they focus on third-party access, not complex and dynamic authorization patterns._
 
 Each new policy adds another **conditional branch**, another **database join**, another **custom role**, another **edge case that breaks** during the next feature request. The code becomes a maze and even experienced developers hesitate before touching it.
 
@@ -26,7 +26,7 @@ Traditional approaches quickly hit walls:
 - **ABAC** offers flexibility but becomes a rule engine nightmare
 - **Database queries** slow to a crawl as your permission matrix grows
 
-> _What if there was a better way? A way that lets you express complex relationships without tangled code or performance hits?_
+> 🤔 _What if there was a better way? A way that lets you express complex relationships without tangled code or performance hits?_
 
 My exploration for a better paradigm started with [**Ory Keto**](https://www.ory.sh/keto), when [integrating Ory in a NestJS application](https://dev.to/getlarge/integrate-ory-in-a-nestjs-application-4llo).
 
@@ -242,7 +242,7 @@ Cat owners own cats. Sitters sit cats. Admins administrate. The authorization mo
 No more "grant permission at 9 AM, revoke at 5 PM" cron jobs. Time-based access happens naturally through conditions.
 Grant permissions only when conditions are met—like during scheduled hours.
 
-> _Yes! My client is going to love this._
+> 🤝 _Yes! My client is going to love this._
 
 ![Time-based conditions](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/xcsdz1o5zg2po3zwpddq.png)
 
@@ -560,7 +560,7 @@ Define tests in YAML and run with a single command:
 fga model test --tests store.fga.yml
 ```
 
-...and forget about all the commands above. The `store.fga.yml` file contains everything you need to create the model and tuples, and run the tests before writing application code!
+...and forget about all the commands above 🙂. The `store.fga.yml` file contains everything you need to create the model and tuples, and run the tests before writing application code!
 
 ![Thank goodness](https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExbHFwcjE1b3NvNGtqYWcwMGRoNHhmbnFmNzRncHo4ZXdyOWdmcmE5cyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Xir88f7Y54j08KBWUQ/giphy.gif)
 
@@ -833,7 +833,9 @@ For large organizations:
 
 <!-- TODO: refine, this sentence stinks -->
 
-Authorization doesn't have to be the part of your codebase that makes you cry. ReBAC and OpenFGA offer a cleaner path—one that grows with your app instead of strangling it.
+Complex authorization doesn't have to mean complex code. ReBAC and OpenFGA deliver a clean architecture that grows with your needs.
+
+Ready to get started? Here's your roadmap:
 
 1. Read in details the [PurrfectSitter's authorization model](https://github.com/getlarge/purrfect-sitter/blob/main/purrfect-sitter-model.fga)
 2. Draw inspiration from the [Purrfect Sitter Fastify API](https://github.com/getlarge/purrfect-sitter/blob/main/apps/purrfect-sitter/src/main.ts)
