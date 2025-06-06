@@ -225,8 +225,6 @@ Notice how readable, yet compact, this is — no complex SQL joins or nested con
 
 ![Nice one Johnny](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmxxeTI3NXg0MmI4a2xlZDEzYXo3MzhxanF3Ym9oajlxdXR0cmU0byZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/kQdtQ8JIYFRuoywakC/giphy.gif)
 
-> 💡: _You can visualize the relations graph and run queries in the [OpenFGA's Playground](https://openfga.dev/docs/getting-started/setup-openfga/playground)_ > ![OpenFGA Playground generated from PurrfectSitter model](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/oh2yxuh779j5yesvpbkd.png)
-
 ## <a id="why-openfga"></a> Why OpenFGA [▓▓▓░░░░]
 
 ### It Matches How You Think
@@ -260,7 +258,9 @@ Traditional systems answer "Can Alice do X?" OpenFGA also answers "What can Alic
 
 ![Is user Jenny related to system development as an admin?](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/3gljlmtefso79v0rdas9.png)
 
-![Is user Bob related to system development as an admin?](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/xtofky2w1j14uxygu40a.png)
+<!-- ![Is user Bob related to system development as an admin?](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/xtofky2w1j14uxygu40a.png) -->
+
+![Who is Romeo's owner?](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/zmmkh9zd1uw4igfawse7.png)
 
 ### Scale Like Google
 
@@ -356,7 +356,7 @@ Let's test our model with real scenarios. We'll use the OpenFGA CLI to create a 
 ---
 
 {% cta https://github.com/codespaces/new?template_repository=getlarge/purrfect-sitter %}
-Create a GitHub Codespace
+Save some time, create a GitHub codespace
 {% endcta %}
 
 It will provide you a ready-to-use environment with all dependencies installed and external services running, so you can focus on running the examples in this article.
@@ -365,7 +365,9 @@ It will provide you a ready-to-use environment with all dependencies installed a
 
 ![But first, coffee](https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExZnZmZml2N25uZWI2bHAzaXdrdGprZzRpeTdtZnd3ZXRveDQ5MmR5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/2uIlaxs2XT8d1eR0Hw/giphy.gif)
 
-### 1. Setting Up OpenFGA
+### Setup OpenFGA
+
+#### 1. Creating a Store and a Model
 
 First, create a store:
 
@@ -375,7 +377,23 @@ Then create the authorization model in the new store:
 
 {% asciinema CspKCVlTdNnFd0riBFvrSIwaZ %}
 
-### 2. Creating Basic Relationships
+> ⚠️ _If you are using Codespaces, specify the API path with_
+>
+> - _the flag `--api-url http://openfga:8080`_
+> - _the environment variable `FGA_API_URL=http://openfga:8080`_
+
+<!-- ```bash
+fga store create --name purrfect-sitter --api-url http://openfga:8080
+fga store get --store-id 01JWY85XG3C6A102SBY34D10YF
+export FGA_STORE_ID=01JWY85XG3C6A102SBY34D10YF
+```
+
+```bash
+fga model write --model-file purrfect-sitter-model.fga --store-id ${FGA_STORE_ID} --api-url http://openfga:8080
+export FGA_MODEL_ID=purrfect-sitter-model.fga
+``` -->
+
+#### 2. Creating Basic Relationships
 
 Bob owns Romeo, Anne sits for him. Simple.
 
@@ -398,9 +416,9 @@ fga query check user:anne can_manage cat:romeo
 # No (false)
 ``` -->
 
-### 3. Admin Powers
+#### 3. Admin Powers
 
-Jenny becomes a system admin who can manage any cat—traditional RBAC within ReBAC.
+Jenny becomes a system admin who can manage any cat — traditional RBAC within ReBAC.
 
 {% asciinema xVwZc6WBr3jXmpaiBQrIRCiH9 %}
 
@@ -416,7 +434,7 @@ fga query check user:jenny can_manage cat:romeo
 # Yes (true)
 ``` -->
 
-### 4. Time Magic
+#### 4. Time Magic
 
 Anne's permissions activate and deactivate automatically based on time. No cron jobs, no cleanup code — the authorization system handles it.
 
@@ -452,7 +470,7 @@ fga query list-objects user:bob owner cat_sitting
 # ["cat_sitting:1"]
 ``` -->
 
-### 5. Status-Driven Access
+#### 5. Status-Driven Access
 
 Reviews only make sense after sitting ends. OpenFGA enforces this business rule automatically, ABAC style.
 
@@ -472,7 +490,7 @@ fga query check user:bob can_review cat_sitting:1 --context='{"cat_sitting_attri
 # Yes (true)
 ``` -->
 
-### 6. Creating and Checking Review Permissions
+#### 6. Creating and Checking Review Permissions
 
 Create a review and check permissions:
 
@@ -502,7 +520,7 @@ fga query list-objects user:bob author review
 # ["review:1"]
 ``` -->
 
-### 7. Making the Review Public
+#### 7. Making the Review Public
 
 Control visibility using wildcards.
 
@@ -517,9 +535,18 @@ fga query check user:edouard can_view review:1
 # Yes (true)
 ``` -->
 
+### Explore Relationships with OpenFGA Playground
+
+You can visualize the relations graph and run queries in the [OpenFGA's Playground](https://openfga.dev/docs/getting-started/setup-openfga/playground).
+I find it a great way to discover and understand relationships in your model and test queries interactively.
+
+![OpenFGA Playground generated from PurrfectSitter model](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/oh2yxuh779j5yesvpbkd.png)
+
+> 💡 _If you are using Codespaces, just open `http://localhost:8082/playground` in your browser._
+
 ## <a id="testing-permissions-with-openfga-cli"></a> Testing permissions with OpenFGA CLI [▓▓▓▓░░░]
 
-Another one of OpenFGA's strengths is its built-in testing capabilities. The CLI provides a declarative way to test authorization models without writing application code.
+Another one of OpenFGA's strengths, is its built-in testing capabilities. The CLI provides a declarative way to test authorization models without writing application code.
 
 <!-- ##### Who Can Do What - Permission Example
 
