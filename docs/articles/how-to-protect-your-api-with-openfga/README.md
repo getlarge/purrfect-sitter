@@ -369,23 +369,17 @@ It will provide you a ready-to-use environment with all dependencies installed a
 
 First, create a store:
 
-<!-- TODO: wait for https://github.com/forem/forem/issues/21977 to use asciinema tag -->
-
-<!-- {% asciinema ByKCMvsficSP0sAVb8WJOjssx %} -->
-
-[![asciicast](https://asciinema.org/a/ByKCMvsficSP0sAVb8WJOjssx.png)](https://asciinema.org/a/ByKCMvsficSP0sAVb8WJOjssx)
+{% asciinema ByKCMvsficSP0sAVb8WJOjssx %}
 
 Then create the authorization model in the new store:
 
-<!-- {% asciinema CspKCVlTdNnFd0riBFvrSIwaZ %} -->
-
-[![asciicast](https://asciinema.org/a/CspKCVlTdNnFd0riBFvrSIwaZ.png)](https://asciinema.org/a/CspKCVlTdNnFd0riBFvrSIwaZ)
+{% asciinema CspKCVlTdNnFd0riBFvrSIwaZ %}
 
 ### 2. Creating Basic Relationships
 
 Bob owns Romeo, Anne sits for him. Simple.
 
-[![asciicast](https://asciinema.org/a/F7trou8DSvBNC45vwVVigUrB7.png)](https://asciinema.org/a/F7trou8DSvBNC45vwVVigUrB7)
+{% asciinema F7trou8DSvBNC45vwVVigUrB7 %}
 
 <!-- ```bash
 # Bob owns Romeo (the cat)
@@ -408,7 +402,7 @@ fga query check user:anne can_manage cat:romeo
 
 Jenny becomes a system admin who can manage any cat—traditional RBAC within ReBAC.
 
-[![asciicast](https://asciinema.org/a/xVwZc6WBr3jXmpaiBQrIRCiH9.png)](https://asciinema.org/a/xVwZc6WBr3jXmpaiBQrIRCiH9)
+{% asciinema xVwZc6WBr3jXmpaiBQrIRCiH9 %}
 
 <!-- ```bash
 # Make Jenny a system admin
@@ -426,7 +420,7 @@ fga query check user:jenny can_manage cat:romeo
 
 Anne's permissions activate and deactivate automatically based on time. No cron jobs, no cleanup code — the authorization system handles it.
 
-[![asciicast](https://asciinema.org/a/zxSG2ngKoQxSDvttpvixNvruf.png)](https://asciinema.org/a/zxSG2ngKoQxSDvttpvixNvruf)
+{% asciinema zxSG2ngKoQxSDvttpvixNvruf %}
 
 <!-- ```bash
 # Make Anne active only during a specific time window
@@ -462,7 +456,7 @@ fga query list-objects user:bob owner cat_sitting
 
 Reviews only make sense after sitting ends. OpenFGA enforces this business rule automatically, ABAC style.
 
-[![asciicast](https://asciinema.org/a/jXehIzoBX8v90ovQEB1Bg9yUJ.png)](https://asciinema.org/a/jXehIzoBX8v90ovQEB1Bg9yUJ)
+{% asciinema jXehIzoBX8v90ovQEB1Bg9yUJ %}
 
 <!-- ```bash
 # Set up review permission based on status
@@ -482,7 +476,7 @@ fga query check user:bob can_review cat_sitting:1 --context='{"cat_sitting_attri
 
 Create a review and check permissions:
 
-[![asciicast](https://asciinema.org/a/VC0yN2HVatIKN4Ks4SDSUFbBg.png)](https://asciinema.org/a/VC0yN2HVatIKN4Ks4SDSUFbBg)
+{% asciinema VC0yN2HVatIKN4Ks4SDSUFbBg %}
 
 <!-- ```bash
 # Create review
@@ -510,9 +504,9 @@ fga query list-objects user:bob author review
 
 ### 7. Making the Review Public
 
-Control visibility:
+Control visibility using wildcards.
 
-[![asciicast](https://asciinema.org/a/rZYmSxGtBq3zj1UhmAQtOqy3b.png)](https://asciinema.org/a/rZYmSxGtBq3zj1UhmAQtOqy3b)
+{% asciinema rZYmSxGtBq3zj1UhmAQtOqy3b %}
 
 <!-- ```bash
 # Make review public
@@ -729,11 +723,9 @@ tests:
               - user:*
 ```
 
-> You can find `store.fga.yml` in the [demo repository](https://github.com/getlarge/purrfect-sitter/blob/main/store.fga.yml).
+> 👋 _You can find `store.fga.yml` in the [demo repository](https://github.com/getlarge/purrfect-sitter/blob/main/store.fga.yml)._
 
-[![asciicast](https://asciinema.org/a/KGCyNgYcrGWnKlW7bpLbVvv7z.png)](https://asciinema.org/a/KGCyNgYcrGWnKlW7bpLbVvv7z)
-
-<!-- {% asciinema KGCyNgYcrGWnKlW7bpLbVvv7z %} -->
+{% asciinema KGCyNgYcrGWnKlW7bpLbVvv7z %}
 
 ### Testing During Adoption
 
@@ -748,7 +740,7 @@ Including tests in your workflow reduces authorization errors and builds confide
 
 ## <a id="adoption-challenges-and-strategies"></a> Adoption Challenges and Strategies [▓▓▓▓▓▓░]
 
-Of course, adopting OpenFGA in existing systems presents challenges. Here's how to address them:
+Of course, adopting OpenFGA in existing systems presents challenges.
 
 ### Mental Model Shift
 
@@ -800,7 +792,7 @@ Reduce synchronization burden:
 - Gradually move to persistent relationship tuples
 - Use contextual tuples for frequently changing data
 
-> Read more about this technique in the [OpenFGA documentation](https://openfga.dev/docs/best-practices/adoption-patterns#provide-request-level-data).
+> ℹ️ _Read more about this technique in the [OpenFGA documentation](https://openfga.dev/docs/best-practices/adoption-patterns#provide-request-level-data)._
 
 ### Managing Organizational Adoption
 
@@ -810,28 +802,34 @@ For large organizations:
 - Use modular models for independent team control
 - Leverage access control for team-specific credentials
 
-<!-- Other production advice https://openfga.dev/docs/best-practices/running-in-production -->
-
-<!-- TODO: For senior architects: Deep-dive into performance characteristics,monitoring, mention support for OpenTelemetry - https://openfga.dev/docs/getting-started/configure-telemetry, horizontal scaling strategies, and production deployment patterns. Include ROI calculations and architectural trade-offs. -->
-
 ## <a id="your-next-move"></a> Your Next Move [▓▓▓▓▓▓▓]
 
 <!-- TODO: refine, this sentence stinks -->
 
 Authorization doesn't have to be the part of your codebase that makes you cry. ReBAC and OpenFGA offer a cleaner path—one that grows with your app instead of strangling it.
 
-1. Read in details the PurrfectSitter's authorization model
-2. Draw inspiration from the Fastify application in [github.com/getlarge/purrfect-sitter](https://github.com/getlarge/purrfect-sitter)
+1. Read in details the [PurrfectSitter's authorization model](https://github.com/getlarge/purrfect-sitter/blob/main/purrfect-sitter-model.fga)
+2. Draw inspiration from the [Purrfect Sitter Fastify API](https://github.com/getlarge/purrfect-sitter/blob/main/apps/purrfect-sitter/src/main.ts)
 3. Adapt it to your domain
 4. Watch complex permission logic become simple relationship definitions.
-5. If you want to show your appreciation, give it a ⭐️ on GitHub.
+5. Get in touch with me for some deep-dive into performance characteristics, monitoring, and production deployment patterns 😉
+6. If you want to show your appreciation, give those repositories a ⭐️ on GitHub. 👇
 
 {% github getlarge/purrfect-sitter %}
+
+{% github openfga/openfga %}
 
 Your future self will thank you for choosing relationships over nested IF statements.
 
 {% user getlarge %}
 
-<!-- References -->
-<!-- Zanzibar Academy https://zanzibar.academy -->
-<!-- All OpenFGA concepts in details https://openfga.dev/docs/concepts -->
+---
+
+## References
+
+- [OpenFGA Documentation](https://openfga.dev/docs)
+- [OpenFGA GitHub Repository](https://github.com/openfga/openfga)
+- [Zanzibar Academy](https://zanzibar.academy)
+- [Google's Zanzibar Paper](https://storage.googleapis.com/gweb-research2023-media/pubtools/5068.pdf)
+- [Ory Keto Documentation](https://www.ory.sh/keto/docs/)
+- [OpenFGA production best practices](https://openfga.dev/docs/best-practices/running-in-production)
