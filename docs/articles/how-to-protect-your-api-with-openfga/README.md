@@ -10,13 +10,16 @@ Another story, another article. A client asked me recently:
 
 > 🗣️ _Can we add temporary permissions for a group of users assigned to a maintenance task, while it's ongoing?_
 
-It should be simple enough, right? Yes, until I examined the authorization code and found a **500-line** function checking user roles and groups, time windows, resource ownership, and various business rules. 😶‍🌫️
+It should be simple enough, right? Yes, until I examined the authorization code behind the API and found a **500-line** function checking user roles and groups, time windows, resource ownership, and various business rules. 😶‍🌫️
 
 Unlike **authentication** (who is accessing the system), where we have OIDC, JWT, and other established standards and patterns, **authorization** (what they can do) often forces us into custom implementations.
 
-> 🫷_You might argue that OAuth 2.0 cover authorization, but they focus on third-party access, not complex and dynamic authorization patterns._
+> 🫷*You might argue that OAuth 2.0 cover authorization, but they focus on third-party access, not complex and dynamic authorization patterns.*
 
-Each new policy adds another **conditional branch**, another **database join**, another **custom role**, another **edge case that breaks** during the next feature request. The code becomes a maze and even experienced developers hesitate before touching it.
+The [OWASP Top 10 API Security Risks](https://owasp.org/API-Security/editions/2023/en/0x11-t10/) lists **Broken Object Level Authorization** as the #1 risk, showing us how common it is to expose sensitive data due to poor authorization checks.
+Is it far-fetched to think that the complexity of authorization logic contributes to this risk?
+
+Each new policy adds another **conditional branch**, another **database join**, another **custom role**, another **edge case that breaks** during the next feature request. The authorization flow becomes a spaghetti bowl and even experienced developers hesitate before touching it.
 
 ![this is fine](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/09cwef7zad5jqr7grjz7.png)
 
@@ -26,9 +29,9 @@ Traditional approaches quickly hit walls:
 - **ABAC** offers flexibility but becomes a rule engine nightmare
 - **Database queries** slow to a crawl as your permission matrix grows
 
-> 🤔 _What if there was a better way? A way that lets you express complex relationships without tangled code or performance hits?_
+What if there is a better way? A way that lets you express complex relationships without messy code or performance hits? 🤔
 
-My exploration for a better paradigm started with [**Ory Keto**](https://www.ory.sh/keto), when [integrating Ory in a NestJS application](https://dev.to/getlarge/integrate-ory-in-a-nestjs-application-4llo).
+My exploration for a better paradigm started with [**Ory Keto**](https://www.ory.sh/keto):
 
 {% link https://dev.to/getlarge/integrate-ory-in-a-nestjs-application-4llo %}
 
@@ -38,7 +41,7 @@ It introduced me to [Google's Zanzibar paper](https://storage.googleapis.com/gwe
 
 This time, I needed more flexibility to introduce **contextual relationships**. That "simple" feature request led me to [**OpenFGA**](https://openfga.dev) — a richer implementation of Zanzibar's principles that extends ReBAC with powerful features like contextual-based conditions, attribute-based access, and a simple query language.
 
-And since you might be familiar with this story, I'll share with you my **learning journey:**
+And since you might be familiar with this story, I'll share with you my **learning journey**, starting from the concepts and terminology, through practical examples and considerations, to real-world usage of OpenFGA.
 
 1. ✅ The Authorization Problem
 2. 📍 **ReBAC and OpenFGA concepts** ← You are here
@@ -81,7 +84,7 @@ These map to your app's core entities:
 
 Each **type** will declare relationships with other types - in the **type definition**.
 
-> **Note**: _In Ory Keto, these are called **namespaces**._
+> ℹ️ _In Ory Keto, these are called **namespaces**._
 
 #### Objects: Instances of Types
 
@@ -103,7 +106,7 @@ A **user** is an entity that is related to objects in your system. In our app, u
 - Systems (like the PurrfectSitter development environment)
 - Cats (like Romeo)
 
-> **Note**: _In Ory Keto, these are called **subjects**. I believe subject is less ambiguous than user, but OpenFGA uses user, so we will too._
+> ℹ️ _In Ory Keto, these are called **subjects**. I believe subject is less ambiguous than user, but OpenFGA uses user, so we will too._
 
 #### Relations: How Things Connect
 
@@ -136,7 +139,7 @@ type cat_sitting
     define sitter: [user]
 ```
 
-> ‼️: _For the sake of this example, we will assume that cats are owned by humans. We all know that, in reality, cats own us, not the other way around._
+> ‼️ _For the sake of this example, we will assume that cats are owned by humans. We all know that, in reality, cats own us, not the other way around._
 
 OpenFGA computes relationships in several ways:
 
@@ -159,8 +162,8 @@ There are even more ways to express relationships, such as **exclusion**, **inte
 
 ### The Complete Authorization Model
 
-The ensemble of types and relations definitions forms the **authorization model**.
-Here, the PurrfectSitter's authorization model in OpenFGA's configuration language (Domain-Specific Language for the purists), defines how **users** interact with **cats**, **cat sittings**, and **reviews**.
+The ensemble of **types** and **relations** definitions forms the **authorization model**.
+Here, the PurrfectSitter's authorization model in OpenFGA's configuration language (**D**omain-**S**pecific **L**anguage for the purists), defines how **users** interact with **cats**, **cat sittings**, and **reviews**.
 
 ```yaml
 model
@@ -231,30 +234,32 @@ Notice how readable, yet compact, this is — no complex SQL joins or nested con
 
 #### Expressive Relationships
 
-Cat owners own cats. Sitters sit cats. Admins administrate. The authorization model mirrors reality instead of forcing you into artificial role hierarchies.
+Cat owners own cats. Sitters sit cats. Admins administrate. The authorization model mirrors reality instead of forcing you into artificial role hierarchies. [Demo](#create-basic-relationships)
 
-![Cat owner relationship diagram](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/t4g6q9mu4ag4crg09qcr.png)
+![Cat owner relationship diagram](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/bg7eguhsxco75yi6g9bi.png)
 
-![Cat sitting scenario diagram](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/g7m1b1h5wlxuwaitssi7.png)
+![Cat sitting scenario diagram](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/oqr497dzgub8p04mru1t.png)
 
 #### Time Works Automatically
 
 No more "grant permission at 9 AM, revoke at 5 PM" cron jobs. Time-based access happens naturally through conditions.
 Grant permissions only when conditions are met—like during scheduled hours.
+[Demo](#time-based-conditions)
 
 > 🤝 _Yes! My client is going to love this._
 
-![Time-based conditions](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/xcsdz1o5zg2po3zwpddq.png)
+![Time-based conditions](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/030t1v1o7nix0ittkcvd.png)
 
 #### Status Drives Decisions
 
-Your app's workflow already has statuses—pending, active, completed. OpenFGA uses these directly for permissions instead of requiring separate access control flags.
+Your app's workflow probably includes entities' states (e.g., pending, active, completed). OpenFGA uses these attributes directly for permissions instead of requiring separate access control flags. [Demo](#state-based-conditions)
 
-![Status-based conditions](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/y45ufry7ecg7lva4rnqm.png)
+![Status-based conditions](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/tcsgc6v4mvlk58cnvxip.png)
 
 ### Queries, Not Just Checks
 
 Traditional systems answer "Can Alice do X?" OpenFGA also answers "What can Alice do?" and "Who can do X?" This unlocks features like smart dashboards and permission audits.
+[Demo](#check-permissions-and-query-relations)
 
 ![Is user Jenny related to system development as an admin?](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/3gljlmtefso79v0rdas9.png)
 
@@ -363,11 +368,9 @@ It will provide you a ready-to-use environment with all dependencies installed a
 
 ---
 
-![But first, coffee](https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExZnZmZml2N25uZWI2bHAzaXdrdGprZzRpeTdtZnd3ZXRveDQ5MmR5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/2uIlaxs2XT8d1eR0Hw/giphy.gif)
-
 ### Setup OpenFGA
 
-#### 1. Creating a Store and a Model
+#### <a id="creating-a-store-and-a-model"></a> 1. Creating a Store and a Model
 
 First, create a store:
 
@@ -393,7 +396,7 @@ fga model write --model-file purrfect-sitter-model.fga --store-id ${FGA_STORE_ID
 export FGA_MODEL_ID=purrfect-sitter-model.fga
 ``` -->
 
-#### 2. Creating Basic Relationships
+#### <a id="create-basic-relationships"></a> 2. Creating Basic Relationships
 
 Bob owns Romeo, Anne sits for him. Simple.
 
@@ -416,7 +419,7 @@ fga query check user:anne can_manage cat:romeo
 # No (false)
 ``` -->
 
-#### 3. Admin Powers
+#### <a id="create-admins"></a> 3. Admin Powers
 
 Jenny becomes a system admin who can manage any cat — traditional RBAC within ReBAC.
 
@@ -434,7 +437,7 @@ fga query check user:jenny can_manage cat:romeo
 # Yes (true)
 ``` -->
 
-#### 4. Time Magic
+#### <a id="time-based-conditions"></a> 4. Time Magic
 
 Anne's permissions activate and deactivate automatically based on time. No cron jobs, no cleanup code — the authorization system handles it.
 
@@ -470,7 +473,7 @@ fga query list-objects user:bob owner cat_sitting
 # ["cat_sitting:1"]
 ``` -->
 
-#### 5. Status-Driven Access
+#### <a id="state-based-conditions"></a> 5. Status-Driven Access
 
 Reviews only make sense after sitting ends. OpenFGA enforces this business rule automatically, ABAC style.
 
@@ -490,7 +493,7 @@ fga query check user:bob can_review cat_sitting:1 --context='{"cat_sitting_attri
 # Yes (true)
 ``` -->
 
-#### 6. Creating and Checking Review Permissions
+#### <a id="check-permissions-and-query-relations"></a> 6. Creating and Checking Review Permissions
 
 Create a review and check permissions:
 
@@ -520,7 +523,7 @@ fga query list-objects user:bob author review
 # ["review:1"]
 ``` -->
 
-#### 7. Making the Review Public
+#### <a id="making-an-object-public"></a> 7. Making the Review Public
 
 Control visibility using wildcards.
 
@@ -767,7 +770,7 @@ Including tests in your workflow reduces authorization errors and builds confide
 
 ## <a id="adoption-challenges-and-strategies"></a> Adoption Challenges and Strategies [▓▓▓▓▓▓░]
 
-Of course, adopting OpenFGA in existing systems presents challenges.
+As good as this tool is, adopting OpenFGA in existing systems presents challenges.
 
 ### Mental Model Shift
 
@@ -787,13 +790,13 @@ This is probably the most challenging aspect of adopting OpenFGA, especially if 
   - Transactional outbox pattern for consistency
   - Background jobs for existing data
 
-Read this excellent article about dual writes in distributed systems. It will surely help you understand strategies for synchronizing data between your application(s) and OpenFGA.
+Read this excellent article 👇 about dual writes in distributed systems. It will surely help you understand strategies for synchronizing data between your applications' DB and OpenFGA.
 
 {% embed https://auth0.com/blog/handling-the-dual-write-problem-in-distributed-systems/ %}
 
 ### Progressive Adoption
 
-Introduce OpenFGA incrementally:
+It's going to be hard (and unwise) to convince your team to rewrite the entire authorization logic in OpenFGA, big-bang refactoring style. Instead, consider a **progressive adoption** strategy:
 
 #### 1. Start with Coarse-Grained Permissions
 
@@ -831,9 +834,7 @@ For large organizations:
 
 ## <a id="your-next-move"></a> Your Next Move [▓▓▓▓▓▓▓]
 
-<!-- TODO: refine, this sentence stinks -->
-
-Complex authorization doesn't have to mean complex code. ReBAC and OpenFGA deliver a clean architecture that grows with your needs.
+Complex policies doesn't have to mean complex code. OpenFGA's ReBAC model simplifies permissions into relationships, making your authorization logic more maintainable and scalable.
 
 Ready to get started? Here's your roadmap:
 

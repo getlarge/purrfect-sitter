@@ -102,13 +102,29 @@ config:
   theme: mc
 ---
 flowchart TD
-    CurrentTime["Current Time"] --> TimeCheck{"Time Check"}
-    StartTime["Start Time"] --> TimeCheck
-    EndTime["End Time"] --> TimeCheck
-    TimeCheck -- "current &gt;= start AND current &lt;= end" --> ActiveSitter["Active Sitter"]
-    TimeCheck -- current &lt; start --> PendingSitter["Pending Sitter"]
-    ActiveSitter --> CanPostUpdates["can_post_updates"]
-    PendingSitter --> CanUpdateDelete["can_update, can_delete"]
+    CurrentTime["Current Time"]:::time
+    StartTime["Start Time"]:::time
+    EndTime["End Time"]:::time
+    TimeCheck{"Timecheck"}:::decision
+    ActiveSitter["Active Sitter"]:::state
+    PendingSitter["Pending Sitter"]:::state
+    CanPostUpdates["can_post_updates"]:::perm
+    CanUpdateDelete["can_update,can_delete"]:::perm
+
+    CurrentTime --> TimeCheck
+    StartTime --> TimeCheck
+    EndTime --> TimeCheck
+    TimeCheck -- "current &gt;= start AND current &lt;= end" --> ActiveSitter
+    TimeCheck -- current &lt; start --> PendingSitter
+    ActiveSitter --> CanPostUpdates
+    PendingSitter --> CanUpdateDelete
+
+    %% Class Definitions
+    classDef time fill:#cce6ff,stroke:#204080,stroke-width:2px,color:#204080;       %% light blue
+    classDef decision fill:#ecd6fd,stroke:#7934a3,stroke-width:2px,color:#7934a3;   %% light purple
+    classDef state fill:#caffd9,stroke:#21875d,stroke-width:2px,color:#21875d;      %% mint green
+    classDef perm fill:#fff0cc,stroke:#805d20,stroke-width:2px,color:#805d20;       %% light orange
+
 ```
 
 ### Status-based Conditions
@@ -121,14 +137,17 @@ config:
 ---
 flowchart TD
 
-    Status[Cat Sitting Status]
+    CatSittingStatus[Current Cat Sitting Status]:::status
 
-    %% Status-based conditions
-    Status --> StatusCheck{Status Check}
-    StatusCheck -->|status in completed_statuses| CanReview[Can Review Permission]
+    CatSittingStatus --> StatusCheck{Status Check}:::decision
+    StatusCheck -->|status in completed_statuses| ReviewPermission[Owner can review completed sitting]:::perm
 
-    %% Permissions granted
-    CanReview --> ReviewPermission[Owner can review completed sitting]
+    %% Category class definitions
+    classDef status fill:#cce6ff,stroke:#204080,stroke-width:2px,color:#204080;       %% light blue
+
+    classDef state fill:#caffd9,stroke:#21875d,stroke-width:2px,color:#21875d;
+    classDef decision fill:#ecd6fd,stroke:#7934a3,stroke-width:2px,color:#7934a3;
+    classDef perm fill:#fff0cc,stroke:#805d20,stroke-width:2px,color:#805d20;
 ```
 
 ## Key Relationships
@@ -170,12 +189,24 @@ config:
   theme: mc
   layout: elk
 ---
+
 flowchart LR
-    Bob["User:Bob"] -- owner --> Romeo["Cat:Romeo"]
+    Bob["User:Bob"]:::user
+    Alice["User:Alice"]:::user
+    Admin["User:Admin"]:::user
 
-    Alice["User:Alice"] -- owner --> Whiskers["Cat:Whiskers"]
-    System1["System:PurrfectSitter"] -- admin --> Admin["User:Admin"]
+    Romeo["Cat:Romeo"]:::cat
+    Whiskers["Cat:Whiskers"]:::cat
 
+    System1["System:PurrfectSitter"]:::system
+
+    Bob -- owner --> Romeo
+    Alice -- owner --> Whiskers
+    System1 -- admin --> Admin
+
+    classDef user fill:#cce6ff,stroke:#204080,stroke-width:2px,color:#204080;
+    classDef cat fill:#fff0cc,stroke:#805d20,stroke-width:2px,color:#805d20;
+    classDef system fill:#caffd9,stroke:#21875d,stroke-width:2px,color:#21875d;
 ```
 
 ### Cat Sitting Scenario
@@ -187,12 +218,16 @@ config:
   layout: elk
 ---
 graph LR
-    Bob[User:Bob] -->|owner| Romeo[Cat:Romeo]
-    Alice[User:Alice] -->|sitter| Sitting1@{ label: Cat Sitting:Romeo's Weekend. }
+    Bob[User:Bob]:::user -->|owner| Romeo[Cat:Romeo]:::cat
+    Alice[User:Alice]:::user -->|sitter| Sitting1["Cat Sitting:Romeo's Weekend."]:::cat_sitting
     Sitting1 -->|cat| Romeo
-
     %% Derived relationships
     Romeo -.->|owner| Sitting1
+
+    %% Category classes
+    classDef user fill:#cce6ff,stroke:#204080,stroke-width:2px,color:#204080;
+    classDef cat fill:#fff0cc,stroke:#805d20,stroke-width:2px,color:#805d20;
+    classDef cat_sitting fill:#ecd6fd,stroke:#7934a3,stroke-width:2px,color:#7934a3;
 ```
 
 ### Who Can Do What - Permission Example
