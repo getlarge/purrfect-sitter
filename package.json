@@ -4,8 +4,11 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "nx": "nsolid node_modules/.bin/nx",
     "test:fga": "fga model test --tests store.fga.yml",
-    "clean:build": "rm -r **/dist **/out-tsc"
+    "clean:build": "rm -r **/dist **/out-tsc",
+    "nx:perf": "node tools/nx-profiling/profile-nx.js",
+    "nx:perf:simple": "node tools/nx-profiling/profile-nx-simple.js"
   },
   "private": true,
   "dependencies": {
