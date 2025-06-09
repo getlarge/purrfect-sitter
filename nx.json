@@ -14,7 +14,7 @@
     ],
     "sharedGlobals": ["{workspaceRoot}/.github/workflows/ci.yml"]
   },
-  "nxCloudId": "67fbd4bdce9a7855fce7ec31",
+  "nxCloudId": "67be24a9bc2e243ad1706f49",
   "plugins": [
     {
       "plugin": "@nx/js/typescript",
@@ -79,7 +79,11 @@
   "conformance": {
     "rules": [
       {
-        "rule": "libs/conformance/dist/no-jest-workers-in-ci",
+        "rule": "libs/infra/conformance/dist/no-project-json",
+        "projects": ["*"]
+      },
+      {
+        "rule": "libs/infra/conformance/dist/no-jest-workers-in-ci",
         "options": {
           "testTargetNames": ["test"]
         },
