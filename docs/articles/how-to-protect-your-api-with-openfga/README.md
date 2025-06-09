@@ -105,6 +105,13 @@ The [CLI tools](https://openfga.dev/docs/cli) make it easy to manage your author
 
 OpenFGA is open-source and Okta is funding it, this ensures a long-term viability and support. On one side, you can always deploy it on your own infrastructure, and the community is growing rapidly. On the other side, Okta has strong competitors like OSO, Ory Keto or AWS Cedar, so they have a vested interest in making OpenFGA a successful product extending what Auth0 has to offer.
 
+### Deployment Flexibility
+
+OpenFGA can be deployed in various ways, depending on your needs:
+
+- **Self-hosted**: Use [Docker Compose](https://openfga.dev/docs/getting-started/setup-openfga/docker) or [Kubernetes](https://artifacthub.io/packages/helm/openfga/openfga) for full control.
+- **Managed service**: Use Auth0's FGA offering for a hassle-free experience.
+
 ### Observability and Debugging
 
 You can configure:
@@ -850,9 +857,6 @@ For large organizations:
 - Start with a single application where OpenFGA delivers immediate value
 - Use modular models for independent team control
 - Leverage access control for team-specific credentials
-
-<!-- deployment: start deploying locally with [Docker Compose](https://openfga.dev/docs/getting-started/setup-openfga/docker)
-Next, consider whether it's worth or necessary to manage OpenFGA yourself, in that case the [Kubernetes recipe](https://artifacthub.io/packages/helm/openfga/openfga) might help, otherwise consider Auth0 which now includes OpenFGA. -->
 
 ## <a id="your-next-move"></a> Your Next Move [▓▓▓▓▓▓▓]
 
