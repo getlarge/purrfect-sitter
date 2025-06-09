@@ -44,13 +44,142 @@ This time, I needed more flexibility to introduce **contextual relationships**. 
 And since you might be familiar with this story, I'll share with you my **learning journey**, starting from the concepts and terminology, through practical examples and considerations, to real-world usage of OpenFGA.
 
 1. ✅ The Authorization Problem
-2. 📍 **ReBAC and OpenFGA concepts** ← You are here
-3. ⬜ [Why OpenFGA?](#why-openfga)
+2. 📍 **Why OpenFGA?** ← You are here
+3. ⬜ [ReBAC and OpenFGA concepts](#rebac-and-openfga-concepts)
 4. ⬜ [OpenFGA in Action](#openfga-in-action)
 5. ⬜ [Testing permissions with OpenFGA CLI](#testing-permissions-with-openfga-cli)
 6. ⬜ [Adoption Challenges and Strategies](#adoption-challenges-and-strategies)
 
-## <a id="rebac-and-openfga-concepts"></a> ReBAC and OpenFGA concepts [▓░░░░░░░]
+## <a id="why-openfga"></a> Why OpenFGA [▓░░░░░░░]
+
+Before I grab your attention and your brain 🧠 with the ReBAC concepts and how OpenFGA implements them, let me explain why I chose OpenFGA over other solutions.
+
+### It Matches How You Think
+
+#### Expressive Relationships
+
+Cat owners own cats. Sitters sit cats. Admins administrate. The authorization model mirrors reality instead of forcing you into artificial role hierarchies. [Demo](#create-basic-relationships)
+
+![Cat owner relationship diagram](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/bg7eguhsxco75yi6g9bi.png)
+
+![Cat sitting scenario diagram](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/oqr497dzgub8p04mru1t.png)
+
+#### Time Works Automatically
+
+No more "grant permission at 9 AM, revoke at 5 PM" cron jobs. Time-based access happens naturally through conditions.
+Grant permissions only when conditions are met—like during scheduled hours.
+[Demo](#time-based-conditions)
+
+> 🤝 _Yes! My client is going to love this._
+
+![Time-based conditions](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/030t1v1o7nix0ittkcvd.png)
+
+#### Status Drives Decisions
+
+Your app's workflow probably includes some entities' states (e.g., pending, active, completed). OpenFGA uses these attributes directly for permissions instead of requiring separate access control flags. [Demo](#state-based-conditions)
+
+![Status-based conditions](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/tcsgc6v4mvlk58cnvxip.png)
+
+### Queries, Not Just Checks
+
+Traditional systems answer "Can Alice do X?" OpenFGA also answers "What can Alice do?" and "Who can do X?" This opens opportunities for features like smart dashboards and permission audits.
+[Demo](#check-permissions-and-query-relations)
+
+![Is user Jenny related to system development as an admin?](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/3gljlmtefso79v0rdas9.png)
+
+![Who is Romeo's owner?](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/zmmkh9zd1uw4igfawse7.png)
+
+### Scale Like Google
+
+Google's [Zanzibar](https://research.google/pubs/zanzibar-googles-consistent-global-authorization-system/) (which inspired OpenFGA) handles **billions** of authorization checks daily. Your application(s) probably won't hit those numbers, but it's nice to know you won't hit a wall due to a poorly performing authorization system.
+
+> ☝️ _In my [tests](https://github.com/getlarge/purrfect-sitter/blob/main/tools/scripts/benchmark-auth-strategies.ts), OpenFGA performed slightly better than custom database lookups for complex relationships (both based on PostgreSQL)._
+
+### Great Documentation and CLI Tools
+
+I can't deny it, OpenFGA has a steep learning curve, but its [documentation](https://openfga.dev/docs) is complete and well-structured. It covers everything from basic concepts to advanced usage patterns until deployment strategies.
+
+The [CLI tools](https://openfga.dev/docs/cli) make it easy to manage your authorization model and test your policies.
+
+### Business Backing
+
+OpenFGA is open-source and Okta is funding it, this ensures a long-term viability and support. On one side, you can always deploy it on your own infrastructure, and the community is growing rapidly. On the other side, Okta has strong competitors like OSO, Ory Keto or AWS Cedar, so they have a vested interest in making OpenFGA a successful product extending what Auth0 has to offer.
+
+### Observability and Debugging
+
+You can configure:
+
+- [OpenTelemetry](https://opentelemetry.io/) for traces collection on the [client](https://openfga.dev/docs/getting-started/configure-telemetry#enabling-telemetry) and the [server](https://openfga.dev/docs/getting-started/setup-openfga/configure-openfga#tracing) side.
+- [Prometheus](https://prometheus.io/docs/concepts/data_model/) for metrics collection.
+
+This makes it easier to monitor your authorization system with open standards and integrate with your existing observability stack.
+
+### Simpler Code To Maintain
+
+To illustrate this, I'm using Typescript to check if a user can update a cat sitting arrangement with both approaches: a plain **database lookup** and an **OpenFGA check**.
+
+#### Database Lookup
+
+```ts
+async function isSystemAdmin(userId: string): Promise<boolean> {
+  const user = await userRepository.findById(userId);
+  if (!user) return false;
+  return user.role === 'admin';
+}
+
+async function checkCatSittingUpdatePermission(
+  userId: string,
+  sittingId: string
+): Promise<boolean> {
+  const sitting = await catSittingRepository.findById(sittingId);
+  if (!sitting) return false;
+
+  const cat = await catRepository.findById(sitting.catId);
+  if (!cat) return false;
+
+  const isOwner = cat.ownerId === userId;
+  const isSitter = sitting.sitterId === userId;
+  const isAdmin = () => await isSystemAdmin(userId);
+  const isPending = () =>
+    sitting.status === 'requested' && new Date(sitting.startTime) > new Date();
+
+  return isOwner || (isSitter && isPending()) || isAdmin();
+}
+```
+
+#### OpenFGA Check
+
+```ts
+async function checkCatSittingUpdatePermission(
+  userId: string,
+  catSittingId: string
+): Promise<boolean> {
+  const openfgaClient = new OpenFgaApi({
+    apiUrl: process.env.OPENFGA_API_URL,
+  });
+
+  const request: CheckRequest = {
+    tuple_key: {
+      user: `user:${userId}`,
+      relation: 'can_update',
+      object: `cat_sitting:${catSittingId}`,
+    },
+    context: {
+      current_time: new Date().toISOString(),
+    },
+  };
+
+  const { allowed } = await openfgaClient.check(
+    process.env.FGA_STORE_ID,
+    request
+  );
+  return !!allowed;
+}
+```
+
+Does it need a lot of explanation? The OpenFGA version is objectively cleaner, more maintainable, and scales better as your authorization logic grows.
+
+## <a id="rebac-and-openfga-concepts"></a> ReBAC and OpenFGA concepts [▓▓▓░░░░]
 
 I'll walk you through ReBAC using PurrfectSitter ©, a cat sitting app where owners find sitters. Real problems, real solutions.
 As trivial as it sounds, this example shows:
@@ -163,7 +292,7 @@ There are even more ways to express relationships, such as **exclusion**, **inte
 ### The Complete Authorization Model
 
 The ensemble of **types** and **relations** definitions forms the **authorization model**.
-Here, the PurrfectSitter's authorization model in OpenFGA's configuration language (**D**omain-**S**pecific **L**anguage for the purists), defines how **users** interact with **cats**, **cat sittings**, and **reviews**.
+Here, the PurrfectSitter's authorization model in OpenFGA's configuration language (**D**omain-**S**pecific **L**anguage for the purist), defines how **users** interact with **cats**, **cat sittings**, and **reviews**.
 
 ```yaml
 model
@@ -228,117 +357,7 @@ Notice how readable, yet compact, this is — no complex SQL joins or nested con
 
 ![Nice one Johnny](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmxxeTI3NXg0MmI4a2xlZDEzYXo3MzhxanF3Ym9oajlxdXR0cmU0byZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/kQdtQ8JIYFRuoywakC/giphy.gif)
 
-## <a id="why-openfga"></a> Why OpenFGA [▓▓▓░░░░]
-
-### It Matches How You Think
-
-#### Expressive Relationships
-
-Cat owners own cats. Sitters sit cats. Admins administrate. The authorization model mirrors reality instead of forcing you into artificial role hierarchies. [Demo](#create-basic-relationships)
-
-![Cat owner relationship diagram](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/bg7eguhsxco75yi6g9bi.png)
-
-![Cat sitting scenario diagram](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/oqr497dzgub8p04mru1t.png)
-
-#### Time Works Automatically
-
-No more "grant permission at 9 AM, revoke at 5 PM" cron jobs. Time-based access happens naturally through conditions.
-Grant permissions only when conditions are met—like during scheduled hours.
-[Demo](#time-based-conditions)
-
-> 🤝 _Yes! My client is going to love this._
-
-![Time-based conditions](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/030t1v1o7nix0ittkcvd.png)
-
-#### Status Drives Decisions
-
-Your app's workflow probably includes entities' states (e.g., pending, active, completed). OpenFGA uses these attributes directly for permissions instead of requiring separate access control flags. [Demo](#state-based-conditions)
-
-![Status-based conditions](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/tcsgc6v4mvlk58cnvxip.png)
-
-### Queries, Not Just Checks
-
-Traditional systems answer "Can Alice do X?" OpenFGA also answers "What can Alice do?" and "Who can do X?" This unlocks features like smart dashboards and permission audits.
-[Demo](#check-permissions-and-query-relations)
-
-![Is user Jenny related to system development as an admin?](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/3gljlmtefso79v0rdas9.png)
-
-<!-- ![Is user Bob related to system development as an admin?](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/xtofky2w1j14uxygu40a.png) -->
-
-![Who is Romeo's owner?](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/zmmkh9zd1uw4igfawse7.png)
-
-### Scale Like Google
-
-Google's [Zanzibar](https://research.google/pubs/zanzibar-googles-consistent-global-authorization-system/) (which inspired OpenFGA) handles billions of authorization checks daily. Your application(s) probably won't hit those numbers, but it's nice to know you won't hit a wall due to a poorly performing authorization system.
-
-<!-- TODO: mention benchmark script to compare DB lookups vs OpenFGA -->
-
-### Simpler To Maintain
-
-Let's implement a function with Typescript to check if a user can update a cat sitting arrangement. We'll compare two approaches: a plain **database lookup** and an **OpenFGA check**.
-
-#### Database Lookup
-
-```ts
-async function isSystemAdmin(userId: string): Promise<boolean> {
-  const user = await userRepository.findById(userId);
-  if (!user) return false;
-  return user.role === 'admin';
-}
-
-async function checkCatSittingUpdatePermission(
-  userId: string,
-  sittingId: string
-): Promise<boolean> {
-  const sitting = await catSittingRepository.findById(sittingId);
-  if (!sitting) return false;
-
-  const cat = await catRepository.findById(sitting.catId);
-  if (!cat) return false;
-
-  const isOwner = cat.ownerId === userId;
-  const isSitter = sitting.sitterId === userId;
-  const isAdmin = () => await isSystemAdmin(userId);
-  const isPending = () =>
-    sitting.status === 'requested' && new Date(sitting.startTime) > new Date();
-
-  return isOwner || (isSitter && isPending()) || isAdmin();
-}
-```
-
-#### OpenFGA Check
-
-```ts
-async function checkCatSittingUpdatePermission(
-  userId: string,
-  catSittingId: string
-): Promise<boolean> {
-  const openfgaClient = new OpenFgaApi({
-    apiUrl: process.env.OPENFGA_API_URL,
-  });
-
-  const request: CheckRequest = {
-    tuple_key: {
-      user: `user:${userId}`,
-      relation: 'can_update',
-      object: `cat_sitting:${catSittingId}`,
-    },
-    context: {
-      current_time: new Date().toISOString(),
-    },
-  };
-
-  const { allowed } = await openfgaClient.check(
-    process.env.FGA_STORE_ID,
-    request
-  );
-  return !!allowed;
-}
-```
-
-Does it need a lot of explanation? The OpenFGA version is objectively cleaner, more maintainable, and scales better as your authorization logic grows.
-
-### ✅ Checkpoint: Can You Answer These?
+## ✅ Checkpoint: Can You Answer These?
 
 Before moving on, make sure you can answer:
 
@@ -356,7 +375,7 @@ Before moving on, make sure you can answer:
 
 ## <a id="openfga-in-action"></a> OpenFGA in Action [▓▓▓░░░░]
 
-Let's test our model with real scenarios. We'll use the OpenFGA CLI to create a store, write the model, and run queries.
+Let's test our model with real scenarios. I use the OpenFGA CLI to initialize the authorization model, create relation tuples, check the permissions and run some querie but you can use any [other client SDK](https://openfga.dev/docs/getting-started/install-sdk).
 
 ---
 
@@ -495,7 +514,7 @@ fga query check user:bob can_review cat_sitting:1 --context='{"cat_sitting_attri
 
 #### <a id="check-permissions-and-query-relations"></a> 6. Creating and Checking Review Permissions
 
-Create a review and check permissions:
+Create a review and check who can edit or delete it. OpenFGA's query language shines here, allowing you to check permissions and also list objects a user can interact with.
 
 {% asciinema VC0yN2HVatIKN4Ks4SDSUFbBg %}
 
@@ -831,6 +850,9 @@ For large organizations:
 - Start with a single application where OpenFGA delivers immediate value
 - Use modular models for independent team control
 - Leverage access control for team-specific credentials
+
+<!-- deployment: start deploying locally with [Docker Compose](https://openfga.dev/docs/getting-started/setup-openfga/docker)
+Next, consider whether it's worth or necessary to manage OpenFGA yourself, in that case the [Kubernetes recipe](https://artifacthub.io/packages/helm/openfga/openfga) might help, otherwise consider Auth0 which now includes OpenFGA. -->
 
 ## <a id="your-next-move"></a> Your Next Move [▓▓▓▓▓▓▓]
 
