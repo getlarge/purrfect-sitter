@@ -75,5 +75,16 @@
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
     }
+  },
+  "conformance": {
+    "rules": [
+      {
+        "rule": "libs/conformance/dist/no-jest-workers-in-ci",
+        "options": {
+          "testTargetNames": ["test"]
+        },
+        "projects": ["*"]
+      }
+    ]
   }
 }

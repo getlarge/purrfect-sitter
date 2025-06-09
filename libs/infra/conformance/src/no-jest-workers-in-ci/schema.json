@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "$id": "no-jest-workers-in-ci",
+  "title": "no-jest-workers-in-ci rule configuration",
+  "type": "object",
+  "properties": {
+    "testTargetNames": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": ["test"]
+    }
+  },
+  "required": ["testTargetNames"],
+  "additionalProperties": false
+}
