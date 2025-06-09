@@ -25,7 +25,7 @@ type FixableProjectViolation = ProjectViolation & {
 
 type CheckResult = {
   projectJsonPath: string;
-  ciConfig: TargetConfiguration['configurations']['ci'];
+  ciConfig: Record<string, unknown> | undefined;
   hasOneMaxWorkerInCiConfig: boolean;
   jestConfigPath: string | null;
   hasMaxWorkersInJestConfig: boolean;
