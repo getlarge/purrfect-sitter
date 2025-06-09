@@ -4,6 +4,15 @@
   "include": [],
   "references": [
     {
+      "path": "../../libs/users/repositories"
+    },
+    {
+      "path": "../../libs/database"
+    },
+    {
+      "path": "../../libs/models"
+    },
+    {
       "path": "./tsconfig.spec.json"
     }
   ],

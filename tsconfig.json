@@ -44,6 +44,9 @@
     },
     {
       "path": "./libs/cats/services"
+    },
+    {
+      "path": "./libs/infra/conformance"
     }
   ]
 }
