@@ -43,5 +43,37 @@ jobs:
           chmod +x /usr/local/bin/fga
           fga model test --tests ./store.fga.yml
 
+      - name: Run conformance rules
+        run: |
+          npx nx run conformance:build --no-cloud
+          npx nx run conformance:check --no-cloud
+
+      - name: Run conformance rules
+        if: always()
+        run: |
+          if [ -f dist/conformance-result.json ]; then
+            npx nx run conformance:format --no-cloud
+          fi
+
+      - name: Find Comment
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: peter-evans/find-comment@v3
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: 'Cloud Conformance Rules Check'
+
+      - name: Create/Update Conformance Results Comment
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: dist/conformance-result.md
+          edit-mode: replace
+
+      #  TODO: upload dist/conformance-result.json as an artifact
+
       - uses: nrwl/nx-set-shas@v4
       - run: npx nx affected -t lint test typecheck build
