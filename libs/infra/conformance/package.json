@@ -1,0 +1,70 @@
+{
+  "name": "@purrfect-sitter/conformance",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {},
+  "nx": {
+    "tags": [
+      "type:util",
+      "scope:infra"
+    ],
+    "targets": {
+      "build": {
+        "dependsOn": [],
+        "executor": "@nx/conformance:bundle-rules",
+        "outputs": [
+          "{options.outputPath}"
+        ],
+        "options": {
+          "rulesDirectory": "{projectRoot}/src",
+          "outputPath": "{projectRoot}/dist"
+        }
+      },
+      "check": {
+        "cache": false,
+        "dependsOn": [
+          "build"
+        ],
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "npx nx conformance:check"
+        }
+      },
+      "fix": {
+        "cache": false,
+        "dependsOn": [
+          "build"
+        ],
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "npx nx conformance"
+        }
+      },
+      "format": {
+        "cache": false,
+        "dependsOn": [],
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node --experimental-strip-types {projectRoot}/src/format-mr-comment.ts"
+        }
+      },
+      "publish": {
+        "dependsOn": [
+          "build"
+        ],
+        "command": "npx nx-cloud publish-conformance-rules {projectRoot}/dist"
+      }
+    }
+  }
+}
