@@ -794,6 +794,24 @@ These testing capabilities help when adopting OpenFGA:
 
 Including tests in your workflow reduces authorization errors and builds confidence in your implementation.
 
+## ✅ Checkpoint II: Can You Answer These?
+
+Have you read carefully the previous sections? If so, you should be able to answer:
+
+1. Can you list objects a user has relationships with?
+2. Can you list users with relationships to an object?
+3. Can you make an object public to all users?
+
+{% collapsible **Answers** %}
+
+1. **List Objects**: Yes, you can use the [list-objects](https://openfga.dev/docs/getting-started/perform-list-objects) command to find objects a user has relationships with, like finding all cat sittings where a user is an active sitter.
+
+2. **List Users**: Yes, if you have a relationship that connects users to objects, you can use the [list-users](https://openfga.dev/docs/getting-started/perform-list-users) command to find users with relationships to an object, like finding all users who can view a specific review.
+
+3. **Public Objects**: Make an object public by adding a relation that allows all users to access it, like granting `user:*` permission on the object as I showed you in [this example](#making-an-object-public)
+
+{% endcollapsible %}
+
 ## <a id="adoption-challenges-and-strategies"></a> Adoption Challenges and Strategies [▓▓▓▓▓▓░]
 
 As good as this tool is, adopting OpenFGA in existing systems presents challenges.
