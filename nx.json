@@ -23,7 +23,12 @@
           "targetName": "typecheck"
         },
         "build": false
-      }
+      },
+      "exclude": [
+        "libs/zap-mcp/zap-service/*",
+        "libs/zap-mcp/behavioral-patterns/*",
+        "libs/zap-mcp/pattern-executor/*"
+      ]
     },
     {
       "plugin": "@nx/eslint/plugin",
@@ -43,6 +48,23 @@
       "options": {
         "defaultEngine": "docker",
         "defaultRegistry": "docker.io"
+      }
+    },
+    {
+      "plugin": "@nx/js/typescript",
+      "include": [
+        "libs/zap-mcp/zap-service/*",
+        "libs/zap-mcp/behavioral-patterns/*",
+        "libs/zap-mcp/pattern-executor/*"
+      ],
+      "options": {
+        "typecheck": {
+          "targetName": "typecheck"
+        },
+        "build": {
+          "targetName": "build",
+          "configName": "tsconfig.lib.json"
+        }
       }
     }
   ],
@@ -90,5 +112,10 @@
         "projects": ["*"]
       }
     ]
+  },
+  "release": {
+    "version": {
+      "preVersionCommand": "npx nx run-many -t build"
+    }
   }
 }

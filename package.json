@@ -68,7 +68,8 @@
     "ts-node": "10.9.1",
     "tslib": "^2.8.0",
     "typescript": "~5.7.2",
-    "typescript-eslint": "^8.19.0"
+    "typescript-eslint": "^8.19.0",
+    "verdaccio": "^6.0.5"
   },
   "workspaces": [
     "apps/*",
@@ -78,7 +79,21 @@
     "libs/reviews/*",
     "libs/users/*",
     "libs/auth/*",
-    "libs/infra/*"
+    "libs/infra/*",
+    "libs/zap-mcp/*"
   ],
-  "packageManager": "npm@11.2.0"
+  "packageManager": "npm@11.2.0",
+  "nx": {
+    "includedScripts": [],
+    "targets": {
+      "local-registry": {
+        "executor": "@nx/js:verdaccio",
+        "options": {
+          "port": 4873,
+          "config": ".verdaccio/config.yml",
+          "storage": "tmp/local-registry/storage"
+        }
+      }
+    }
+  }
 }

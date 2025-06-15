@@ -47,6 +47,18 @@
     },
     {
       "path": "./libs/infra/conformance"
+    },
+    {
+      "path": "./libs/zap-mcp/zap-service"
+    },
+    {
+      "path": "./libs/zap-mcp/behavioral-patterns"
+    },
+    {
+      "path": "./libs/zap-mcp/pattern-executor"
+    },
+    {
+      "path": "./apps/zap-mcp-server"
     }
   ]
 }
