@@ -124,7 +124,7 @@ OpenFGA is open-source and Okta is funding it, this ensures a long-term viabilit
 
 OpenFGA can be deployed in various ways, depending on your needs:
 
-- **Self-hosted**: Use [Docker Compose](https://openfga.dev/docs/getting-started/setup-openfga/docker) or [Kubernetes](https://artifacthub.io/packages/helm/openfga/openfga) for full control.
+- **Self-hosted**: Use [Docker Compose](https://openfga.dev/docs/getting-started/setup-openfga/docker) to get started locally, [Kubernetes](https://artifacthub.io/packages/helm/openfga/openfga) for full control and [Terraform](https://registry.terraform.io/providers/openfga/openfga/latest/docs) to orchestrate your infrastructure.
 - **Managed service**: Use Auth0's FGA offering for a hassle-free experience.
 
 ### Observability and Debugging
