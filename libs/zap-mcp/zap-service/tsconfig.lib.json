@@ -7,9 +7,27 @@
     "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
     "emitDeclarationOnly": false,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"]
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "types": [
+      "node"
+    ],
+    "typeRoots": [
+      "../../../node_modules/@types",
+      "types"
+    ],
   },
-  "include": ["src/**/*.ts"],
+  "files": [
+    "types/zaproxy/index.d.ts",
+    "types/zaproxy/zaproxy-test.ts"
+  ],
+  "include": [
+    "src/**/*.ts"
+  ],
   "references": [],
-  "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]
+  "exclude": [
+    "jest.config.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts"
+  ]
 }
