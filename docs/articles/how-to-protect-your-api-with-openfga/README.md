@@ -21,7 +21,10 @@ Is it far-fetched to think that the complexity of authorization logic contribute
 
 Each new policy adds another **conditional branch**, another **database join**, another **custom role**, another **edge case that breaks** during the next feature request. The authorization flow becomes a spaghetti bowl and even experienced developers hesitate before touching it.
 
-![this is fine](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/09cwef7zad5jqr7grjz7.png)
+<figure>
+  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/09cwef7zad5jqr7grjz7.png" alt="this is fine"/>
+  <figcaption>Me, until 2024.</figcaption>
+</figure>
 
 Traditional approaches quickly hit walls:
 
@@ -60,9 +63,15 @@ Before I grab your attention and your brain 🧠 with the ReBAC concepts and how
 
 Cat owners own cats. Sitters sit cats. Admins administrate. The authorization model mirrors reality instead of forcing you into artificial role hierarchies. [Demo](#create-basic-relationships)
 
-![Cat owner relationship diagram](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/bg7eguhsxco75yi6g9bi.png)
+<figure>
+  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/bg7eguhsxco75yi6g9bi.png" alt="Cat owner relationship diagram"/>
+  <figcaption>Direct relations</figcaption>
+</figure>
 
-![Cat sitting scenario diagram](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/oqr497dzgub8p04mru1t.png)
+<figure>
+  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/oqr497dzgub8p04mru1t.png" alt="Cat sitting scenario diagram"/>
+  <figcaption>Implied relations</figcaption>
+</figure>
 
 #### Time Works Automatically
 
@@ -85,9 +94,15 @@ Your app's workflow probably includes some entities' states (e.g., pending, acti
 Traditional systems answer "Can Alice do X?" OpenFGA also answers "What can Alice do?" and "Who can do X?" This opens opportunities for features like smart dashboards and permission audits.
 [Demo](#check-permissions-and-query-relations)
 
-![Is user Jenny related to system development as an admin?](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/3gljlmtefso79v0rdas9.png)
+<figure>
+  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/3gljlmtefso79v0rdas9.png" alt="Is user Jenny related to system development as an admin?"/>
+  <figcaption>Tuple Queries from OpenFGA playground</figcaption>
+</figure>
 
-![Who is Romeo's owner?](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/zmmkh9zd1uw4igfawse7.png)
+<figure>
+  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/zmmkh9zd1uw4igfawse7.png" alt="Who is Romeo's owner?"/>
+  <figcaption>Who has the right to feed Romeo?</figcaption>
+</figure>
 
 ### Scale Like Google
 
