@@ -23,7 +23,6 @@ Each new policy adds another **conditional branch**, another **database join**, 
 
 <figure>
   <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/09cwef7zad5jqr7grjz7.png" alt="this is fine"/>
-  <figcaption>Me, until 2024.</figcaption>
 </figure>
 
 Traditional approaches quickly hit walls:
