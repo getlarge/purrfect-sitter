@@ -1,6 +1,12 @@
 # Purrfect Sitter
 
-A cat sitting management application with dual authorization strategies.
+A cat sitting application with dual authorization strategies.
+This is the support project for the [How to Protect Your API with OpenFGA](https://dev.to/this-is-learning/how-to-protect-your-api-with-openfga-from-rebac-concepts-to-practical-usage-4n9j) article.
+
+<figure>
+  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/faoyboj4ihjrn3msync4.png" alt="An anonymous developer surrounded by cats"/>
+  <figcaption>An anonymous developer surrounded by cats</figcaption>
+</figure>
 
 ## Architecture
 
@@ -243,17 +249,20 @@ Located in `tools/scripts/`:
    ```
 
    This script:
+
    - Creates test users (cat owner, cat sitter, admin)
    - Sets up necessary data (cats, cat sittings)
    - Executes multiple iterations of each scenario with headers for tracing
    - Sends HTTP requests with `X-Benchmark-Scenario` headers to identify scenarios in traces
 
 6. Analyze the results:
+
    ```bash
    node --experimental-strip-types tools/scripts/trace-analyzer.ts
    ```
 
    This will:
+
    - Fetch OpenFGA traces from Zipkin
    - Calculate metrics for individual scenario iterations
    - Aggregate metrics by scenario type across iterations
