@@ -50,7 +50,7 @@ apps/**/package-lock.json
 
 # devcontainer
 .cache
-.claude
+.claude/settings.local.json
 .config
 .devcontainer/.onCreateCommandMarker
 .devcontainer/.postCreateCommandMarker

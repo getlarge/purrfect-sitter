@@ -2,18 +2,18 @@
   "mcpServers": {
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "./"]
+      "args": ["-y", "@modelcontextprotocol/server-filesystem@latest", "./"]
     },
     "node-runner": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "mcp-node"],
+      "args": ["-y", "mcp-node@latest"],
       "env": {}
     },
     "nx": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "nx-mcp", "./"],
+      "args": ["-y", "nx-mcp@latest", "./"],
       "env": {}
     },
     "github": {

@@ -1,0 +1,61 @@
+{
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "memory",
+    "filesystem",
+    "node-runner",
+    "nx-mcp",
+    "git"
+  ],
+  "includeCoAuthoredBy": true,
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(rg:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(mkdir:*)",
+      "mcp__filesystem__read_file",
+      "mcp__filesystem__read_multiple_files",
+      "mcp__filesystem__create_directory",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__directory_tree",
+      "mcp__filesystem__search_files",
+      "mcp__filesystem__get_file_info",
+      "mcp__filesystem__list_allowed_directories",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:www.typescriptlang.org)",
+      "Bash(git log:*)",
+      "mcp__git__status",
+      "mcp__git__diff",
+      "mcp__git__diff_unstaged",
+      "mcp__git__diff_staged",
+      "mcp__git__log",
+      "mcp__git__show",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "mcp__github__github_issue",
+      "mcp__github__get_issue",
+      "mcp__github__get_issue_comments",
+      "mcp__github__get_pull_request",
+      "mcp__github__get_pull_request_comments",
+      "mcp__github__get_pull_request_files",
+      "mcp__github__list_pull_requests",
+      "mcp__github__search_issues",
+      "mcp__memory",
+      "mcp__node-runner__list-node-versions",
+      "mcp__node-runner__get-node-version",
+      "mcp__node-runner__run-npm-script",
+      "mcp__node-runner__list-servers",
+      "mcp__nx__nx_project_details",
+      "mcp__nx__nx_docs",
+      "mcp__nx__nx_workspace",
+      "Bash(nx run *)"
+    ],
+    "deny": []
+  },
+  "env": {
+    "BASH_MAX_TIMEOUT_MS": "1800000"
+  }
+}
