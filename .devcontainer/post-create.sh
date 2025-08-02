@@ -5,13 +5,6 @@ echo "🚀 Setting up PurrfectSitter development environment..."
 
 # echo "🛠️ Configuring ZSH..."
 
-# git clone https://github.com/powerline/fonts.git
-# cd fonts
-# ./install.sh
-# cd .. && rm -rf fonts
-
-# zsh -c 'git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/powerlevel10k'
-
 # TODO: add dotfiles for zsh
 # cp .devcontainer/dotfiles/.zshrc ~
 # cp .devcontainer/dotfiles/.p10k.zsh ~
