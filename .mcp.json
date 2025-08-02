@@ -16,6 +16,12 @@
       "args": ["-y", "nx-mcp@latest", "./"],
       "env": {}
     },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest"
+      ]
+    },
     "github": {
       "command": "./tools/mcp/github.sh"
     },

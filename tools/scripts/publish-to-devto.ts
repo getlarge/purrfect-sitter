@@ -1,6 +1,10 @@
 /**
  * @see https://developers.forem.com/api/v1#tag/articles/operation/createArticle
+ * Run with:
+ * - npx run @purrfect-sitter/dev-to:build
+ * - node --experimental-strip-types tools/scripts/publish-to-devto.js
  */
+
 import {
   getMyArticles,
   getOrganization,
