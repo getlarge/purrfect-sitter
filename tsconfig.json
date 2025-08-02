@@ -47,6 +47,12 @@
     },
     {
       "path": "./libs/infra/conformance"
+    },
+    {
+      "path": "./libs/slides-com"
+    },
+    {
+      "path": "./libs/dev-to"
     }
   ]
 }
