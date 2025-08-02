@@ -64,6 +64,7 @@
     "nx": "21.1.2",
     "nx-mcp": "^0.0.8",
     "pg-mem": "^3.0.5",
+    "playwright": "^1.48.0",
     "prettier": "^2.6.2",
     "ts-node": "10.9.1",
     "tslib": "^2.8.0",
@@ -73,12 +74,7 @@
   "workspaces": [
     "apps/*",
     "libs/*",
-    "libs/cats/*",
-    "libs/cat-sittings/*",
-    "libs/reviews/*",
-    "libs/users/*",
-    "libs/auth/*",
-    "libs/infra/*"
+    "libs/**/*"
   ],
   "packageManager": "npm@11.2.0"
 }
